@@ -128,6 +128,33 @@ MIGRATIONS: tuple[Migration, ...] = (
         );
         """,
     ),
+    Migration(
+        version=6,
+        name="findings",
+        sql="""
+        CREATE TABLE IF NOT EXISTS findings (
+            id VARCHAR PRIMARY KEY,
+            tenant_id VARCHAR NOT NULL,
+            rule_id VARCHAR NOT NULL,
+            category VARCHAR NOT NULL,
+            severity VARCHAR NOT NULL,
+            title VARCHAR NOT NULL,
+            summary VARCHAR NOT NULL,
+            affected_objects JSON NOT NULL,
+            evidence JSON NOT NULL,
+            remediation_hint VARCHAR NOT NULL,
+            "references" JSON NOT NULL,
+            detected_at TIMESTAMP NOT NULL,
+            first_seen_at TIMESTAMP NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_findings_tenant_category
+            ON findings(tenant_id, category);
+        CREATE INDEX IF NOT EXISTS idx_findings_tenant_severity
+            ON findings(tenant_id, severity);
+        CREATE INDEX IF NOT EXISTS idx_findings_tenant_rule
+            ON findings(tenant_id, rule_id);
+        """,
+    ),
 )
 
 
