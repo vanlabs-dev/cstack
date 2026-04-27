@@ -12,6 +12,7 @@ members = ["apps/*", "packages/*"]
 [tool.uv.sources]
 cstack-schemas = { workspace = true }
 cstack-storage = { workspace = true }
+cstack-graph-client = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -49,3 +50,15 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 testpaths = ["apps", "packages"]
+
+[[tool.mypy.overrides]]
+module = [
+    "msgraph",
+    "msgraph.*",
+    "azure.*",
+    "kiota_serialization_json.*",
+    "kiota_abstractions.*",
+    "duckdb.*",
+]
+ignore_missing_imports = true
+disable_error_code = ["attr-defined"]
