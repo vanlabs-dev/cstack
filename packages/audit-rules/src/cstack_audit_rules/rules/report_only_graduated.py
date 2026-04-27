@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from cstack_audit_core import AffectedObject, Finding, Severity
 
-from cstack_audit_rules._helpers import is_report_only
+from cstack_audit_rules._helpers import ensure_utc, is_report_only
 from cstack_audit_rules.context import AuditContext
 from cstack_audit_rules.registry import Rule, RuleMetadata, make_finding, register_rule
 
@@ -33,7 +33,7 @@ def _evaluate(context: AuditContext) -> list[Finding]:
         if not is_report_only(policy):
             continue
         modified = policy.modified_date_time
-        if modified is None or modified < threshold:
+        if modified is None or ensure_utc(modified) < threshold:
             findings.append(
                 make_finding(
                     METADATA,
