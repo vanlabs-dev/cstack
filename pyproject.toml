@@ -14,6 +14,7 @@ cstack-schemas = { workspace = true }
 cstack-storage = { workspace = true }
 cstack-graph-client = { workspace = true }
 cstack-fixtures = { workspace = true }
+cstack-cli = { workspace = true }
 
 [dependency-groups]
 dev = [
