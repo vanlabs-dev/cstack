@@ -11,6 +11,7 @@ members = ["apps/*", "packages/*"]
 
 [tool.uv.sources]
 cstack-schemas = { workspace = true }
+cstack-storage = { workspace = true }
 
 [dependency-groups]
 dev = [

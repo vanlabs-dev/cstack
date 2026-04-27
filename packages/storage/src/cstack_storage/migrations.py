@@ -1,0 +1,162 @@
+from dataclasses import dataclass
+from datetime import UTC, datetime
+
+import duckdb
+
+
+@dataclass(frozen=True)
+class Migration:
+    version: int
+    name: str
+    sql: str
+
+
+MIGRATIONS: tuple[Migration, ...] = (
+    Migration(
+        version=1,
+        name="init_tenants",
+        sql="""
+        CREATE TABLE IF NOT EXISTS tenants (
+            tenant_id TEXT PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            client_id TEXT NOT NULL,
+            cert_thumbprint TEXT NOT NULL,
+            cert_subject TEXT NOT NULL,
+            added_at TIMESTAMP NOT NULL,
+            is_fixture BOOLEAN NOT NULL DEFAULT FALSE
+        );
+        """,
+    ),
+    Migration(
+        version=2,
+        name="raw_ingestions",
+        sql="""
+        CREATE TABLE IF NOT EXISTS raw_ingestions (
+            tenant_id TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            ingested_at TIMESTAMP NOT NULL,
+            raw_payload JSON NOT NULL,
+            source_path TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_raw_ingestions_tenant_resource
+            ON raw_ingestions (tenant_id, resource_type, ingested_at);
+        """,
+    ),
+    Migration(
+        version=3,
+        name="ca_policies",
+        sql="""
+        CREATE TABLE IF NOT EXISTS ca_policies (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            display_name TEXT NOT NULL,
+            state TEXT,
+            created_at TIMESTAMP,
+            modified_at TIMESTAMP,
+            conditions JSON,
+            grant_controls JSON,
+            session_controls JSON,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        """,
+    ),
+    Migration(
+        version=4,
+        name="named_locations",
+        sql="""
+        CREATE TABLE IF NOT EXISTS named_locations (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            display_name TEXT NOT NULL,
+            location_type TEXT NOT NULL,
+            ip_ranges JSON,
+            countries JSON,
+            is_trusted BOOLEAN,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        """,
+    ),
+    Migration(
+        version=5,
+        name="directory_objects",
+        sql="""
+        CREATE TABLE IF NOT EXISTS users (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            display_name TEXT,
+            user_principal_name TEXT,
+            account_enabled BOOLEAN,
+            user_type TEXT,
+            sign_in_activity JSON,
+            raw JSON,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        CREATE TABLE IF NOT EXISTS groups (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            display_name TEXT,
+            mail_enabled BOOLEAN,
+            security_enabled BOOLEAN,
+            members JSON,
+            raw JSON,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        CREATE TABLE IF NOT EXISTS directory_roles (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            display_name TEXT,
+            description TEXT,
+            role_template_id TEXT,
+            members JSON,
+            raw JSON,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        CREATE TABLE IF NOT EXISTS role_assignments (
+            tenant_id TEXT NOT NULL,
+            id TEXT NOT NULL,
+            principal_id TEXT,
+            role_definition_id TEXT,
+            directory_scope_id TEXT,
+            raw JSON,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        """,
+    ),
+)
+
+
+def run_migrations(conn: duckdb.DuckDBPyConnection) -> list[int]:
+    """Apply any not-yet-applied migrations, in version order.
+
+    Returns the list of versions applied during this call so callers can log
+    or display upgrade progress. Idempotent: re-running with no pending
+    migrations is a no-op.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS _migrations (
+            version INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            applied_at TIMESTAMP NOT NULL
+        );
+        """
+    )
+    applied_rows = conn.execute("SELECT version FROM _migrations").fetchall()
+    applied = {row[0] for row in applied_rows}
+    just_applied: list[int] = []
+    for migration in MIGRATIONS:
+        if migration.version in applied:
+            continue
+        conn.execute(migration.sql)
+        conn.execute(
+            "INSERT INTO _migrations (version, name, applied_at) VALUES (?, ?, ?)",
+            [migration.version, migration.name, datetime.now(UTC)],
+        )
+        just_applied.append(migration.version)
+    return just_applied
