@@ -62,6 +62,13 @@ out/
 .env.local
 .env.*.local
 
+# Secrets and tenant credentials
+tenants.json
+*.pem
+*.pfx
+*.p12
+*.key
+
 # Data and ML (root-level data dir only; fixture corpora live under packages/)
 /data/
 *.duckdb
