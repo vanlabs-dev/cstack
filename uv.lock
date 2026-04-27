@@ -11,6 +11,7 @@ members = [
     "cstack",
     "cstack-audit-core",
     "cstack-audit-coverage",
+    "cstack-audit-exclusions",
     "cstack-audit-rules",
     "cstack-cli",
     "cstack-fixtures",
@@ -541,6 +542,25 @@ requires-dist = [
     { name = "cstack-audit-core", editable = "packages/audit-core" },
     { name = "cstack-schemas", editable = "packages/schemas" },
     { name = "cstack-storage", editable = "packages/storage" },
+    { name = "pydantic", specifier = ">=2.9" },
+]
+
+[[package]]
+name = "cstack-audit-exclusions"
+version = "0.0.1"
+source = { editable = "packages/audit-exclusions" }
+dependencies = [
+    { name = "cstack-audit-core" },
+    { name = "cstack-audit-rules" },
+    { name = "cstack-schemas" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cstack-audit-core", editable = "packages/audit-core" },
+    { name = "cstack-audit-rules", editable = "packages/audit-rules" },
+    { name = "cstack-schemas", editable = "packages/schemas" },
     { name = "pydantic", specifier = ">=2.9" },
 ]
 
