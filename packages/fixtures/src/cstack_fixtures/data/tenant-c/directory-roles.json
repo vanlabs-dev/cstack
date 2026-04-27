@@ -1,0 +1,10 @@
+[
+  {"id": "role-c-globaladmin", "displayName": "Global Administrator", "description": "Highest-privilege admin role.", "roleTemplateId": "62e90394-69f5-4237-9190-012177145e10"},
+  {"id": "role-c-privrole", "displayName": "Privileged Role Administrator", "description": "Manages role assignments and policies.", "roleTemplateId": "e8611ab8-c189-46e8-94e1-60213ab1f814"},
+  {"id": "role-c-globalreader", "displayName": "Global Reader", "description": "Read-only across the directory.", "roleTemplateId": "f2ef992c-3afb-46b9-b7cf-a126ee74c451"},
+  {"id": "role-c-condaccess", "displayName": "Conditional Access Administrator", "description": "Manages CA policies.", "roleTemplateId": "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9"},
+  {"id": "role-c-secadmin", "displayName": "Security Administrator", "description": "Manages security configuration.", "roleTemplateId": "194ae4cb-b126-40b2-bd5b-6091b380977d"},
+  {"id": "role-c-userauth", "displayName": "User Administrator", "description": "Manages users and groups.", "roleTemplateId": "fe930be7-5e62-47db-91af-98c3a49a38b1"},
+  {"id": "role-c-cloudapp", "displayName": "Cloud Application Administrator", "description": "Manages cloud apps and registrations.", "roleTemplateId": "158c047a-c907-4556-b7ef-446551a6b5f7"},
+  {"id": "role-c-appauth", "displayName": "Application Administrator", "description": "Manages app registrations and consent.", "roleTemplateId": "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"}
+]

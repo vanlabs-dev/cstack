@@ -1,0 +1,202 @@
+[
+  {
+    "id": "ca-c-country-include",
+    "displayName": "Allow access only from approved countries",
+    "state": "enabled",
+    "createdDateTime": "2025-02-15T09:00:00Z",
+    "modifiedDateTime": "2025-02-15T09:00:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["All"], "excludeGroups": ["grp-c-emergency-access"]},
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["loc-c-allowed-countries"],
+        "excludeLocations": []
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-c-ip-exclude-known-bad",
+    "displayName": "Block access from known-bad IP ranges",
+    "state": "enabled",
+    "createdDateTime": "2025-04-05T09:00:00Z",
+    "modifiedDateTime": "2025-04-05T09:00:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["loc-c-known-bad-egress"],
+        "excludeLocations": []
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "ca-c-app-filter",
+    "displayName": "Per-app filter: data platform tooling",
+    "state": "enabled",
+    "createdDateTime": "2025-06-01T09:00:00Z",
+    "modifiedDateTime": "2025-06-01T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-data-platform"]},
+      "applications": {
+        "includeApplications": ["All"],
+        "excludeApplications": ["00000003-0000-0ff1-ce00-000000000000"],
+        "includeAuthenticationContextClassReferences": ["c1", "c2"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-c-platform-windows-macos",
+    "displayName": "Windows and macOS only for managed devices",
+    "state": "enabled",
+    "createdDateTime": "2025-06-15T09:00:00Z",
+    "modifiedDateTime": "2025-06-15T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-managed-devices"]},
+      "applications": {"includeApplications": ["All"]},
+      "platforms": {
+        "includePlatforms": ["windows", "macOS"],
+        "excludePlatforms": ["iOS", "android", "linux", "windowsPhone"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    }
+  },
+  {
+    "id": "ca-c-signin-frequency",
+    "displayName": "Sign-in frequency: 4 hours for tier-0",
+    "state": "enabled",
+    "createdDateTime": "2025-07-01T09:00:00Z",
+    "modifiedDateTime": "2025-07-01T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-tier-0-admins"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]},
+    "sessionControls": {
+      "signInFrequency": {"value": 4, "type": "hours", "isEnabled": true}
+    }
+  },
+  {
+    "id": "ca-c-persistent-browser",
+    "displayName": "Persistent browser session blocked",
+    "state": "enabled",
+    "createdDateTime": "2025-07-10T09:00:00Z",
+    "modifiedDateTime": "2025-07-10T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-byod"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["browser"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]},
+    "sessionControls": {
+      "persistentBrowser": {"mode": "never", "isEnabled": true}
+    }
+  },
+  {
+    "id": "ca-c-grant-and",
+    "displayName": "AND grant: MFA plus compliant device",
+    "state": "enabled",
+    "createdDateTime": "2025-08-01T09:00:00Z",
+    "modifiedDateTime": "2025-08-01T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-finance"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice", "domainJoinedDevice"]
+    }
+  },
+  {
+    "id": "ca-c-grant-or",
+    "displayName": "OR grant: any of MFA, compliant device, or HAADJ",
+    "state": "enabled",
+    "createdDateTime": "2025-08-01T09:05:00Z",
+    "modifiedDateTime": "2025-08-01T09:05:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-c-vendors-pii"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "OR",
+      "builtInControls": ["mfa", "compliantDevice", "domainJoinedDevice"]
+    }
+  },
+  {
+    "id": "ca-c-workload-identity",
+    "displayName": "Workload identity location restriction",
+    "state": "enabled",
+    "createdDateTime": "2025-09-01T09:00:00Z",
+    "modifiedDateTime": "2025-09-01T09:00:00Z",
+    "conditions": {
+      "clientApplications": {
+        "includeServicePrincipals": ["sp-c-pipeline-runner"],
+        "excludeServicePrincipals": ["sp-c-emergency-broker"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["All"],
+        "excludeLocations": ["loc-c-corp-vpn"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "ca-c-role-globaladmin",
+    "displayName": "Global Admin: locked-down sign-in",
+    "state": "enabled",
+    "createdDateTime": "2025-09-15T09:00:00Z",
+    "modifiedDateTime": "2025-09-15T09:00:00Z",
+    "conditions": {
+      "users": {
+        "includeRoles": ["62e90394-69f5-4237-9190-012177145e10"],
+        "excludeGroups": ["grp-c-emergency-access"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["loc-c-corp-vpn"],
+        "excludeLocations": []
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    },
+    "sessionControls": {
+      "signInFrequency": {"value": 1, "type": "hours", "isEnabled": true}
+    }
+  },
+  {
+    "id": "ca-c-role-priv-role-admin",
+    "displayName": "Privileged Role Admin: token protection",
+    "state": "enabled",
+    "createdDateTime": "2025-09-15T09:05:00Z",
+    "modifiedDateTime": "2025-09-15T09:05:00Z",
+    "conditions": {
+      "users": {
+        "includeRoles": ["e8611ab8-c189-46e8-94e1-60213ab1f814"],
+        "excludeGroups": ["grp-c-emergency-access"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    }
+  }
+]

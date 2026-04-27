@@ -1,0 +1,7 @@
+{
+  "name": "tenant-a",
+  "description": "Well-configured SMB tenant. MFA covers all users with break-glass exclusion, legacy auth blocked, admin MFA enforced, sign-in and user risk policies in place, guest restrictions on untrusted countries, and compliant device required for sensitive apps.",
+  "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+  "expected_findings_count": 1,
+  "scenario_tags": ["well-configured", "smb", "mfa-coverage", "risk-based"]
+}

@@ -1,0 +1,13 @@
+[
+  {"id": "grp-b-all-staff", "displayName": "All staff", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-finance", "displayName": "Finance", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-b-sales", "displayName": "Sales team", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-b-it", "displayName": "IT helpdesk", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-engineering", "displayName": "Engineering", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-b-leadership", "displayName": "Leadership", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-mfa-exclusions", "displayName": "MFA policy exclusions", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-vendors", "displayName": "Vendors and contractors", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-stale-2024", "displayName": "Project Atlas (closed)", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-mobile-pilot", "displayName": "Mobile pilot users", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-b-temp-q3-2024", "displayName": "Temporary Q3 2024 staff", "mailEnabled": false, "securityEnabled": true}
+]

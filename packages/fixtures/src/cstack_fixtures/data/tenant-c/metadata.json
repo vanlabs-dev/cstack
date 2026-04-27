@@ -1,0 +1,7 @@
+{
+  "name": "tenant-c",
+  "description": "Edge-case coverage tenant. Every Graph CA policy shape we know about appears at least once: country named-location includes, IP named-location excludes, app filters, device platform conditions, sign-in frequency controls, persistent browser session controls, AND/OR grant combinations, workload identity policies, and role-scoped policies for Global Admin and Privileged Role Admin.",
+  "tenant_id": "00000000-cccc-3333-3333-333333333333",
+  "expected_findings_count": 4,
+  "scenario_tags": ["edge-cases", "every-shape", "role-scoped", "workload-identity"]
+}

@@ -1,0 +1,15 @@
+[
+  {"id": "grp-c-all-staff", "displayName": "All staff", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-engineering", "displayName": "Engineering", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-c-data-platform", "displayName": "Data platform engineers", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-finance", "displayName": "Finance", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-c-tier-0-admins", "displayName": "Tier 0 admins", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-tier-1-admins", "displayName": "Tier 1 admins", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-managed-devices", "displayName": "Managed-device users", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-byod", "displayName": "Bring-your-own-device users", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-workload-identities", "displayName": "Service principals (cstack-tracked)", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-emergency-access", "displayName": "Break-glass emergency accounts", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-platform-readonly", "displayName": "Platform read-only auditors", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-vendors-pii", "displayName": "Vendors with PII access", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-c-priv-role-admins", "displayName": "Privileged role admins", "mailEnabled": false, "securityEnabled": true}
+]

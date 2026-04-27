@@ -1,0 +1,16 @@
+[
+  {
+    "@odata.type": "#microsoft.graph.ipNamedLocation",
+    "id": "loc-b-office",
+    "displayName": "Main office",
+    "isTrusted": true,
+    "ipRanges": [
+      {
+        "@odata.type": "#microsoft.graph.iPv4CidrRange",
+        "cidrAddress": "192.0.2.0/24"
+      }
+    ],
+    "createdDateTime": "2024-03-15T09:00:00Z",
+    "modifiedDateTime": "2024-03-15T09:00:00Z"
+  }
+]

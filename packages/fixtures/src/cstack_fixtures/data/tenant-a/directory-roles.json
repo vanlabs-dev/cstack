@@ -1,0 +1,10 @@
+[
+  {"id": "role-a-globaladmin", "displayName": "Global Administrator", "description": "Highest-privilege admin role.", "roleTemplateId": "62e90394-69f5-4237-9190-012177145e10"},
+  {"id": "role-a-privrole", "displayName": "Privileged Role Administrator", "description": "Manages role assignments and policies.", "roleTemplateId": "e8611ab8-c189-46e8-94e1-60213ab1f814"},
+  {"id": "role-a-userauth", "displayName": "User Administrator", "description": "Manages users and groups.", "roleTemplateId": "fe930be7-5e62-47db-91af-98c3a49a38b1"},
+  {"id": "role-a-condaccess", "displayName": "Conditional Access Administrator", "description": "Manages CA policies.", "roleTemplateId": "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9"},
+  {"id": "role-a-secadmin", "displayName": "Security Administrator", "description": "Manages security configuration.", "roleTemplateId": "194ae4cb-b126-40b2-bd5b-6091b380977d"},
+  {"id": "role-a-secreader", "displayName": "Security Reader", "description": "Read-only security insights.", "roleTemplateId": "5d6b6bb7-de71-4623-b4af-96380a352509"},
+  {"id": "role-a-helpdesk", "displayName": "Helpdesk Administrator", "description": "Resets passwords for non-admins.", "roleTemplateId": "729827e3-9c14-49f7-bb1b-9608f156bbb8"},
+  {"id": "role-a-billing", "displayName": "Billing Administrator", "description": "Subscription and billing only.", "roleTemplateId": "b0f54661-2d74-4c50-afa3-1ec803f12efe"}
+]

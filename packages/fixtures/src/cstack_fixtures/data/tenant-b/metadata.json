@@ -1,0 +1,7 @@
+{
+  "name": "tenant-b",
+  "description": "Messy tenant. Legacy auth not blocked, no admin-specific policy, MFA policy with 14 user exclusions (six inactive 90+ days), two stale report-only policies, one disabled policy from 2024, and no risk-based policies.",
+  "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+  "expected_findings_count": 12,
+  "scenario_tags": ["gaps", "stale-policies", "exclusion-bloat", "no-risk-policies"]
+}

@@ -1,0 +1,14 @@
+[
+  {"id": "grp-a-all-staff", "displayName": "All staff", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-admins", "displayName": "IT admins", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-finance", "displayName": "Finance team", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-a-engineering", "displayName": "Engineering", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-a-sales", "displayName": "Sales", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-a-marketing", "displayName": "Marketing", "mailEnabled": true, "securityEnabled": true},
+  {"id": "grp-a-execs", "displayName": "Executive leadership", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-contractors", "displayName": "External contractors", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-mfa-exclusions", "displayName": "Break-glass exclusion list", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-sensitive-app-users", "displayName": "Sensitive app users", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-guests-approved", "displayName": "Guests approved for collaboration", "mailEnabled": false, "securityEnabled": true},
+  {"id": "grp-a-mobile-eligible", "displayName": "Mobile-eligible staff", "mailEnabled": false, "securityEnabled": true}
+]

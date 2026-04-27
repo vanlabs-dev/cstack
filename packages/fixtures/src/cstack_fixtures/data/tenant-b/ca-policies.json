@@ -1,0 +1,97 @@
+[
+  {
+    "id": "ca-b-mfa-mostly",
+    "displayName": "Require MFA (with exclusions)",
+    "state": "enabled",
+    "createdDateTime": "2024-04-12T10:00:00Z",
+    "modifiedDateTime": "2025-11-02T13:00:00Z",
+    "conditions": {
+      "users": {
+        "includeUsers": ["All"],
+        "excludeUsers": [
+          "user-tenant-b-0002",
+          "user-tenant-b-0005",
+          "user-tenant-b-0007",
+          "user-tenant-b-0011",
+          "user-tenant-b-0013",
+          "user-tenant-b-0019",
+          "user-tenant-b-0023",
+          "user-tenant-b-0029",
+          "user-tenant-b-0031",
+          "user-tenant-b-0037",
+          "user-tenant-b-0041",
+          "user-tenant-b-0043",
+          "user-tenant-b-0047",
+          "user-tenant-b-0053"
+        ],
+        "excludeGroups": ["grp-b-mfa-exclusions"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-b-mfa-finance",
+    "displayName": "Finance team MFA",
+    "state": "enabled",
+    "createdDateTime": "2024-08-21T09:00:00Z",
+    "modifiedDateTime": "2024-08-21T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-b-finance"]},
+      "applications": {"includeApplications": ["00000003-0000-0ff1-ce00-000000000000"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-b-report-only-vendors",
+    "displayName": "Report only: vendor location restrictions",
+    "state": "enabledForReportingButNotEnforced",
+    "createdDateTime": "2025-04-15T09:00:00Z",
+    "modifiedDateTime": "2025-04-15T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-b-vendors"]},
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["All"],
+        "excludeLocations": ["loc-b-office"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "ca-b-report-only-engineers-mfa",
+    "displayName": "Report only: engineering elevated MFA",
+    "state": "enabledForReportingButNotEnforced",
+    "createdDateTime": "2025-05-20T09:00:00Z",
+    "modifiedDateTime": "2025-05-20T09:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-b-engineering"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    }
+  },
+  {
+    "id": "ca-b-disabled-legacy-2024",
+    "displayName": "Disabled: legacy mobile pilot 2024",
+    "state": "disabled",
+    "createdDateTime": "2024-06-01T09:00:00Z",
+    "modifiedDateTime": "2024-12-15T16:00:00Z",
+    "conditions": {
+      "users": {"includeGroups": ["grp-b-mobile-pilot"]},
+      "applications": {"includeApplications": ["All"]},
+      "platforms": {"includePlatforms": ["iOS", "android"]},
+      "clientAppTypes": ["mobileAppsAndDesktopClients"]
+    },
+    "grantControls": {
+      "operator": "OR",
+      "builtInControls": ["approvedApplication"]
+    }
+  }
+]

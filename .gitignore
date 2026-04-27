@@ -62,8 +62,8 @@ out/
 .env.local
 .env.*.local
 
-# Data and ML
-data/
+# Data and ML (root-level data dir only; fixture corpora live under packages/)
+/data/
 *.duckdb
 *.duckdb.wal
 mlruns/

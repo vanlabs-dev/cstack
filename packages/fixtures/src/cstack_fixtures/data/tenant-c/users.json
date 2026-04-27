@@ -1,0 +1,752 @@
+[
+  {
+    "id": "user-tenant-c-0001",
+    "displayName": "Morgan Martin",
+    "userPrincipalName": "user0001@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0002",
+    "displayName": "Dakota Jackson",
+    "userPrincipalName": "user0002#EXT#@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0003",
+    "displayName": "Parker Thomas",
+    "userPrincipalName": "user0003@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0004",
+    "displayName": "Sage Allen",
+    "userPrincipalName": "user0004@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0005",
+    "displayName": "Sam Lee",
+    "userPrincipalName": "user0005@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0006",
+    "displayName": "Dakota King",
+    "userPrincipalName": "user0006@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0007",
+    "displayName": "Pat Wilson",
+    "userPrincipalName": "user0007@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0008",
+    "displayName": "Casey Wilson",
+    "userPrincipalName": "user0008@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0009",
+    "displayName": "Quinn Martin",
+    "userPrincipalName": "user0009@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0010",
+    "displayName": "Sage Wright",
+    "userPrincipalName": "user0010@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0011",
+    "displayName": "Drew Wilson",
+    "userPrincipalName": "user0011@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0012",
+    "displayName": "Tatum Martinez",
+    "userPrincipalName": "user0012@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0013",
+    "displayName": "Sam Moore",
+    "userPrincipalName": "user0013@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0014",
+    "displayName": "Jamie Hernandez",
+    "userPrincipalName": "user0014@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0015",
+    "displayName": "Avery Allen",
+    "userPrincipalName": "user0015@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0016",
+    "displayName": "Skyler Anderson",
+    "userPrincipalName": "user0016@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0017",
+    "displayName": "Taylor Clark",
+    "userPrincipalName": "user0017#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0018",
+    "displayName": "Avery Harris",
+    "userPrincipalName": "user0018@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0019",
+    "displayName": "Cameron Smith",
+    "userPrincipalName": "user0019@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0020",
+    "displayName": "Robin Williams",
+    "userPrincipalName": "user0020@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0021",
+    "displayName": "Phoenix Hall",
+    "userPrincipalName": "user0021@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0022",
+    "displayName": "Riley Jones",
+    "userPrincipalName": "user0022@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0023",
+    "displayName": "Alex Thompson",
+    "userPrincipalName": "user0023@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0024",
+    "displayName": "Jamie Hernandez",
+    "userPrincipalName": "user0024@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0025",
+    "displayName": "Kendall King",
+    "userPrincipalName": "user0025@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0026",
+    "displayName": "Finley Jackson",
+    "userPrincipalName": "user0026@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0027",
+    "displayName": "Logan Young",
+    "userPrincipalName": "user0027@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0028",
+    "displayName": "Quinn Martin",
+    "userPrincipalName": "user0028@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0029",
+    "displayName": "Emerson Thompson",
+    "userPrincipalName": "user0029#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0030",
+    "displayName": "Devon Davis",
+    "userPrincipalName": "user0030@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0031",
+    "displayName": "Drew Taylor",
+    "userPrincipalName": "user0031#EXT#@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0032",
+    "displayName": "Tatum White",
+    "userPrincipalName": "user0032#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0033",
+    "displayName": "Sam Hernandez",
+    "userPrincipalName": "user0033@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0034",
+    "displayName": "Cameron Allen",
+    "userPrincipalName": "user0034@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0035",
+    "displayName": "Morgan Wright",
+    "userPrincipalName": "user0035@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0036",
+    "displayName": "Robin Lewis",
+    "userPrincipalName": "user0036@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0037",
+    "displayName": "Avery Allen",
+    "userPrincipalName": "user0037@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0038",
+    "displayName": "Kendall Anderson",
+    "userPrincipalName": "user0038#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0039",
+    "displayName": "Sam Allen",
+    "userPrincipalName": "user0039#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0040",
+    "displayName": "Kendall Thompson",
+    "userPrincipalName": "user0040@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0041",
+    "displayName": "Alex Hall",
+    "userPrincipalName": "user0041@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0042",
+    "displayName": "Tatum Hernandez",
+    "userPrincipalName": "user0042@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0043",
+    "displayName": "Kendall Lee",
+    "userPrincipalName": "user0043@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0044",
+    "displayName": "Emerson Jones",
+    "userPrincipalName": "user0044@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0045",
+    "displayName": "Noor White",
+    "userPrincipalName": "user0045#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0046",
+    "displayName": "Noor Clark",
+    "userPrincipalName": "user0046@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0047",
+    "displayName": "Taylor Robinson",
+    "userPrincipalName": "user0047@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0048",
+    "displayName": "Jamie Jones",
+    "userPrincipalName": "user0048@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0049",
+    "displayName": "Kendall Clark",
+    "userPrincipalName": "user0049@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0050",
+    "displayName": "Logan Clark",
+    "userPrincipalName": "user0050#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0051",
+    "displayName": "Alex Davis",
+    "userPrincipalName": "user0051#EXT#@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0052",
+    "displayName": "Sam Allen",
+    "userPrincipalName": "user0052@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0053",
+    "displayName": "Parker Clark",
+    "userPrincipalName": "user0053@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0054",
+    "displayName": "Blake Lewis",
+    "userPrincipalName": "user0054@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0055",
+    "displayName": "Drew Brown",
+    "userPrincipalName": "user0055@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0056",
+    "displayName": "Devon Wright",
+    "userPrincipalName": "user0056@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0057",
+    "displayName": "Parker Wright",
+    "userPrincipalName": "user0057@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0058",
+    "displayName": "Robin Smith",
+    "userPrincipalName": "user0058@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0059",
+    "displayName": "Logan Garcia",
+    "userPrincipalName": "user0059@tenant-c.example",
+    "accountEnabled": false,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0060",
+    "displayName": "Casey Garcia",
+    "userPrincipalName": "user0060@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0061",
+    "displayName": "Tatum Smith",
+    "userPrincipalName": "user0061@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0062",
+    "displayName": "Devon Robinson",
+    "userPrincipalName": "user0062#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0063",
+    "displayName": "Emerson Smith",
+    "userPrincipalName": "user0063@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0064",
+    "displayName": "Jordan Clark",
+    "userPrincipalName": "user0064@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0065",
+    "displayName": "Devon Brown",
+    "userPrincipalName": "user0065#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0066",
+    "displayName": "Taylor Davis",
+    "userPrincipalName": "user0066@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0067",
+    "displayName": "Sage Hall",
+    "userPrincipalName": "user0067@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0068",
+    "displayName": "Sam Martin",
+    "userPrincipalName": "user0068@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0069",
+    "displayName": "Sam Miller",
+    "userPrincipalName": "user0069#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2025-10-03T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0070",
+    "displayName": "Skyler Hernandez",
+    "userPrincipalName": "user0070@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-25T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0071",
+    "displayName": "Parker Walker",
+    "userPrincipalName": "user0071@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0072",
+    "displayName": "Alex Hernandez",
+    "userPrincipalName": "user0072#EXT#@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Guest",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-31T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0073",
+    "displayName": "Parker Thomas",
+    "userPrincipalName": "user0073@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0074",
+    "displayName": "Jamie Hall",
+    "userPrincipalName": "user0074@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "id": "user-tenant-c-0075",
+    "displayName": "Lane Thomas",
+    "userPrincipalName": "user0075@tenant-c.example",
+    "accountEnabled": true,
+    "userType": "Member",
+    "signInActivity": {
+      "lastSignInDateTime": "2026-03-02T00:00:00Z"
+    }
+  }
+]

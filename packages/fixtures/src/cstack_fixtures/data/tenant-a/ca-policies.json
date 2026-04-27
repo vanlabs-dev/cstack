@@ -1,0 +1,148 @@
+[
+  {
+    "id": "ca-a-mfa-all-users",
+    "displayName": "Require MFA for all users",
+    "state": "enabled",
+    "createdDateTime": "2025-02-10T09:00:00Z",
+    "modifiedDateTime": "2025-09-12T14:30:00Z",
+    "conditions": {
+      "users": {
+        "includeUsers": ["All"],
+        "excludeUsers": ["user-tenant-a-0001"],
+        "excludeGroups": ["grp-a-mfa-exclusions"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-a-block-legacy-auth",
+    "displayName": "Block legacy authentication",
+    "state": "enabled",
+    "createdDateTime": "2025-02-10T09:05:00Z",
+    "modifiedDateTime": "2025-02-10T09:05:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["All"], "excludeUsers": ["user-tenant-a-0001"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["exchangeActiveSync", "other"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "ca-a-admin-mfa",
+    "displayName": "Require MFA for privileged admins",
+    "state": "enabled",
+    "createdDateTime": "2025-02-10T09:10:00Z",
+    "modifiedDateTime": "2025-09-12T14:30:00Z",
+    "conditions": {
+      "users": {
+        "includeRoles": [
+          "62e90394-69f5-4237-9190-012177145e10",
+          "e8611ab8-c189-46e8-94e1-60213ab1f814",
+          "194ae4cb-b126-40b2-bd5b-6091b380977d",
+          "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",
+          "fe930be7-5e62-47db-91af-98c3a49a38b1"
+        ],
+        "excludeUsers": ["user-tenant-a-0001"]
+      },
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    }
+  },
+  {
+    "id": "ca-a-signin-risk",
+    "displayName": "Sign-in risk: require MFA when medium or high",
+    "state": "enabled",
+    "createdDateTime": "2025-03-05T10:00:00Z",
+    "modifiedDateTime": "2025-08-20T11:30:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["All"], "excludeUsers": ["user-tenant-a-0001"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"],
+      "signInRiskLevels": ["medium", "high"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "ca-a-user-risk",
+    "displayName": "User risk: require password change when high",
+    "state": "enabled",
+    "createdDateTime": "2025-03-05T10:05:00Z",
+    "modifiedDateTime": "2025-08-20T11:30:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["All"], "excludeUsers": ["user-tenant-a-0001"]},
+      "applications": {"includeApplications": ["All"]},
+      "clientAppTypes": ["all"],
+      "userRiskLevels": ["high"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "passwordChange"]
+    }
+  },
+  {
+    "id": "ca-a-guest-untrusted-locations",
+    "displayName": "Block guests from untrusted countries",
+    "state": "enabled",
+    "createdDateTime": "2025-04-01T09:00:00Z",
+    "modifiedDateTime": "2025-04-01T09:00:00Z",
+    "conditions": {
+      "users": {
+        "includeGuestsOrExternalUsers": {
+          "guestOrExternalUserTypes": "b2bCollaborationGuest,b2bCollaborationMember"
+        }
+      },
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["All"],
+        "excludeLocations": ["loc-a-trusted-countries", "AllTrusted"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "ca-a-sensitive-app-compliant-device",
+    "displayName": "Sensitive apps require compliant device",
+    "state": "enabled",
+    "createdDateTime": "2025-05-15T09:00:00Z",
+    "modifiedDateTime": "2025-05-15T09:00:00Z",
+    "conditions": {
+      "users": {
+        "includeGroups": ["grp-a-sensitive-app-users"],
+        "excludeUsers": ["user-tenant-a-0001"]
+      },
+      "applications": {"includeApplications": ["00000003-0000-0ff1-ce00-000000000000"]},
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {
+      "operator": "AND",
+      "builtInControls": ["mfa", "compliantDevice"]
+    },
+    "sessionControls": {
+      "signInFrequency": {"value": 4, "type": "hours", "isEnabled": true}
+    }
+  },
+  {
+    "id": "ca-a-breakglass-restrict",
+    "displayName": "Break-glass account allowed only from HQ",
+    "state": "enabled",
+    "createdDateTime": "2025-02-10T09:15:00Z",
+    "modifiedDateTime": "2025-02-10T09:15:00Z",
+    "conditions": {
+      "users": {"includeUsers": ["user-tenant-a-0001"]},
+      "applications": {"includeApplications": ["All"]},
+      "locations": {
+        "includeLocations": ["All"],
+        "excludeLocations": ["loc-a-hq"]
+      },
+      "clientAppTypes": ["all"]
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  }
+]
