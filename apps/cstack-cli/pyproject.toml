@@ -11,6 +11,10 @@ dependencies = [
     "cstack-storage",
     "cstack-schemas",
     "cstack-fixtures",
+    "cstack-audit-core",
+    "cstack-audit-coverage",
+    "cstack-audit-rules",
+    "cstack-audit-exclusions",
 ]
 
 [project.scripts]

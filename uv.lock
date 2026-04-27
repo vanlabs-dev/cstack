@@ -589,6 +589,10 @@ version = "0.0.1"
 source = { editable = "apps/cstack-cli" }
 dependencies = [
     { name = "click" },
+    { name = "cstack-audit-core" },
+    { name = "cstack-audit-coverage" },
+    { name = "cstack-audit-exclusions" },
+    { name = "cstack-audit-rules" },
     { name = "cstack-fixtures" },
     { name = "cstack-graph-client" },
     { name = "cstack-schemas" },
@@ -600,6 +604,10 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1" },
+    { name = "cstack-audit-core", editable = "packages/audit-core" },
+    { name = "cstack-audit-coverage", editable = "packages/audit-coverage" },
+    { name = "cstack-audit-exclusions", editable = "packages/audit-exclusions" },
+    { name = "cstack-audit-rules", editable = "packages/audit-rules" },
     { name = "cstack-fixtures", editable = "packages/fixtures" },
     { name = "cstack-graph-client", editable = "packages/graph-client" },
     { name = "cstack-schemas", editable = "packages/schemas" },

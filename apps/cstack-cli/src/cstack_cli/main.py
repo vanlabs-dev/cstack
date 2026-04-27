@@ -339,5 +339,201 @@ def fixtures_clear_all_cmd(ctx: click.Context) -> None:
     click.echo("cleared all fixtures")
 
 
+# --- audit subgroup ------------------------------------------------------
+
+
+@cli.group()
+def audit() -> None:
+    """Run signalguard CA audit modules and inspect their findings."""
+
+
+def _is_fixture_tenant(tenant: TenantConfig, settings: Settings) -> bool:
+    return tenant.is_fixture
+
+
+def _ensure_fixture_loaded(tenant: TenantConfig, conn: object) -> None:
+    """Re-hydrate a fixture tenant before running an audit so the analyser
+    sees fresh data even after the user cleared the DB by hand."""
+    if tenant.is_fixture:
+        fixtures_load_helper(tenant.display_name, conn)  # type: ignore[arg-type]
+
+
+@audit.command("coverage")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def audit_coverage_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_cli.audit_runner import (
+        load_context,
+        persist,
+        run_coverage,
+        severity_breakdown,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        _ensure_fixture_loaded(target, conn)
+        context = load_context(conn, target)
+        findings = run_coverage(context)
+        persisted = persist(conn, findings)
+    breakdown = severity_breakdown(findings)
+    click.echo(
+        f"{target.display_name}: coverage findings={len(findings)} new={persisted} {breakdown}"
+    )
+
+
+@audit.command("rules")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def audit_rules_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_cli.audit_runner import (
+        load_context,
+        persist,
+        run_rules,
+        severity_breakdown,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        _ensure_fixture_loaded(target, conn)
+        context = load_context(conn, target)
+        findings = run_rules(context)
+        persisted = persist(conn, findings)
+    breakdown = severity_breakdown(findings)
+    click.echo(f"{target.display_name}: rule findings={len(findings)} new={persisted} {breakdown}")
+
+
+@audit.command("exclusions")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def audit_exclusions_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_cli.audit_runner import (
+        load_context,
+        persist,
+        run_exclusions,
+        severity_breakdown,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        _ensure_fixture_loaded(target, conn)
+        context = load_context(conn, target)
+        findings = run_exclusions(context)
+        persisted = persist(conn, findings)
+    breakdown = severity_breakdown(findings)
+    click.echo(
+        f"{target.display_name}: exclusion findings={len(findings)} new={persisted} {breakdown}"
+    )
+
+
+@audit.command("all")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def audit_all_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_cli.audit_runner import (
+        format_summary,
+        load_context,
+        persist,
+        run_coverage,
+        run_exclusions,
+        run_rules,
+        severity_breakdown,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        _ensure_fixture_loaded(target, conn)
+        context = load_context(conn, target)
+        coverage = run_coverage(context)
+        rules = run_rules(context)
+        exclusions = run_exclusions(context)
+        persist(conn, coverage)
+        persist(conn, rules)
+        persist(conn, exclusions)
+    name = f"{target.display_name} (fixture)" if target.is_fixture else target.display_name
+    summary = format_summary(
+        name,
+        {
+            "coverage": severity_breakdown(coverage),
+            "rules": severity_breakdown(rules),
+            "exclusions": severity_breakdown(exclusions),
+        },
+    )
+    click.echo(summary)
+
+
+@audit.command("findings")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--category", default=None, help="coverage | rule | exclusion")
+@click.option("--min-severity", "min_severity", default=None)
+@click.option("--rule-id", "rule_id", default=None)
+@click.option("--json", "as_json", is_flag=True, default=False)
+@click.pass_context
+def audit_findings_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    category: str | None,
+    min_severity: str | None,
+    rule_id: str | None,
+    as_json: bool,
+) -> None:
+    from cstack_audit_core import latest_findings
+
+    from cstack_cli.audit_runner import parse_severity
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    severity = parse_severity(min_severity)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        rows = latest_findings(
+            conn,
+            tenant_id=target.tenant_id,
+            category=category,
+            min_severity=severity,
+            rule_id=rule_id,
+        )
+    if as_json:
+        import json as _json
+
+        click.echo(_json.dumps([f.model_dump(mode="json") for f in rows], indent=2))
+        return
+    if not rows:
+        click.echo(f"{target.display_name}: no findings match the filter")
+        return
+    sev_w = max(8, *(len(f.severity.value) for f in rows))
+    rule_w = max(8, *(len(f.rule_id) for f in rows))
+    click.echo(f"{'severity'.ljust(sev_w)}  {'rule'.ljust(rule_w)}  title")
+    click.echo("-" * 80)
+    for f in rows:
+        click.echo(f"{f.severity.value.ljust(sev_w)}  {f.rule_id.ljust(rule_w)}  {f.title}")
+
+
+@audit.command("list-rules")
+def audit_list_rules_cmd() -> None:
+    from cstack_audit_rules import RULE_REGISTRY
+
+    if not RULE_REGISTRY:
+        click.echo("(no rules registered)")
+        return
+    name_w = max(len("id"), *(len(r.metadata.id) for r in RULE_REGISTRY.values()))
+    sev_w = max(len("severity"), *(len(r.metadata.severity.value) for r in RULE_REGISTRY.values()))
+    click.echo(f"{'id'.ljust(name_w)}  {'severity'.ljust(sev_w)}  title")
+    click.echo("-" * 80)
+    for rule in sorted(RULE_REGISTRY.values(), key=lambda r: r.metadata.id):
+        click.echo(
+            f"{rule.metadata.id.ljust(name_w)}  "
+            f"{rule.metadata.severity.value.ljust(sev_w)}  "
+            f"{rule.metadata.title}"
+        )
+
+
 if __name__ == "__main__":
     cli()
