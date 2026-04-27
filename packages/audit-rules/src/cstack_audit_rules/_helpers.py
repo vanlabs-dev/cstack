@@ -1,5 +1,7 @@
 """Shared evaluation helpers reused across rules. Internal to the package."""
 
+from datetime import UTC, datetime
+
 from cstack_schemas import ConditionalAccessPolicy
 
 REPORT_ONLY_STATE = "enabledForReportingButNotEnforced"
@@ -68,6 +70,15 @@ def targets_app_id(policy: ConditionalAccessPolicy, app_ids: frozenset[str]) -> 
     if apps is None or apps.include_applications is None:
         return False
     return any(aid in app_ids for aid in apps.include_applications)
+
+
+def ensure_utc(when: datetime) -> datetime:
+    """Normalise to a UTC-aware datetime. DuckDB returns naive timestamps,
+    while ``context.as_of`` is constructed with tzinfo. Comparing the two
+    raises TypeError, so rules call this helper before comparing."""
+    if when.tzinfo is None:
+        return when.replace(tzinfo=UTC)
+    return when
 
 
 def includes_legacy_client_app_types(policy: ConditionalAccessPolicy) -> bool:
