@@ -79,7 +79,7 @@ block as the new ground truth.
 
 - `rule.disabled-policies-old` and `rule.report-only-graduated` crashed on
   tenant-b and tenant-c with `TypeError: can't compare offset-naive and
-  offset-aware datetimes`. DuckDB returns naive timestamps; `context.as_of`
+offset-aware datetimes`. DuckDB returns naive timestamps; `context.as_of`
   is UTC-aware. Added `_helpers.ensure_utc` and routed the comparisons
   through it. Both rules now run cleanly across all fixtures.
 
