@@ -55,6 +55,11 @@ def load_certificate_credential_from_pfx(
     )
 
 
+# TODO(sprint-7): replace pwsh shell-out with native cryptography cert-store lookup.
+# The current implementation invokes powershell to export the cert and private key,
+# which is functional but adds a process boundary and a windows-only dependency.
+# Rewrite using cryptography.hazmat primitives or pywin32 once we validate against
+# a real tenant.
 def _export_pem_from_windows_store(thumbprint: str) -> bytes:
     """Export a CurrentUser\\My cert + private key as PEM bytes.
 
