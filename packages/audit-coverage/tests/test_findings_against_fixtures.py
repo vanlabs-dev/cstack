@@ -1,24 +1,16 @@
 """Integration tests: load each bundled fixture and exercise coverage.
 
-These tests assert that each fixture loads, the matrix builds without
-exceptions, and broad shape expectations hold. Exact finding counts are
-calibrated in the Phase 6 sprint loop and asserted via metadata.json there.
+Expected counts come from each fixture's ``metadata.json`` (calibrated in
+Sprint 2). When a fixture or a rule changes, re-run ``cstack audit all``
+against the fixture and update its metadata, then this test stays current.
 """
 
+import json
 from datetime import UTC, datetime
 
 import duckdb
-from cstack_audit_core import Severity
-from cstack_audit_coverage import (
-    compute_coverage,
-    findings_from_coverage,
-)
-from cstack_fixtures import (
-    FIXTURE_TENANT_A_ID,
-    FIXTURE_TENANT_B_ID,
-    FIXTURE_TENANT_C_ID,
-    load_fixture,
-)
+from cstack_audit_coverage import compute_coverage, findings_from_coverage
+from cstack_fixtures import list_fixtures, load_fixture
 from cstack_schemas import (
     ConditionalAccessPolicy,
     DirectoryRole,
@@ -38,19 +30,24 @@ def _hydrated_inputs(
     role_rows = db.execute(
         "SELECT raw FROM directory_roles WHERE tenant_id = ?", [tenant_id]
     ).fetchall()
-    import json
-
     users = [User.model_validate(json.loads(r[0])) for r in user_rows]
     groups = [Group.model_validate(json.loads(r[0])) for r in group_rows]
     roles = [DirectoryRole.model_validate(json.loads(r[0])) for r in role_rows]
     return policies, users, groups, roles
 
 
-def test_tenant_a_has_no_critical_coverage_findings(db: duckdb.DuckDBPyConnection) -> None:
-    load_fixture("tenant-a", db)
-    policies, users, groups, roles = _hydrated_inputs(db, FIXTURE_TENANT_A_ID)
+def _expected_for(fixture_name: str) -> dict[str, int]:
+    metas = {m.name: m for m in list_fixtures()}
+    return metas[fixture_name].expected_findings.by_category
+
+
+def _coverage_count_for(name: str, db: duckdb.DuckDBPyConnection) -> int:
+    metas = {m.name: m for m in list_fixtures()}
+    tenant_id = metas[name].tenant_id
+    load_fixture(name, db)
+    policies, users, groups, roles = _hydrated_inputs(db, tenant_id)
     matrix = compute_coverage(
-        FIXTURE_TENANT_A_ID,
+        tenant_id,
         policies,
         users,
         groups,
@@ -58,41 +55,19 @@ def test_tenant_a_has_no_critical_coverage_findings(db: duckdb.DuckDBPyConnectio
         [],
         as_of=datetime(2026, 4, 28, tzinfo=UTC),
     )
-    findings = findings_from_coverage(matrix, FIXTURE_TENANT_A_ID)
-    critical = [f for f in findings if f.severity == Severity.CRITICAL]
-    # Without role members in fixture data, ADMINS_ANY and PRIVILEGED_ROLES
-    # segments are empty; well-configured tenant-a should not produce CRITICAL
-    # cells from non-empty segments either.
-    assert critical == []
+    return len(findings_from_coverage(matrix, tenant_id))
 
 
-def test_tenant_b_produces_findings(db: duckdb.DuckDBPyConnection) -> None:
-    load_fixture("tenant-b", db)
-    policies, users, groups, roles = _hydrated_inputs(db, FIXTURE_TENANT_B_ID)
-    matrix = compute_coverage(
-        FIXTURE_TENANT_B_ID,
-        policies,
-        users,
-        groups,
-        roles,
-        [],
-        as_of=datetime(2026, 4, 28, tzinfo=UTC),
-    )
-    findings = findings_from_coverage(matrix, FIXTURE_TENANT_B_ID)
-    # tenant-b has gaps; expect at least some findings to fire.
-    assert len(findings) > 0
+def test_tenant_a_matches_calibrated_coverage(db: duckdb.DuckDBPyConnection) -> None:
+    expected = _expected_for("tenant-a")["coverage"]
+    assert _coverage_count_for("tenant-a", db) == expected
 
 
-def test_tenant_c_does_not_crash(db: duckdb.DuckDBPyConnection) -> None:
-    load_fixture("tenant-c", db)
-    policies, users, groups, roles = _hydrated_inputs(db, FIXTURE_TENANT_C_ID)
-    matrix = compute_coverage(
-        FIXTURE_TENANT_C_ID,
-        policies,
-        users,
-        groups,
-        roles,
-        [],
-        as_of=datetime(2026, 4, 28, tzinfo=UTC),
-    )
-    findings_from_coverage(matrix, FIXTURE_TENANT_C_ID)  # must not raise
+def test_tenant_b_matches_calibrated_coverage(db: duckdb.DuckDBPyConnection) -> None:
+    expected = _expected_for("tenant-b")["coverage"]
+    assert _coverage_count_for("tenant-b", db) == expected
+
+
+def test_tenant_c_matches_calibrated_coverage(db: duckdb.DuckDBPyConnection) -> None:
+    expected = _expected_for("tenant-c")["coverage"]
+    assert _coverage_count_for("tenant-c", db) == expected
