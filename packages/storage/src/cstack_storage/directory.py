@@ -17,10 +17,10 @@ def upsert_users(conn: duckdb.DuckDBPyConnection, tenant_id: str, users: list[Us
             u.user_principal_name,
             u.account_enabled,
             u.user_type,
-            json.dumps(u.sign_in_activity.model_dump(by_alias=True, exclude_none=True))
+            u.sign_in_activity.model_dump_json(by_alias=True, exclude_none=True)
             if u.sign_in_activity is not None
             else None,
-            json.dumps(u.model_dump(by_alias=True, exclude_none=True)),
+            u.model_dump_json(by_alias=True, exclude_none=True),
             now,
         )
         for u in users
@@ -49,7 +49,7 @@ def upsert_groups(conn: duckdb.DuckDBPyConnection, tenant_id: str, groups: list[
             g.mail_enabled,
             g.security_enabled,
             json.dumps(g.members),
-            json.dumps(g.model_dump(by_alias=True, exclude_none=True)),
+            g.model_dump_json(by_alias=True, exclude_none=True),
             now,
         )
         for g in groups
@@ -82,7 +82,7 @@ def upsert_directory_roles(
             r.description,
             r.role_template_id,
             json.dumps(r.members),
-            json.dumps(r.model_dump(by_alias=True, exclude_none=True)),
+            r.model_dump_json(by_alias=True, exclude_none=True),
             now,
         )
         for r in roles
@@ -114,7 +114,7 @@ def upsert_role_assignments(
             a.principal_id,
             a.role_definition_id,
             a.directory_scope_id,
-            json.dumps(a.model_dump(by_alias=True, exclude_none=True)),
+            a.model_dump_json(by_alias=True, exclude_none=True),
             now,
         )
         for a in assignments

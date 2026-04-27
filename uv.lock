@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "cstack",
+    "cstack-fixtures",
     "cstack-graph-client",
     "cstack-schemas",
     "cstack-storage",
@@ -487,6 +488,21 @@ dev = [
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov", specifier = ">=5" },
     { name = "ruff", specifier = ">=0.8" },
+]
+
+[[package]]
+name = "cstack-fixtures"
+version = "0.0.1"
+source = { editable = "packages/fixtures" }
+dependencies = [
+    { name = "cstack-schemas" },
+    { name = "cstack-storage" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cstack-schemas", editable = "packages/schemas" },
+    { name = "cstack-storage", editable = "packages/storage" },
 ]
 
 [[package]]

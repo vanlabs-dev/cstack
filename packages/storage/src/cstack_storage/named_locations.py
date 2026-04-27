@@ -23,15 +23,19 @@ def upsert_named_locations(
     rows: list[tuple[object, ...]] = []
     for location in locations:
         if isinstance(location, IpNamedLocation):
+            ranges_json = json.dumps(
+                [
+                    json.loads(r.model_dump_json(by_alias=True, exclude_none=True))
+                    for r in location.ip_ranges
+                ]
+            )
             rows.append(
                 (
                     tenant_id,
                     location.id,
                     location.display_name,
                     "ip",
-                    json.dumps(
-                        [r.model_dump(by_alias=True, exclude_none=True) for r in location.ip_ranges]
-                    ),
+                    ranges_json,
                     None,
                     location.is_trusted,
                     now,

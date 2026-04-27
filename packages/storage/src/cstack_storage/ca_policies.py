@@ -22,13 +22,13 @@ def upsert_ca_policies(
             policy.state,
             policy.created_date_time,
             policy.modified_date_time,
-            json.dumps(policy.conditions.model_dump(by_alias=True, exclude_none=True))
+            policy.conditions.model_dump_json(by_alias=True, exclude_none=True)
             if policy.conditions is not None
             else None,
-            json.dumps(policy.grant_controls.model_dump(by_alias=True, exclude_none=True))
+            policy.grant_controls.model_dump_json(by_alias=True, exclude_none=True)
             if policy.grant_controls is not None
             else None,
-            json.dumps(policy.session_controls.model_dump(by_alias=True, exclude_none=True))
+            policy.session_controls.model_dump_json(by_alias=True, exclude_none=True)
             if policy.session_controls is not None
             else None,
             now,
