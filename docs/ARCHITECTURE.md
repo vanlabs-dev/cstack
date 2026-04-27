@@ -8,24 +8,58 @@ runs as an independent service or library.
 
 ## Repo layout
 
-- `apps/` runnable services and entry points
-- `packages/` libraries shared across tools (Graph client, schemas, utilities)
-- `docs/` prose
-- `scripts/` operational scripts
-- `infra/` deployment artifacts (TBD)
+- `apps/cstack-cli/` Click-based CLI exposing tenant, extract, and fixtures subcommands.
+- `packages/schemas/` Pydantic v2 models for tenants, conditional access policies,
+  named locations, and directory objects.
+- `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
+  layer helpers.
+- `packages/graph-client/` Typed wrapper around `msgraph-sdk` with certificate auth and
+  pagination.
+- `packages/fixtures/` Synthetic Graph corpus (three tenants) plus a loader that
+  hydrates DuckDB exactly as the live extractor would.
+- `docs/` prose and sprint notes.
+- `scripts/` PowerShell app registration and certificate rotation scripts (run by
+  tenant admins, not invoked from cstack itself).
+- `infra/` deployment artifacts (TBD).
 
 ## Runtime stack
 
-Python 3.12 on the audit, ingest, and ML side, managed as a uv workspace. Node 22 LTS on
-the API and frontend side, managed as a pnpm workspace. Both lockfiles are committed.
+Python 3.12 via uv workspace on the audit, ingest, and storage side. Node 22 LTS via
+pnpm workspace reserved for future API and frontend work. Both lockfiles are committed.
+DuckDB persists tenant data to a single file (`data/cstack.duckdb` by default).
 
 ## Data flow
 
-Each tool reads signals from Microsoft Graph and adjacent tenant APIs, normalizes them
-into shared schemas, and persists output to per-tool stores. Cross-tool sharing flows
-through the schema package, not direct coupling.
+```
+fixtures load-all                   live extract
+        |                                |
+        v                                v
++-------------------+         +---------------------+
+| bundled corpus    |         | Microsoft Graph     |
+| packages/fixtures |         | (cert-auth)         |
++---------+---------+         +----------+----------+
+          \\                              /
+           \\                            /
+            v                          v
+         +-------- raw_ingestions --------+
+         | data/raw/<tenant>/<date>/*.json|
+         +----------------+---------------+
+                          |
+                          v
+         +----------- normalised tables -----------+
+         | tenants, ca_policies, named_locations,  |
+         | users, groups, directory_roles,         |
+         | role_assignments                        |
+         +-----------------+------------------------+
+                           |
+                           v
+                  (Sprint 2 audit logic)
+```
+
+Both code paths share the same downstream tables. Sprint 2's audit rules consume
+`ca_policies` plus the directory tables via tenant-scoped queries.
 
 ## Deployment model
 
-TBD. Sprint 0 ships local tooling only. Container, runtime, and hosting decisions are
-deferred to a deployment sprint.
+TBD. Sprint 1 ships a local CLI that operates against a DuckDB file. Container,
+runtime, and hosting decisions are deferred to a deployment sprint.

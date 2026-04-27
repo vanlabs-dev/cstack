@@ -37,11 +37,17 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 
 ## Repo layout
 
-- `apps/` runnable services and entry points
-- `packages/` libraries shared across tools
-- `docs/` prose
-- `scripts/` operational scripts
-- `infra/` deployment artifacts (TBD)
+- `apps/cstack-cli/` Click CLI exposing tenant, extract, and fixtures subcommands.
+- `packages/schemas/` pydantic models for tenants, CA policies, named locations,
+  directory objects.
+- `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers.
+- `packages/graph-client/` typed `msgraph-sdk` wrapper with certificate auth and
+  paginated fetchers.
+- `packages/fixtures/` synthetic Graph corpus plus a loader that hydrates DuckDB the
+  same way live extraction would.
+- `docs/` prose and sprint notes.
+- `scripts/` PowerShell app registration and cert rotation scripts.
+- `infra/` deployment artifacts (TBD).
 
 ## Conventions
 
