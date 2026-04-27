@@ -11,6 +11,7 @@ members = [
     "cstack",
     "cstack-audit-core",
     "cstack-audit-coverage",
+    "cstack-audit-rules",
     "cstack-cli",
     "cstack-fixtures",
     "cstack-graph-client",
@@ -528,6 +529,25 @@ requires-dist = [
 name = "cstack-audit-coverage"
 version = "0.0.1"
 source = { editable = "packages/audit-coverage" }
+dependencies = [
+    { name = "cstack-audit-core" },
+    { name = "cstack-schemas" },
+    { name = "cstack-storage" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cstack-audit-core", editable = "packages/audit-core" },
+    { name = "cstack-schemas", editable = "packages/schemas" },
+    { name = "cstack-storage", editable = "packages/storage" },
+    { name = "pydantic", specifier = ">=2.9" },
+]
+
+[[package]]
+name = "cstack-audit-rules"
+version = "0.0.1"
+source = { editable = "packages/audit-rules" }
 dependencies = [
     { name = "cstack-audit-core" },
     { name = "cstack-schemas" },

@@ -17,6 +17,7 @@ cstack-fixtures = { workspace = true }
 cstack-cli = { workspace = true }
 cstack-audit-core = { workspace = true }
 cstack-audit-coverage = { workspace = true }
+cstack-audit-rules = { workspace = true }
 
 [dependency-groups]
 dev = [
