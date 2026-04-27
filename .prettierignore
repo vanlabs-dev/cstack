@@ -15,6 +15,9 @@ __pycache__/
 uv.lock
 pnpm-lock.yaml
 
+# Fixture corpora are hand-curated to mirror Graph wire shapes; do not reflow.
+packages/fixtures/src/cstack_fixtures/data/
+
 .DS_Store
 Thumbs.db
 
