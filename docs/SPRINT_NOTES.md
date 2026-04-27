@@ -17,10 +17,10 @@ uv run cstack extract all --tenant tenant-b
 ### Observed counts
 
 | Fixture  | ca_policies | named_locations | users | groups | directory_roles |
-|----------|-------------|-----------------|-------|--------|------------------|
-| tenant-a |           8 |               3 |    60 |     12 |                8 |
-| tenant-b |           5 |               1 |    80 |     11 |                5 |
-| tenant-c |          11 |               4 |    75 |     13 |                8 |
+| -------- | ----------- | --------------- | ----- | ------ | --------------- |
+| tenant-a | 8           | 3               | 60    | 12     | 8               |
+| tenant-b | 5           | 1               | 80    | 11     | 5               |
+| tenant-c | 11          | 4               | 75    | 13     | 8               |
 
 `tenant list` shows all three rows with `fixture=yes`.
 
@@ -37,9 +37,7 @@ The `extract` commands wrote raw JSON snapshots under
 
 - `SELECT tenant_id, COUNT(*) FROM ca_policies GROUP BY tenant_id` returns
   the same row counts as the metadata above.
-- `SELECT * FROM ca_policies WHERE tenant_id = '<tenant-a id>' AND (id IS
-  NULL OR display_name IS NULL)` returns zero rows. No nulls slip into
-  non-nullable columns.
+- `SELECT * FROM ca_policies WHERE tenant_id = '<tenant-a id>' AND (id IS NULL OR display_name IS NULL)` returns zero rows. No nulls slip into non-nullable columns.
 
 ### Issues
 
