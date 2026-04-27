@@ -37,15 +37,21 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 
 ## Repo layout
 
-- `apps/cstack-cli/` Click CLI exposing tenant, extract, and fixtures subcommands.
+- `apps/cstack-cli/` Click CLI exposing tenant, extract, fixtures, and audit
+  subcommands.
 - `packages/schemas/` pydantic models for tenants, CA policies, named locations,
   directory objects.
-- `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers.
+- `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers,
+  plus the `findings` table.
 - `packages/graph-client/` typed `msgraph-sdk` wrapper with certificate auth and
   paginated fetchers.
 - `packages/fixtures/` synthetic Graph corpus plus a loader that hydrates DuckDB the
-  same way live extraction would.
-- `docs/` prose and sprint notes.
+  same way live extraction would; `metadata.json` carries calibrated audit expectations.
+- `packages/audit-core/` shared finding model, severity, and finding storage.
+- `packages/audit-coverage/` user/app segment matrix and weak-cell finding generator.
+- `packages/audit-rules/` rule registry and 15 best-practice CA evaluators.
+- `packages/audit-exclusions/` exclusion hygiene analyser.
+- `docs/` prose, sprint notes, and the rules catalogue.
 - `scripts/` PowerShell app registration and cert rotation scripts.
 - `infra/` deployment artifacts (TBD).
 
