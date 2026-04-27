@@ -9,6 +9,9 @@ package = false
 [tool.uv.workspace]
 members = ["apps/*", "packages/*"]
 
+[tool.uv.sources]
+cstack-schemas = { workspace = true }
+
 [dependency-groups]
 dev = [
     "pytest>=8",
@@ -34,6 +37,13 @@ python_version = "3.12"
 strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
+plugins = ["pydantic.mypy"]
+mypy_path = ["packages/schemas/src", "packages/storage/src", "packages/graph-client/src", "packages/fixtures/src", "apps/cstack-cli/src"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = false
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
