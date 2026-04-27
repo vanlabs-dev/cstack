@@ -287,7 +287,7 @@ def fixtures_list_cmd() -> None:
     for m in metas:
         click.echo(
             f"{m.name.ljust(name_width)}  "
-            f"{str(m.expected_findings_count).rjust(17)}  "
+            f"{str(m.expected_findings.total).rjust(17)}  "
             f"{m.description[:60]}"
         )
 

@@ -48,7 +48,20 @@ warn_redundant_casts = true
 explicit_package_bases = true
 namespace_packages = true
 plugins = ["pydantic.mypy"]
-mypy_path = ["packages/schemas/src", "packages/storage/src", "packages/graph-client/src", "packages/fixtures/src", "apps/cstack-cli/src"]
+# conftest.py duplicates across test dirs trip mypy's module-name disambiguation;
+# fixtures live there and add no production typing value, so skip them.
+exclude = ['/tests/conftest\.py$']
+mypy_path = [
+    "packages/schemas/src",
+    "packages/storage/src",
+    "packages/graph-client/src",
+    "packages/fixtures/src",
+    "packages/audit-core/src",
+    "packages/audit-coverage/src",
+    "packages/audit-rules/src",
+    "packages/audit-exclusions/src",
+    "apps/cstack-cli/src",
+]
 
 [tool.pydantic-mypy]
 init_forbid_extra = false

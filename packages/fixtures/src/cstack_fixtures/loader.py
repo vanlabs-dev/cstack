@@ -30,6 +30,22 @@ from cstack_fixtures.registry import (
 )
 
 
+class FixtureExpectedFindings(BaseModel):
+    """Calibrated expected findings, populated by the Sprint 2 audit run.
+
+    These counts are the new ground truth that integration tests assert
+    against. Re-calibrate by re-running ``cstack audit all`` against each
+    fixture and updating metadata.json.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    total: int
+    by_category: dict[str, int]
+    by_severity: dict[str, int]
+    by_rule_id: dict[str, int]
+
+
 class FixtureMetadata(BaseModel):
     """Header for a fixture tenant. Mirrors metadata.json on disk."""
 
@@ -38,8 +54,10 @@ class FixtureMetadata(BaseModel):
     name: str
     description: str
     tenant_id: str
-    expected_findings_count: int
+    expected_findings: FixtureExpectedFindings
     scenario_tags: list[str]
+    calibrated_at: str | None = None
+    notes: str | None = None
 
 
 class FixtureLoadResult(BaseModel):

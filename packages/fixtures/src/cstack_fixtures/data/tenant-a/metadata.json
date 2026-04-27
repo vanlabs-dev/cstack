@@ -2,6 +2,27 @@
   "name": "tenant-a",
   "description": "Well-configured SMB tenant. MFA covers all users with break-glass exclusion, legacy auth blocked, admin MFA enforced, sign-in and user risk policies in place, guest restrictions on untrusted countries, and compliant device required for sensitive apps.",
   "tenant_id": "00000000-aaaa-1111-1111-111111111111",
-  "expected_findings_count": 1,
-  "scenario_tags": ["well-configured", "smb", "mfa-coverage", "risk-based"]
+  "scenario_tags": ["well-configured", "smb", "mfa-coverage", "risk-based"],
+  "expected_findings": {
+    "total": 8,
+    "by_category": {
+      "coverage": 0,
+      "rule": 2,
+      "exclusion": 6
+    },
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 7,
+      "info": 0
+    },
+    "by_rule_id": {
+      "exclusion.undocumented": 6,
+      "rule.persistent-browser-unmanaged": 1,
+      "rule.workload-identity-policies": 1
+    }
+  },
+  "calibrated_at": "2026-04-28",
+  "notes": "calibrated against rules engine v0.0.1; all findings are LOW or MEDIUM hygiene observations, no CRITICAL or HIGH gaps."
 }

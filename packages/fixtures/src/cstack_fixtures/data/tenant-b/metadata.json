@@ -2,6 +2,44 @@
   "name": "tenant-b",
   "description": "Messy tenant. Legacy auth not blocked, no admin-specific policy, MFA policy with 14 user exclusions (six inactive 90+ days), two stale report-only policies, one disabled policy from 2024, and no risk-based policies.",
   "tenant_id": "00000000-bbbb-2222-2222-222222222222",
-  "expected_findings_count": 12,
-  "scenario_tags": ["gaps", "stale-policies", "exclusion-bloat", "no-risk-policies"]
+  "scenario_tags": ["gaps", "stale-policies", "exclusion-bloat", "no-risk-policies"],
+  "expected_findings": {
+    "total": 29,
+    "by_category": {
+      "coverage": 3,
+      "rule": 14,
+      "exclusion": 12
+    },
+    "by_severity": {
+      "critical": 1,
+      "high": 6,
+      "medium": 15,
+      "low": 6,
+      "info": 1
+    },
+    "by_rule_id": {
+      "coverage.all_users-on-legacy_auth": 1,
+      "coverage.guests-on-legacy_auth": 1,
+      "coverage.service_accounts-on-legacy_auth": 1,
+      "exclusion.creep": 1,
+      "exclusion.orphan-user": 1,
+      "exclusion.stale-user": 9,
+      "exclusion.undocumented": 1,
+      "rule.block-legacy-auth": 1,
+      "rule.breakglass-configured": 1,
+      "rule.compliant-device-admin-actions": 1,
+      "rule.device-compliance-sensitive-apps": 1,
+      "rule.disabled-policies-old": 1,
+      "rule.guest-restrictions": 1,
+      "rule.mfa-admins": 1,
+      "rule.persistent-browser-unmanaged": 1,
+      "rule.report-only-graduated": 2,
+      "rule.risk-based-signin": 1,
+      "rule.risk-based-user": 1,
+      "rule.signin-frequency-unmanaged": 1,
+      "rule.workload-identity-policies": 1
+    }
+  },
+  "calibrated_at": "2026-04-28",
+  "notes": "calibrated against rules engine v0.0.1; CRITICAL admin-MFA gap matches the 'no admin-specific policy' scenario tag."
 }

@@ -2,6 +2,32 @@
   "name": "tenant-c",
   "description": "Edge-case coverage tenant. Every Graph CA policy shape we know about appears at least once: country named-location includes, IP named-location excludes, app filters, device platform conditions, sign-in frequency controls, persistent browser session controls, AND/OR grant combinations, workload identity policies, and role-scoped policies for Global Admin and Privileged Role Admin.",
   "tenant_id": "00000000-cccc-3333-3333-333333333333",
-  "expected_findings_count": 4,
-  "scenario_tags": ["edge-cases", "every-shape", "role-scoped", "workload-identity"]
+  "scenario_tags": ["edge-cases", "every-shape", "role-scoped", "workload-identity"],
+  "expected_findings": {
+    "total": 10,
+    "by_category": {
+      "coverage": 2,
+      "rule": 5,
+      "exclusion": 3
+    },
+    "by_severity": {
+      "critical": 0,
+      "high": 4,
+      "medium": 3,
+      "low": 3,
+      "info": 0
+    },
+    "by_rule_id": {
+      "coverage.all_users-on-legacy_auth": 1,
+      "coverage.guests-on-legacy_auth": 1,
+      "exclusion.undocumented": 3,
+      "rule.block-legacy-auth": 1,
+      "rule.device-compliance-sensitive-apps": 1,
+      "rule.guest-restrictions": 1,
+      "rule.risk-based-signin": 1,
+      "rule.risk-based-user": 1
+    }
+  },
+  "calibrated_at": "2026-04-28",
+  "notes": "calibrated against rules engine v0.0.1; every Graph shape parses without rule crashes."
 }
