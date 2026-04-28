@@ -18,18 +18,23 @@ import {
   getTenantDetailTenantsTenantIdGet,
   getUserSigninsTenantsTenantIdUsersUserIdSigninsGet,
   listFindingsTenantsTenantIdFindingsGet,
+  listModelsTenantsTenantIdModelsGet,
   listScoresTenantsTenantIdAnomalyScoresGet,
   listTenantsTenantsGet,
   runAuditTenantsTenantIdAuditRunPost,
+  scoreTenantsTenantIdAnomalyScorePost,
 } from '@/lib/api/generated';
 import type {
   AnomalyScore,
   AnomalyScoreDetail,
+  AnomalyScoreRequest,
+  AnomalyScoreRunResponse,
   AuditRunRequest,
   AuditRunResponse,
   CoverageMatrix,
   Finding,
   FindingsSummary,
+  ModelSummary,
   PaginatedAnomalyScore,
   PaginatedFinding,
   PaginatedSignIn,
@@ -227,4 +232,32 @@ export async function callRunAudit(
     throwOnError: true,
   });
   return data as unknown as AuditRunResponse;
+}
+
+export async function callScoreAnomaly(
+  tenantId: string,
+  body: AnomalyScoreRequest,
+  opts: WithAbort = {},
+): Promise<AnomalyScoreRunResponse> {
+  const { data } = await scoreTenantsTenantIdAnomalyScorePost({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    body,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as AnomalyScoreRunResponse;
+}
+
+export async function callListModels(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<ModelSummary[]> {
+  const { data } = await listModelsTenantsTenantIdModelsGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as ModelSummary[];
 }

@@ -36,7 +36,7 @@ const MODULES = [
     icon: Shield,
     label: 'SignalGuard',
     on: true,
-    href: '/dashboard',
+    href: '/dashboard/signalguard',
   },
   { id: 'license', icon: Receipt, label: 'LicenseLens', on: false },
   { id: 'drift', icon: LineChart, label: 'Driftwatch', on: false },
@@ -71,11 +71,11 @@ export function Sidebar({ tenants, activeTenantId }: SidebarProps) {
 
   const isModuleActive = (id: string): boolean => {
     if (id === 'signalguard') {
-      return (
-        pathname === '/dashboard' ||
+      return Boolean(
+        pathname?.startsWith('/dashboard/signalguard') ||
         pathname?.startsWith('/dashboard/findings') ||
         pathname?.startsWith('/dashboard/anomalies') ||
-        false
+        pathname === '/dashboard',
       );
     }
     return false;
@@ -219,8 +219,12 @@ export function Sidebar({ tenants, activeTenantId }: SidebarProps) {
             </div>
           );
           if (m.on && 'href' in m && m.href) {
+            const href =
+              m.id === 'signalguard' && activeTenantId
+                ? `${m.href}?tenant=${activeTenantId}`
+                : m.href;
             return (
-              <Link key={m.id} href={m.href as never} className="block my-px">
+              <Link key={m.id} href={href as never} className="block my-px">
                 {Inner}
               </Link>
             );
