@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+import { ApiKeyGate } from "@/components/system/ApiKeyGate";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -31,7 +33,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} bg-bg text-fg antialiased`}
       >
-        {children}
+        <ApiKeyGate>{children}</ApiKeyGate>
       </body>
     </html>
   );
