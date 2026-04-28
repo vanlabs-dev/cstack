@@ -71,6 +71,15 @@ check them in.
 - Shared packages are prefixed `shared-` or named generically when the role is obvious:
   `graph-client`, `schemas`, `shared-config`.
 
+## Design references
+
+- `docs/DESIGN_TOKENS.md` is the single source of truth for visual decisions.
+  Always reference token names, never hex literals, in component code.
+- `docs/DESIGN_SYSTEM.md` describes layout patterns, component primitives, and
+  per-screen blueprints. Read it before building UI work.
+- `.design/` (gitignored) holds the source design pack. Sprint 5a Phase 0 may
+  reference it but should not rely on it remaining in place.
+
 ## Not in scope yet
 
 The following are deferred to dedicated sprints; do not introduce them ad hoc.
