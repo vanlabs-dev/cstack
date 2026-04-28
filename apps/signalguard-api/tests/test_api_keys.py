@@ -4,18 +4,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Any
 
 import pytest
 from httpx import AsyncClient
+
+from signalguard_api.config import Settings
 
 from .conftest import DEV_KEY, TENANT_A, TENANT_B
 
 
 @pytest.mark.asyncio
 async def test_list_api_keys_returns_seeded_label(client: AsyncClient) -> None:
-    response = await client.get(
-        f"/tenants/{TENANT_A}/api-keys", headers={"X-API-Key": DEV_KEY}
-    )
+    response = await client.get(f"/tenants/{TENANT_A}/api-keys", headers={"X-API-Key": DEV_KEY})
     assert response.status_code == 200
     body = response.json()
     assert any(k["label"] == "ci" for k in body)
@@ -26,7 +27,7 @@ async def test_list_api_keys_returns_seeded_label(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_create_api_key_returns_plaintext_once(
-    client: AsyncClient, settings, seeded_tenants
+    client: AsyncClient, settings: Settings, seeded_tenants: Any
 ) -> None:
     _ = seeded_tenants
     response = await client.post(
@@ -68,7 +69,7 @@ async def test_create_api_key_404_unknown_tenant(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_delete_api_key_removes_hash(
-    client: AsyncClient, settings, seeded_tenants
+    client: AsyncClient, settings: Settings, seeded_tenants: Any
 ) -> None:
     _ = seeded_tenants
     response = await client.delete(

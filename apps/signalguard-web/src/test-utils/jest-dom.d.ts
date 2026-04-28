@@ -1,7 +1,11 @@
-import '@testing-library/jest-dom';
+import type { TestingLibraryMatchers } from '@testing-library/jest-dom/matchers';
 import 'vitest';
 
+type CustomMatchers<R = unknown> = TestingLibraryMatchers<unknown, R>;
+
 declare module 'vitest' {
-  interface Assertion<T = unknown> extends jest.Matchers<void, T> {}
-  interface AsymmetricMatchersContaining extends jest.AsymmetricMatchers {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Assertion<T = unknown> extends CustomMatchers<T> {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface AsymmetricMatchersContaining extends CustomMatchers {}
 }
