@@ -72,15 +72,17 @@ def _seed_tenants(tenants_file: Path) -> list[TenantConfig]:
 def settings(tmp_path: Path) -> Settings:
     """Per-test Settings backed by a tmp_path data dir.
 
-    ``mlflow_tracking_uri`` is left at the default (None) so the lifespan
-    skips the explicit MLflow configure step; tests that need MLflow set it
-    themselves with a Path.as_uri() value, which avoids the Windows
-    ``file://drive:`` parser quirk.
+    Points MLflow at an empty tmp_path/mlruns via ``Path.as_uri()`` so each
+    test sees a fresh registry. A bare path or a ``file://drive:`` URI
+    confuses MLflow on Windows; ``Path.as_uri()`` produces the correct
+    ``file:///`` form.
     """
+    mlruns = tmp_path / "mlruns"
+    mlruns.mkdir(parents=True, exist_ok=True)
     return Settings(
         db_path=tmp_path / "cstack.duckdb",
         tenants_file=tmp_path / "tenants.json",
-        mlflow_tracking_uri=None,
+        mlflow_tracking_uri=mlruns.resolve().as_uri(),
         dev_api_key=DEV_KEY,
         cors_allowed_origins=["http://localhost:3000"],
         log_level="WARNING",

@@ -17,6 +17,8 @@ from signalguard_api.correlation import CorrelationIdMiddleware
 from signalguard_api.lifespan import lifespan
 from signalguard_api.routers import (
     anomaly,
+    anomaly_actions,
+    audit,
     coverage,
     findings,
     health,
@@ -75,4 +77,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(coverage.router)
     app.include_router(signins.stats_router)
     app.include_router(signins.user_router)
+    app.include_router(audit.router)
+    app.include_router(anomaly_actions.router)
     return app
