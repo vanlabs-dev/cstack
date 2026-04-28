@@ -74,6 +74,9 @@ tenants.json
 *.duckdb
 *.duckdb.wal
 mlruns/
+mlartifacts/
+*.pkl
+*.joblib
 
 # OS
 .DS_Store

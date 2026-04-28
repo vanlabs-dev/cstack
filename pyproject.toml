@@ -20,6 +20,7 @@ cstack-audit-coverage = { workspace = true }
 cstack-audit-rules = { workspace = true }
 cstack-audit-exclusions = { workspace = true }
 cstack-ml-features = { workspace = true }
+cstack-ml-mlops = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -62,6 +63,7 @@ mypy_path = [
     "packages/audit-rules/src",
     "packages/audit-exclusions/src",
     "packages/ml-features/src",
+    "packages/ml-mlops/src",
     "apps/cstack-cli/src",
 ]
 
