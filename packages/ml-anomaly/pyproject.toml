@@ -1,0 +1,25 @@
+[project]
+name = "cstack-ml-anomaly"
+version = "0.0.1"
+description = "Per-tenant Isolation Forest anomaly detection with SHAP explainability"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.9",
+    "scikit-learn>=1.5",
+    "shap>=0.46",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "joblib>=1.4",
+    "cstack-schemas",
+    "cstack-storage",
+    "cstack-audit-core",
+    "cstack-ml-features",
+    "cstack-ml-mlops",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cstack_ml_anomaly"]
