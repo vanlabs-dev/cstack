@@ -8,8 +8,8 @@ runs as an independent service or library.
 
 ## Repo layout
 
-- `apps/cstack-cli/` Click-based CLI exposing tenant, extract, fixtures, and audit
-  subcommands.
+- `apps/cstack-cli/` Click-based CLI exposing tenant, extract, fixtures, audit,
+  signins, and anomaly subcommands.
 - `packages/schemas/` Pydantic v2 models for tenants, conditional access policies,
   named locations, and directory objects.
 - `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
@@ -27,7 +27,16 @@ runs as an independent service or library.
   `RULE_REGISTRY` on import.
 - `packages/audit-exclusions/` Exclusion hygiene analyser (stale, orphan,
   admin-MFA-bypass, creep, undocumented).
-- `docs/` prose and sprint notes.
+- `packages/ml-features/` Feature engineering pipeline for sign-in events:
+  `UserHistory` rolling state, per-feature extractors, and the canonical
+  `FEATURE_COLUMNS` contract.
+- `packages/ml-mlops/` MLflow tracking helpers, registry alias API
+  (`@champion`/`@challenger`), drift PSI, and shadow-scoring framework.
+- `packages/ml-anomaly/` Per-tenant pooled IsolationForest training,
+  scoring with SHAP attributions, anomaly Finding generation, promotion
+  gating.
+- `docs/` prose, sprint notes, the rules catalogue, and the MLOps
+  walkthrough.
 - `scripts/` PowerShell app registration and certificate rotation scripts (run by
   tenant admins, not invoked from cstack itself).
 - `infra/` deployment artifacts (TBD).

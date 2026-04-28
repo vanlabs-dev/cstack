@@ -7,6 +7,7 @@ Status: early development. Public APIs and repository structure are unstable.
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [MLOps walkthrough](docs/MLOPS.md)
 - [Rules catalogue](docs/RULES.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Sprint notes](docs/SPRINT_NOTES.md)
@@ -18,7 +19,8 @@ Status: early development. Public APIs and repository structure are unstable.
       detection
   - foundation: complete (fixture-driven extract pipeline working end-to-end)
   - CA audit (coverage matrix, 15 rules, exclusion hygiene): complete (against fixtures)
-  - sign-in anomaly detection: planned for Sprint 3
+  - sign-in anomaly detection (Isolation Forest + SHAP + MLflow): pipeline complete
+    (against fixtures); recall calibration ongoing, see [MLOPS.md](docs/MLOPS.md)
 
 ## Running locally
 
@@ -40,6 +42,23 @@ uv run cstack tenant list
 uv run cstack extract ca-policies --tenant tenant-a
 uv run cstack extract all --tenant tenant-b
 ```
+
+### Running anomaly detection
+
+```sh
+uv run cstack signins extract --tenant tenant-a --scenario baseline
+uv run cstack anomaly train --tenant tenant-a --lookback-days 365
+uv run cstack anomaly promote --tenant tenant-a --force
+uv run cstack signins extract --tenant tenant-a --scenario replay-attacks
+uv run cstack anomaly score --tenant tenant-a
+uv run cstack anomaly alerts --tenant tenant-a --n 20
+uv run cstack anomaly mlflow-ui
+```
+
+The model is a pooled per-tenant Isolation Forest with SHAP top-3 attributions
+on every flagged sign-in. MLflow tracks every run; aliases `@champion` and
+`@challenger` gate promotion. See [MLOPS.md](docs/MLOPS.md) for the full
+lifecycle.
 
 ### Running an audit
 

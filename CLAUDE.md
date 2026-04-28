@@ -37,8 +37,8 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 
 ## Repo layout
 
-- `apps/cstack-cli/` Click CLI exposing tenant, extract, fixtures, and audit
-  subcommands.
+- `apps/cstack-cli/` Click CLI exposing tenant, extract, fixtures, audit, signins,
+  and anomaly subcommands.
 - `packages/schemas/` pydantic models for tenants, CA policies, named locations,
   directory objects.
 - `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers,
@@ -51,7 +51,13 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 - `packages/audit-coverage/` user/app segment matrix and weak-cell finding generator.
 - `packages/audit-rules/` rule registry and 15 best-practice CA evaluators.
 - `packages/audit-exclusions/` exclusion hygiene analyser.
-- `docs/` prose, sprint notes, and the rules catalogue.
+- `packages/ml-features/` feature engineering pipeline for sign-in events.
+- `packages/ml-mlops/` MLflow tracking, registry aliases, drift PSI, shadow scoring.
+- `packages/ml-anomaly/` per-tenant Isolation Forest training + SHAP scoring.
+- `docs/` prose, sprint notes, the rules catalogue, and the MLOps walkthrough.
+
+Note: model artefacts and the local `mlruns/` directory are gitignored; never
+check them in.
 - `scripts/` PowerShell app registration and cert rotation scripts.
 - `infra/` deployment artifacts (TBD).
 
