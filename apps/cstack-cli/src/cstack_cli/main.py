@@ -535,5 +535,256 @@ def audit_list_rules_cmd() -> None:
         )
 
 
+# --- signins subgroup ----------------------------------------------------
+
+
+@cli.group()
+def signins() -> None:
+    """Sign-in extraction and stats."""
+
+
+@signins.command("extract")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option(
+    "--scenario",
+    type=click.Choice(["baseline", "replay-attacks", "noisy"]),
+    default="baseline",
+    show_default=True,
+)
+@click.pass_context
+def signins_extract_cmd(ctx: click.Context, tenant_identifier: str, scenario: str) -> None:
+    """Load a fixture sign-in scenario into DuckDB. Live extract is Sprint 7."""
+    from cstack_fixtures import load_signins
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    if not target.is_fixture:
+        raise click.ClickException(
+            "live tenant sign-in extract is deferred to Sprint 7; use a fixture tenant for now"
+        )
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        result = load_signins(target.display_name, scenario, conn)
+    click.echo(
+        f"{target.display_name}/{scenario}: "
+        f"signins={result.rows_written} ground_truth={result.ground_truth_count}"
+    )
+
+
+@signins.command("stats")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def signins_stats_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_storage import count_signins_by_user
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        counts = count_signins_by_user(conn, target.tenant_id)
+    if not counts:
+        click.echo(f"{target.display_name}: no sign-ins recorded")
+        return
+    click.echo(f"{target.display_name}: {len(counts)} users, {sum(counts.values())} total")
+    top = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)[:10]
+    for user_id, n in top:
+        click.echo(f"  {user_id}  {n}")
+
+
+# --- anomaly subgroup ----------------------------------------------------
+
+
+@cli.group()
+def anomaly() -> None:
+    """Train, score, monitor, and promote the anomaly model."""
+
+
+@anomaly.command("train")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--lookback-days", default=60, show_default=True)
+@click.option("--contamination", default=0.02, show_default=True)
+@click.pass_context
+def anomaly_train_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    lookback_days: int,
+    contamination: float,
+) -> None:
+    from cstack_ml_anomaly import train_tenant
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        result = train_tenant(
+            target.tenant_id,
+            conn,
+            lookback_days=lookback_days,
+            contamination=contamination,
+        )
+    click.echo(
+        f"{target.display_name}: trained {result.model_name} v{result.model_version} "
+        f"on {result.n_signins_used} sign-ins / {result.n_users} users "
+        f"in {result.training_duration_seconds:.1f}s; alias=@challenger"
+    )
+
+
+@anomaly.command("score")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--since", default=None, help="ISO-8601 lower bound on createdDateTime.")
+@click.option(
+    "--threshold",
+    default=0.7,
+    show_default=True,
+    help="Findings emitted at or above this normalised score.",
+)
+@click.pass_context
+def anomaly_score_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    since: str | None,
+    threshold: float,
+) -> None:
+    from datetime import datetime as _dt
+
+    from cstack_audit_core import write_findings
+    from cstack_ml_anomaly import findings_from_anomalies, score_batch
+    from cstack_storage import get_signins, write_scores
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    since_dt = _dt.fromisoformat(since) if since else None
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        signins_to_score = get_signins(conn, target.tenant_id, since=since_dt)
+        if not signins_to_score:
+            click.echo(f"{target.display_name}: no sign-ins to score")
+            return
+        scores = score_batch(signins_to_score, target.tenant_id, conn)
+        write_scores(conn, scores)
+        findings = findings_from_anomalies(scores, target.tenant_id, threshold=threshold)
+        new_findings = write_findings(conn, findings)
+    n_anom = sum(1 for s in scores if s.is_anomaly)
+    click.echo(
+        f"{target.display_name}: scored={len(scores)} flagged={n_anom} new_findings={new_findings}"
+    )
+
+
+@anomaly.command("alerts")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--n", default=20, show_default=True)
+@click.option("--min-score", "min_score", default=0.7, show_default=True)
+@click.pass_context
+def anomaly_alerts_cmd(
+    ctx: click.Context, tenant_identifier: str, n: int, min_score: float
+) -> None:
+    from cstack_storage import latest_anomalies
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        rows = latest_anomalies(conn, target.tenant_id, n=n)
+    rows = [r for r in rows if r.normalised_score >= min_score]
+    if not rows:
+        click.echo(f"{target.display_name}: no anomalies above {min_score}")
+        return
+    click.echo(f"{'score':>6}  {'user':<25}  signin_id  top SHAP feature")
+    click.echo("-" * 80)
+    for r in rows:
+        top = r.shap_top_features[0] if r.shap_top_features else None
+        feat = (
+            f"{top.feature_name}={top.feature_value:.2f} ({top.direction})"
+            if top is not None
+            else "(no shap)"
+        )
+        click.echo(f"{r.normalised_score:6.3f}  {r.user_id[:25]:<25}  {r.signin_id[:12]}  {feat}")
+
+
+@anomaly.command("monitor")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--window-days", default=7, show_default=True)
+@click.pass_context
+def anomaly_monitor_cmd(ctx: click.Context, tenant_identifier: str, window_days: int) -> None:
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
+
+    from cstack_ml_anomaly.scoring import _build_score_features
+    from cstack_ml_features import FEATURE_COLUMNS
+    from cstack_ml_mlops import compute_feature_drift, flag_drifting_features
+    from cstack_storage import get_signins
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    now = _dt.now(UTC)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        recent_cut = now - _td(days=window_days)
+        recent = get_signins(conn, target.tenant_id, since=recent_cut)
+        reference = get_signins(conn, target.tenant_id, until=recent_cut)
+    if not recent or not reference:
+        click.echo(
+            f"{target.display_name}: not enough history to monitor "
+            f"(reference={len(reference)}, recent={len(recent)})"
+        )
+        return
+    ref_df = _build_score_features(reference)
+    cur_df = _build_score_features(recent)
+    drift = compute_feature_drift(ref_df, cur_df, list(FEATURE_COLUMNS))
+    flagged = flag_drifting_features(drift)
+    click.echo(f"{target.display_name}: PSI per feature")
+    for name, psi in sorted(drift.items(), key=lambda kv: -kv[1]):
+        marker = " *" if name in flagged else ""
+        click.echo(f"  {name:<40} {psi:6.3f}{marker}")
+    click.echo(f"flagged ({len(flagged)}): {', '.join(flagged) or '(none)'}")
+
+
+@anomaly.command("evaluate-promotion")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.pass_context
+def anomaly_evaluate_promotion_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+    from cstack_ml_anomaly import evaluate_for_promotion
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        decision = evaluate_for_promotion(target.tenant_id, conn)
+    click.echo(
+        f"{target.display_name}: promote={decision.promote} "
+        f"challenger={decision.challenger_version}; {decision.reason}"
+    )
+
+
+@anomaly.command("promote")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--force", is_flag=True, default=False)
+@click.pass_context
+def anomaly_promote_cmd(ctx: click.Context, tenant_identifier: str, force: bool) -> None:
+    from cstack_ml_anomaly import (
+        evaluate_for_promotion,
+        promote_challenger_to_champion,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    if not force:
+        with connection_scope(settings.db_path) as conn:
+            run_migrations(conn)
+            decision = evaluate_for_promotion(target.tenant_id, conn)
+        if not decision.promote:
+            raise click.ClickException(
+                f"promotion gate failed: {decision.reason}; pass --force to override"
+            )
+    result = promote_challenger_to_champion(target.tenant_id, force=force)
+    click.echo(f"{target.display_name}: {result.reason}")
+
+
+@anomaly.command("mlflow-ui")
+def anomaly_mlflow_ui_cmd() -> None:
+    """Print the command to launch the MLflow UI on the local file backend."""
+    click.echo("mlflow ui --backend-store-uri file://./mlruns")
+
+
 if __name__ == "__main__":
     cli()

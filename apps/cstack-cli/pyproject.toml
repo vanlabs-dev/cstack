@@ -15,6 +15,9 @@ dependencies = [
     "cstack-audit-coverage",
     "cstack-audit-rules",
     "cstack-audit-exclusions",
+    "cstack-ml-features",
+    "cstack-ml-mlops",
+    "cstack-ml-anomaly",
 ]
 
 [project.scripts]
