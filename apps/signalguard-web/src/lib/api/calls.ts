@@ -9,6 +9,8 @@
  */
 
 import {
+  createApiKeyTenantsTenantIdApiKeysPost,
+  deleteApiKeyTenantsTenantIdApiKeysKeyLabelDelete,
   feedTenantsTenantIdAnomalyScoresFeedGet,
   findingsSummaryTenantsTenantIdFindingsSummaryGet,
   getCoverageTenantsTenantIdCoverageMatrixGet,
@@ -17,6 +19,7 @@ import {
   getStatsTenantsTenantIdSigninsStatsGet,
   getTenantDetailTenantsTenantIdGet,
   getUserSigninsTenantsTenantIdUsersUserIdSigninsGet,
+  listApiKeysTenantsTenantIdApiKeysGet,
   listFindingsTenantsTenantIdFindingsGet,
   listModelsTenantsTenantIdModelsGet,
   listScoresTenantsTenantIdAnomalyScoresGet,
@@ -29,6 +32,9 @@ import type {
   AnomalyScoreDetail,
   AnomalyScoreRequest,
   AnomalyScoreRunResponse,
+  ApiKeyCreateRequest,
+  ApiKeyCreateResponse,
+  ApiKeySummary,
   AuditRunRequest,
   AuditRunResponse,
   CoverageMatrix,
@@ -260,4 +266,45 @@ export async function callListModels(
     throwOnError: true,
   });
   return data as unknown as ModelSummary[];
+}
+
+export async function callListApiKeys(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<ApiKeySummary[]> {
+  const { data } = await listApiKeysTenantsTenantIdApiKeysGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as ApiKeySummary[];
+}
+
+export async function callCreateApiKey(
+  tenantId: string,
+  body: ApiKeyCreateRequest,
+  opts: WithAbort = {},
+): Promise<ApiKeyCreateResponse> {
+  const { data } = await createApiKeyTenantsTenantIdApiKeysPost({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    body,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as ApiKeyCreateResponse;
+}
+
+export async function callDeleteApiKey(
+  tenantId: string,
+  keyLabel: string,
+  opts: WithAbort = {},
+): Promise<void> {
+  await deleteApiKeyTenantsTenantIdApiKeysKeyLabelDelete({
+    client: apiClient(),
+    path: { tenant_id: tenantId, key_label: keyLabel },
+    signal: opts.signal,
+    throwOnError: true,
+  });
 }

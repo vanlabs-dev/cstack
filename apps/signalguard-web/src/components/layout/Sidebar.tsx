@@ -244,7 +244,7 @@ export function Sidebar({ tenants, activeTenantId }: SidebarProps) {
         {[
           { icon: Home, label: 'Home', href: '/dashboard' },
           { icon: Book, label: 'Docs', href: null },
-          { icon: Settings, label: 'Settings', href: null },
+          { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
         ].map((n) => {
           const inner = (
             <div className="flex items-center gap-2.5 rounded-[4px] px-2 py-1.5 text-12 text-fg-secondary hover:bg-surface-hover">

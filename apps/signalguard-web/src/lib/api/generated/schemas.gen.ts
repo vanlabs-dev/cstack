@@ -229,6 +229,60 @@ export const ApiCallerSchema = {
   type: 'object',
 } as const;
 
+export const ApiKeyCreateRequestSchema = {
+  properties: {
+    label: {
+      default: 'default',
+      maxLength: 64,
+      minLength: 1,
+      title: 'Label',
+      type: 'string',
+    },
+  },
+  title: 'ApiKeyCreateRequest',
+  type: 'object',
+} as const;
+
+export const ApiKeyCreateResponseSchema = {
+  description: 'First-and-only-time view of a freshly minted API key.',
+  properties: {
+    created_at: {
+      format: 'date-time',
+      title: 'Created At',
+      type: 'string',
+    },
+    key: {
+      title: 'Key',
+      type: 'string',
+    },
+    key_label: {
+      title: 'Key Label',
+      type: 'string',
+    },
+  },
+  required: ['key', 'key_label', 'created_at'],
+  title: 'ApiKeyCreateResponse',
+  type: 'object',
+} as const;
+
+export const ApiKeySummarySchema = {
+  description: 'Listing entry. Hash and plaintext are never exposed.',
+  properties: {
+    created_at: {
+      format: 'date-time',
+      title: 'Created At',
+      type: 'string',
+    },
+    label: {
+      title: 'Label',
+      type: 'string',
+    },
+  },
+  required: ['label', 'created_at'],
+  title: 'ApiKeySummary',
+  type: 'object',
+} as const;
+
 export const AppSegmentSchema = {
   enum: ['all_apps', 'm365_core', 'admin_portals', 'legacy_auth', 'high_risk_apps'],
   title: 'AppSegment',

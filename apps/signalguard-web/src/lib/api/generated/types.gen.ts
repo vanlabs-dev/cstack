@@ -62,6 +62,27 @@ export type ApiCaller = {
   tenant_id: string | null;
 };
 
+export type ApiKeyCreateRequest = {
+  label?: string;
+};
+
+/**
+ * First-and-only-time view of a freshly minted API key.
+ */
+export type ApiKeyCreateResponse = {
+  created_at: string;
+  key: string;
+  key_label: string;
+};
+
+/**
+ * Listing entry. Hash and plaintext are never exposed.
+ */
+export type ApiKeySummary = {
+  created_at: string;
+  label: string;
+};
+
 export type AppSegment =
   | 'all_apps'
   | 'm365_core'
@@ -621,6 +642,94 @@ export type ScoreTenantsTenantIdAnomalyScorePostResponses = {
 
 export type ScoreTenantsTenantIdAnomalyScorePostResponse =
   ScoreTenantsTenantIdAnomalyScorePostResponses[keyof ScoreTenantsTenantIdAnomalyScorePostResponses];
+
+export type ListApiKeysTenantsTenantIdApiKeysGetData = {
+  body?: never;
+  path: {
+    tenant_id: string;
+  };
+  query?: never;
+  url: '/tenants/{tenant_id}/api-keys';
+};
+
+export type ListApiKeysTenantsTenantIdApiKeysGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListApiKeysTenantsTenantIdApiKeysGetError =
+  ListApiKeysTenantsTenantIdApiKeysGetErrors[keyof ListApiKeysTenantsTenantIdApiKeysGetErrors];
+
+export type ListApiKeysTenantsTenantIdApiKeysGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: Array<ApiKeySummary>;
+};
+
+export type ListApiKeysTenantsTenantIdApiKeysGetResponse =
+  ListApiKeysTenantsTenantIdApiKeysGetResponses[keyof ListApiKeysTenantsTenantIdApiKeysGetResponses];
+
+export type CreateApiKeyTenantsTenantIdApiKeysPostData = {
+  body: ApiKeyCreateRequest;
+  path: {
+    tenant_id: string;
+  };
+  query?: never;
+  url: '/tenants/{tenant_id}/api-keys';
+};
+
+export type CreateApiKeyTenantsTenantIdApiKeysPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateApiKeyTenantsTenantIdApiKeysPostError =
+  CreateApiKeyTenantsTenantIdApiKeysPostErrors[keyof CreateApiKeyTenantsTenantIdApiKeysPostErrors];
+
+export type CreateApiKeyTenantsTenantIdApiKeysPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: ApiKeyCreateResponse;
+};
+
+export type CreateApiKeyTenantsTenantIdApiKeysPostResponse =
+  CreateApiKeyTenantsTenantIdApiKeysPostResponses[keyof CreateApiKeyTenantsTenantIdApiKeysPostResponses];
+
+export type DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteData = {
+  body?: never;
+  path: {
+    key_label: string;
+    tenant_id: string;
+  };
+  query?: never;
+  url: '/tenants/{tenant_id}/api-keys/{key_label}';
+};
+
+export type DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteError =
+  DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteErrors[keyof DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteErrors];
+
+export type DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponse =
+  DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponses[keyof DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponses];
 
 export type DryRunTenantsTenantIdAuditDryRunPostData = {
   body: AuditRunRequest;

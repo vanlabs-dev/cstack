@@ -10,6 +10,8 @@ import {
   feedTenantsTenantIdAnomalyScoresFeedGet,
   getDetailTenantsTenantIdAnomalyScoresSigninIdGet,
   scoreTenantsTenantIdAnomalyScorePost,
+  listApiKeysTenantsTenantIdApiKeysGet,
+  createApiKeyTenantsTenantIdApiKeysPost,
   dryRunTenantsTenantIdAuditDryRunPost,
   runAuditTenantsTenantIdAuditRunPost,
   getCoverageTenantsTenantIdCoverageMatrixGet,
@@ -32,6 +34,8 @@ import type {
   FeedTenantsTenantIdAnomalyScoresFeedGetData,
   GetDetailTenantsTenantIdAnomalyScoresSigninIdGetData,
   ScoreTenantsTenantIdAnomalyScorePostData,
+  ListApiKeysTenantsTenantIdApiKeysGetData,
+  CreateApiKeyTenantsTenantIdApiKeysPostData,
   DryRunTenantsTenantIdAuditDryRunPostData,
   RunAuditTenantsTenantIdAuditRunPostData,
   GetCoverageTenantsTenantIdCoverageMatrixGetData,
@@ -236,6 +240,48 @@ export const scoreTenantsTenantIdAnomalyScorePostOptions = (
       return data;
     },
     queryKey: scoreTenantsTenantIdAnomalyScorePostQueryKey(options),
+  });
+};
+
+export const listApiKeysTenantsTenantIdApiKeysGetQueryKey = (
+  options: Options<ListApiKeysTenantsTenantIdApiKeysGetData>,
+) => createQueryKey('listApiKeysTenantsTenantIdApiKeysGet', options);
+
+export const listApiKeysTenantsTenantIdApiKeysGetOptions = (
+  options: Options<ListApiKeysTenantsTenantIdApiKeysGetData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listApiKeysTenantsTenantIdApiKeysGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listApiKeysTenantsTenantIdApiKeysGetQueryKey(options),
+  });
+};
+
+export const createApiKeyTenantsTenantIdApiKeysPostQueryKey = (
+  options: Options<CreateApiKeyTenantsTenantIdApiKeysPostData>,
+) => createQueryKey('createApiKeyTenantsTenantIdApiKeysPost', options);
+
+export const createApiKeyTenantsTenantIdApiKeysPostOptions = (
+  options: Options<CreateApiKeyTenantsTenantIdApiKeysPostData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await createApiKeyTenantsTenantIdApiKeysPost({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: createApiKeyTenantsTenantIdApiKeysPostQueryKey(options),
   });
 };
 

@@ -22,6 +22,15 @@ import type {
   ScoreTenantsTenantIdAnomalyScorePostData,
   ScoreTenantsTenantIdAnomalyScorePostResponse,
   ScoreTenantsTenantIdAnomalyScorePostError,
+  ListApiKeysTenantsTenantIdApiKeysGetData,
+  ListApiKeysTenantsTenantIdApiKeysGetResponse,
+  ListApiKeysTenantsTenantIdApiKeysGetError,
+  CreateApiKeyTenantsTenantIdApiKeysPostData,
+  CreateApiKeyTenantsTenantIdApiKeysPostResponse,
+  CreateApiKeyTenantsTenantIdApiKeysPostError,
+  DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteData,
+  DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponse,
+  DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteError,
   DryRunTenantsTenantIdAuditDryRunPostData,
   DryRunTenantsTenantIdAuditDryRunPostResponse,
   DryRunTenantsTenantIdAuditDryRunPostError,
@@ -203,6 +212,63 @@ export const scoreTenantsTenantIdAnomalyScorePost = <ThrowOnError extends boolea
       'Content-Type': 'application/json',
       ...options?.headers,
     },
+  });
+};
+
+/**
+ * List API keys for a tenant
+ * Returns label and creation timestamp for each minted key. The hash and plaintext are never exposed; the only place plaintext is visible is the POST response at creation time.
+ */
+export const listApiKeysTenantsTenantIdApiKeysGet = <ThrowOnError extends boolean = false>(
+  options: Options<ListApiKeysTenantsTenantIdApiKeysGetData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    ListApiKeysTenantsTenantIdApiKeysGetResponse,
+    ListApiKeysTenantsTenantIdApiKeysGetError,
+    ThrowOnError
+  >({
+    url: '/tenants/{tenant_id}/api-keys',
+    ...options,
+  });
+};
+
+/**
+ * Mint a new API key for a tenant
+ * Generates a 32-byte url-safe secret, persists only its SHA-256 hash, and returns the plaintext exactly once. Save the response.
+ */
+export const createApiKeyTenantsTenantIdApiKeysPost = <ThrowOnError extends boolean = false>(
+  options: Options<CreateApiKeyTenantsTenantIdApiKeysPostData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    CreateApiKeyTenantsTenantIdApiKeysPostResponse,
+    CreateApiKeyTenantsTenantIdApiKeysPostError,
+    ThrowOnError
+  >({
+    url: '/tenants/{tenant_id}/api-keys',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
+  });
+};
+
+/**
+ * Revoke an API key by label
+ * Removes the hash row from tenants.json. Existing in-flight requests using the key will fail on the next call.
+ */
+export const deleteApiKeyTenantsTenantIdApiKeysKeyLabelDelete = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).delete<
+    DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteResponse,
+    DeleteApiKeyTenantsTenantIdApiKeysKeyLabelDeleteError,
+    ThrowOnError
+  >({
+    url: '/tenants/{tenant_id}/api-keys/{key_label}',
+    ...options,
   });
 };
 

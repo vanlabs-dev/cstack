@@ -245,6 +245,64 @@
         "title": "ApiCaller",
         "type": "object"
       },
+      "ApiKeyCreateRequest": {
+        "properties": {
+          "label": {
+            "default": "default",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ApiKeyCreateRequest",
+        "type": "object"
+      },
+      "ApiKeyCreateResponse": {
+        "description": "First-and-only-time view of a freshly minted API key.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "key_label": {
+            "title": "Key Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "key_label",
+          "created_at"
+        ],
+        "title": "ApiKeyCreateResponse",
+        "type": "object"
+      },
+      "ApiKeySummary": {
+        "description": "Listing entry. Hash and plaintext are never exposed.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "created_at"
+        ],
+        "title": "ApiKeySummary",
+        "type": "object"
+      },
       "AppSegment": {
         "enum": [
           "all_apps",
@@ -1959,6 +2017,149 @@
         "summary": "Score recent sign-ins against the registered model",
         "tags": [
           "anomaly"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/api-keys": {
+      "get": {
+        "description": "Returns label and creation timestamp for each minted key. The hash and plaintext are never exposed; the only place plaintext is visible is the POST response at creation time.",
+        "operationId": "list_api_keys_tenants__tenant_id__api_keys_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeySummary"
+                  },
+                  "title": "Response List Api Keys Tenants  Tenant Id  Api Keys Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List API keys for a tenant",
+        "tags": [
+          "tenants"
+        ]
+      },
+      "post": {
+        "description": "Generates a 32-byte url-safe secret, persists only its SHA-256 hash, and returns the plaintext exactly once. Save the response.",
+        "operationId": "create_api_key_tenants__tenant_id__api_keys_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mint a new API key for a tenant",
+        "tags": [
+          "tenants"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/api-keys/{key_label}": {
+      "delete": {
+        "description": "Removes the hash row from tenants.json. Existing in-flight requests using the key will fail on the next call.",
+        "operationId": "delete_api_key_tenants__tenant_id__api_keys__key_label__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_label",
+            "required": true,
+            "schema": {
+              "title": "Key Label",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke an API key by label",
+        "tags": [
+          "tenants"
         ]
       }
     },
