@@ -1,6 +1,15 @@
 'use client';
 
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, type TooltipProps } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipProps,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import type { ShapFeatureContribution } from '@/lib/api/generated/types.gen';
 
@@ -15,7 +24,7 @@ interface RowDatum {
   value: number;
   shap: number;
   direction: 'pushes_anomalous' | 'pushes_normal';
-  raw: ShapFeatureContribution;
+  shap_value: number;
 }
 
 function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
@@ -63,7 +72,9 @@ export function ShapWaterfall({ contributions, baseScore, normalisedScore }: Sha
       value: c.feature_value,
       shap: c.shap_value,
       direction: c.direction,
-      raw: c,
+      // Horizontal bars: anomalous → right (positive), normal → left (negative).
+      shap_value:
+        c.direction === 'pushes_anomalous' ? Math.abs(c.shap_value) : -Math.abs(c.shap_value),
     }));
   return (
     <div className="overflow-hidden rounded-r-md border border-border bg-surface">
@@ -74,62 +85,41 @@ export function ShapWaterfall({ contributions, baseScore, normalisedScore }: Sha
         </div>
         <span className="num mono text-16 font-semibold">{(normalisedScore * 100).toFixed(0)}</span>
       </div>
-      <div className="px-3.5 py-3">
-        <div className="space-y-1.5">
-          {sorted.map((row) => {
-            const sign = row.direction === 'pushes_anomalous' ? '+' : '−';
-            const colour =
-              row.direction === 'pushes_anomalous' ? 'var(--color-crit)' : 'var(--color-ok)';
-            return (
-              <div
-                key={row.feature}
-                className="grid items-center gap-2"
-                style={{ gridTemplateColumns: '1fr 60px' }}
-              >
-                <div>
-                  <div className="mb-0.5 text-12">{row.feature}</div>
-                  <div className="relative h-1.5 rounded-sm bg-surface-subtle">
-                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-border-strong" />
-                    <div
-                      className="absolute top-0 bottom-0 rounded-sm"
-                      style={{
-                        left:
-                          row.direction === 'pushes_anomalous'
-                            ? '50%'
-                            : `${50 - Math.min(Math.abs(row.shap), 0.5) * 100}%`,
-                        width: `${Math.min(Math.abs(row.shap), 0.5) * 100}%`,
-                        background: colour,
-                        opacity: 0.85,
-                      }}
-                    />
-                  </div>
-                </div>
-                <span className="num mono text-right text-11 font-medium" style={{ color: colour }}>
-                  {sign}
-                  {Math.abs(row.shap).toFixed(2)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-3 hidden" aria-hidden style={{ height: 0, width: 0 }}>
-          <ResponsiveContainer width="100%" height={0}>
-            <BarChart data={sorted}>
-              <Bar dataKey="shap">
-                {sorted.map((d) => (
-                  <Cell
-                    key={d.feature}
-                    fill={
-                      d.direction === 'pushes_anomalous' ? 'var(--color-crit)' : 'var(--color-ok)'
-                    }
-                  />
-                ))}
-              </Bar>
-              <Tooltip content={<CustomTooltip />} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-3 text-11 text-fg-tertiary">
+      <div className="px-3.5 py-3" data-testid="shap-waterfall">
+        <ResponsiveContainer width="100%" height={Math.max(220, sorted.length * 28)}>
+          <BarChart
+            data={sorted}
+            layout="vertical"
+            margin={{ top: 4, right: 56, bottom: 4, left: 12 }}
+          >
+            <XAxis type="number" hide domain={['dataMin', 'dataMax']} />
+            <YAxis
+              type="category"
+              dataKey="feature"
+              tick={{
+                fill: 'var(--color-fg-secondary)',
+                fontSize: 12,
+                fontFamily: 'var(--font-mono)',
+              }}
+              tickLine={false}
+              axisLine={false}
+              width={170}
+            />
+            <Tooltip cursor={{ fill: 'var(--color-surface-hover)' }} content={<CustomTooltip />} />
+            <Bar dataKey="shap_value" barSize={14} radius={[2, 2, 2, 2]}>
+              {sorted.map((d) => (
+                <Cell
+                  key={d.feature}
+                  fill={
+                    d.direction === 'pushes_anomalous' ? 'var(--color-crit)' : 'var(--color-ok)'
+                  }
+                  fillOpacity={0.85}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="mt-2 text-11 text-fg-tertiary">
           base rate {(baseScore * 100).toFixed(0)} → score {(normalisedScore * 100).toFixed(0)}
         </div>
       </div>
