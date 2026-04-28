@@ -6,7 +6,6 @@ import pytest
 from cstack_fixtures import load_fixture
 from cstack_storage import connection_scope, run_migrations
 from httpx import AsyncClient
-
 from signalguard_api.config import Settings
 
 from .conftest import DEV_KEY, TENANT_A, TENANT_B
