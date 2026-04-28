@@ -13,6 +13,11 @@ runs as an independent service or library.
 - `apps/signalguard-api/` FastAPI HTTP surface over the same packages the CLI
   consumes. Read endpoints (tenants, findings, anomaly scores, coverage,
   sign-ins, models) plus two action endpoints (audit run, anomaly score).
+- `apps/signalguard-web/` Next.js 15 dashboard that consumes the API via a
+  typed client generated from `apps/signalguard-api/openapi.json`. Three
+  core screens in 5a (home, findings list with inline expansion, sign-in
+  anomaly drill-down); five more screens land in 5b. Design tokens live in
+  `docs/DESIGN_TOKENS.md`; component patterns in `docs/DESIGN_SYSTEM.md`.
 - `packages/schemas/` Pydantic v2 models for tenants, conditional access policies,
   named locations, and directory objects.
 - `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
@@ -128,6 +133,32 @@ HTTP client (curl, dashboard, scripts)
 
 The API never duplicates business logic; routers parse input, dispatch into
 the package functions the CLI already calls, and shape the response.
+
+## Web dashboard
+
+```
+Browser
+  |
+  v
++---------------------------+
+| signalguard-web (Next 15) |
+| - Server Components hit   |
+|   the API via the typed   |
+|   @hey-api client         |
+| - Client Components for   |
+|   filter chips, tables,   |
+|   and recharts            |
+| - X-API-Key cookie shared |
+|   between server + client |
++-------------+-------------+
+              |
+              v
+         FastAPI :8000  ->  DuckDB
+```
+
+The committed design reference is `docs/DESIGN_TOKENS.md` plus
+`docs/DESIGN_SYSTEM.md`. The `.design/` source folder is gitignored and is
+not required for the build.
 
 ## Adding a new rule
 

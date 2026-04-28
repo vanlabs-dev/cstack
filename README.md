@@ -24,6 +24,8 @@ Status: early development. Public APIs and repository structure are unstable.
     (against fixtures); recall calibration ongoing, see [MLOPS.md](docs/MLOPS.md)
   - HTTP API (read + action endpoints, OpenAPI 3.1): complete; see
     [apps/signalguard-api/README.md](apps/signalguard-api/README.md)
+  - web dashboard (3 core screens against fixture data): 5a complete; see
+    [apps/signalguard-web/README.md](apps/signalguard-web/README.md)
 
 ## Running locally
 
@@ -73,6 +75,17 @@ uv run signalguard-api --port 8000
 
 See [apps/signalguard-api/README.md](apps/signalguard-api/README.md) for the
 auth model and curl examples.
+
+### Starting the web dashboard
+
+```sh
+# After the API is running on :8000.
+pnpm --filter signalguard-web dev
+# Visit http://localhost:3000/dashboard, enter the dev API key.
+```
+
+See [apps/signalguard-web/README.md](apps/signalguard-web/README.md) for the
+route catalogue and dev workflow.
 
 ### Running an audit
 
