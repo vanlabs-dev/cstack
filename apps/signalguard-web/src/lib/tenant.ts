@@ -4,19 +4,14 @@
  * tenant fall back to the first tenant the API returns.
  */
 
-import { listTenantsTenantsGet } from '@/lib/api/generated';
 import type { TenantSummary as GeneratedTenantSummary } from '@/lib/api/generated/types.gen';
 
-import { apiClient } from './api/client';
+import { callListTenants } from './api/calls';
 
 export type TenantSummary = GeneratedTenantSummary;
 
 export async function fetchTenantList(): Promise<TenantSummary[]> {
-  const { data } = await listTenantsTenantsGet({
-    client: apiClient(),
-    throwOnError: true,
-  });
-  return data;
+  return callListTenants();
 }
 
 export async function resolveActiveTenantId(fromQuery: string | undefined): Promise<string | null> {

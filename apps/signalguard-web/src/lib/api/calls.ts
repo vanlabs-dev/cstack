@@ -1,0 +1,230 @@
+/**
+ * Thin typed wrappers around the generated SDK functions.
+ *
+ * The generated openapi-ts client narrows ``data`` to the union of the
+ * response object's property types under some configurations. The wrappers
+ * here re-cast to the intended response type so call sites stay typed.
+ * This is a one-way ratchet: edit this file when the OpenAPI spec gains
+ * new endpoints, never edit ``generated/`` directly.
+ */
+
+import {
+  feedTenantsTenantIdAnomalyScoresFeedGet,
+  findingsSummaryTenantsTenantIdFindingsSummaryGet,
+  getCoverageTenantsTenantIdCoverageMatrixGet,
+  getDetailTenantsTenantIdAnomalyScoresSigninIdGet,
+  getFindingTenantsTenantIdFindingsFindingIdGet,
+  getStatsTenantsTenantIdSigninsStatsGet,
+  getTenantDetailTenantsTenantIdGet,
+  getUserSigninsTenantsTenantIdUsersUserIdSigninsGet,
+  listFindingsTenantsTenantIdFindingsGet,
+  listScoresTenantsTenantIdAnomalyScoresGet,
+  listTenantsTenantsGet,
+  runAuditTenantsTenantIdAuditRunPost,
+} from '@/lib/api/generated';
+import type {
+  AnomalyScore,
+  AnomalyScoreDetail,
+  AuditRunRequest,
+  AuditRunResponse,
+  CoverageMatrix,
+  Finding,
+  FindingsSummary,
+  PaginatedAnomalyScore,
+  PaginatedFinding,
+  PaginatedSignIn,
+  SigninStats,
+  TenantDetail,
+  TenantSummary,
+} from '@/lib/api/generated/types.gen';
+
+import { apiClient } from './client';
+
+interface WithAbort {
+  signal?: AbortSignal;
+}
+
+interface FindingsListQuery extends WithAbort {
+  tenantId: string;
+  category?: Array<'coverage' | 'rule' | 'exclusion' | 'anomaly'>;
+  minSeverity?: 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  ruleId?: string;
+  since?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export async function callListTenants(opts: WithAbort = {}): Promise<TenantSummary[]> {
+  const { data } = await listTenantsTenantsGet({
+    client: apiClient(),
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as TenantSummary[];
+}
+
+export async function callTenantDetail(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<TenantDetail> {
+  const { data } = await getTenantDetailTenantsTenantIdGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as TenantDetail;
+}
+
+export async function callListFindings(q: FindingsListQuery): Promise<PaginatedFinding> {
+  const { data } = await listFindingsTenantsTenantIdFindingsGet({
+    client: apiClient(),
+    path: { tenant_id: q.tenantId },
+    query: {
+      category: q.category,
+      min_severity: q.minSeverity,
+      rule_id: q.ruleId,
+      since: q.since,
+      limit: q.limit,
+      offset: q.offset,
+    },
+    signal: q.signal,
+    throwOnError: true,
+  });
+  return data as unknown as PaginatedFinding;
+}
+
+export async function callFinding(
+  tenantId: string,
+  findingId: string,
+  opts: WithAbort = {},
+): Promise<Finding> {
+  const { data } = await getFindingTenantsTenantIdFindingsFindingIdGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId, finding_id: findingId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as Finding;
+}
+
+export async function callFindingsSummary(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<FindingsSummary> {
+  const { data } = await findingsSummaryTenantsTenantIdFindingsSummaryGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as FindingsSummary;
+}
+
+export async function callListAnomalyScores(
+  tenantId: string,
+  query?: {
+    user_id?: string;
+    min_score?: number;
+    is_anomaly?: boolean;
+    since?: string;
+    limit?: number;
+    offset?: number;
+  },
+  opts: WithAbort = {},
+): Promise<PaginatedAnomalyScore> {
+  const { data } = await listScoresTenantsTenantIdAnomalyScoresGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    query,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as PaginatedAnomalyScore;
+}
+
+export async function callAnomalyFeed(
+  tenantId: string,
+  query?: { n?: number; min_score?: number },
+  opts: WithAbort = {},
+): Promise<AnomalyScore[]> {
+  const { data } = await feedTenantsTenantIdAnomalyScoresFeedGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    query,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as AnomalyScore[];
+}
+
+export async function callAnomalyDetail(
+  tenantId: string,
+  signinId: string,
+  opts: WithAbort = {},
+): Promise<AnomalyScoreDetail> {
+  const { data } = await getDetailTenantsTenantIdAnomalyScoresSigninIdGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId, signin_id: signinId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as AnomalyScoreDetail;
+}
+
+export async function callCoverageMatrix(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<CoverageMatrix> {
+  const { data } = await getCoverageTenantsTenantIdCoverageMatrixGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as CoverageMatrix;
+}
+
+export async function callSigninStats(
+  tenantId: string,
+  opts: WithAbort = {},
+): Promise<SigninStats> {
+  const { data } = await getStatsTenantsTenantIdSigninsStatsGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as SigninStats;
+}
+
+export async function callUserSignins(
+  tenantId: string,
+  userId: string,
+  query?: { limit?: number; offset?: number },
+  opts: WithAbort = {},
+): Promise<PaginatedSignIn> {
+  const { data } = await getUserSigninsTenantsTenantIdUsersUserIdSigninsGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId, user_id: userId },
+    query,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as PaginatedSignIn;
+}
+
+export async function callRunAudit(
+  tenantId: string,
+  body: AuditRunRequest,
+  opts: WithAbort = {},
+): Promise<AuditRunResponse> {
+  const { data } = await runAuditTenantsTenantIdAuditRunPost({
+    client: apiClient(),
+    path: { tenant_id: tenantId },
+    body,
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as AuditRunResponse;
+}
