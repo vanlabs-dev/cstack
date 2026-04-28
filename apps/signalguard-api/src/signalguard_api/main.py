@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from signalguard_api.config import Settings, get_settings
 from signalguard_api.correlation import CorrelationIdMiddleware
 from signalguard_api.lifespan import lifespan
-from signalguard_api.routers import health, whoami
+from signalguard_api.routers import findings, health, tenants, whoami
 
 OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "health", "description": "Liveness and readiness probes."},
@@ -61,4 +61,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(CorrelationIdMiddleware)
     app.include_router(health.router)
     app.include_router(whoami.router)
+    app.include_router(tenants.router)
+    app.include_router(findings.router)
     return app
