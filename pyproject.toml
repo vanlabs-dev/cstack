@@ -19,6 +19,7 @@ cstack-audit-core = { workspace = true }
 cstack-audit-coverage = { workspace = true }
 cstack-audit-rules = { workspace = true }
 cstack-audit-exclusions = { workspace = true }
+cstack-ml-features = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -60,6 +61,7 @@ mypy_path = [
     "packages/audit-coverage/src",
     "packages/audit-rules/src",
     "packages/audit-exclusions/src",
+    "packages/ml-features/src",
     "apps/cstack-cli/src",
 ]
 
@@ -80,6 +82,17 @@ module = [
     "kiota_serialization_json.*",
     "kiota_abstractions.*",
     "duckdb.*",
+    "shap",
+    "shap.*",
+    "mlflow",
+    "mlflow.*",
+    "scipy",
+    "scipy.*",
+    "sklearn.*",
+    "joblib",
+    "joblib.*",
+    "pandas",
+    "pandas.*",
 ]
 ignore_missing_imports = true
 disable_error_code = ["attr-defined"]

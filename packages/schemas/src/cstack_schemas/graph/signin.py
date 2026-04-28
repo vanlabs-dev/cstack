@@ -46,7 +46,7 @@ class SignIn(GraphModel):
     ip_address: str | None = None
     status: SignInStatus | None = None
     risk_level_aggregated: str | None = None
-    risk_level_during_signin: str | None = None
+    risk_level_during_sign_in: str | None = None
     risk_state: str | None = None
     conditional_access_status: str | None = None
     authentication_requirement: str | None = None

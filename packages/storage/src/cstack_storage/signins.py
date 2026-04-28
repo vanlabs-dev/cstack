@@ -45,7 +45,7 @@ def upsert_signins(conn: duckdb.DuckDBPyConnection, tenant_id: str, signins: lis
                 if s.authentication_methods_used is not None
                 else None,
                 s.risk_level_aggregated,
-                s.risk_level_during_signin,
+                s.risk_level_during_sign_in,
                 s.risk_state,
                 s.is_interactive,
                 s.model_dump_json(by_alias=True, exclude_none=True),
