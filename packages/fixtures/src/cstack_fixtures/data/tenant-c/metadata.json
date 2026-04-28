@@ -2,7 +2,12 @@
   "name": "tenant-c",
   "description": "Edge-case coverage tenant. Every Graph CA policy shape we know about appears at least once: country named-location includes, IP named-location excludes, app filters, device platform conditions, sign-in frequency controls, persistent browser session controls, AND/OR grant combinations, workload identity policies, and role-scoped policies for Global Admin and Privileged Role Admin.",
   "tenant_id": "00000000-cccc-3333-3333-333333333333",
-  "scenario_tags": ["edge-cases", "every-shape", "role-scoped", "workload-identity"],
+  "scenario_tags": [
+    "edge-cases",
+    "every-shape",
+    "role-scoped",
+    "workload-identity"
+  ],
   "expected_findings": {
     "total": 10,
     "by_category": {
@@ -29,5 +34,25 @@
     }
   },
   "calibrated_at": "2026-04-28",
-  "notes": "calibrated against rules engine v0.0.1; every Graph shape parses without rule crashes."
+  "notes": "calibrated against rules engine v0.0.1; every Graph shape parses without rule crashes.",
+  "signin_scenarios": [
+    {
+      "name": "baseline",
+      "description": "30 days of normal behaviour, no injected anomalies.",
+      "signins_path": "signins/baseline/signins.json",
+      "ground_truth_path": "signins/baseline/ground_truth.json"
+    },
+    {
+      "name": "replay-attacks",
+      "description": "Baseline plus scripted impossible-travel, MFA bypass, off-hours admin, credential stuffing, new ASN.",
+      "signins_path": "signins/replay-attacks/signins.json",
+      "ground_truth_path": "signins/replay-attacks/ground_truth.json"
+    },
+    {
+      "name": "noisy",
+      "description": "Operationally noisy normals plus the same scripted attacks.",
+      "signins_path": "signins/noisy/signins.json",
+      "ground_truth_path": "signins/noisy/ground_truth.json"
+    }
+  ]
 }

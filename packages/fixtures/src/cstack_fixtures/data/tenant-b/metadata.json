@@ -2,7 +2,12 @@
   "name": "tenant-b",
   "description": "Messy tenant. Legacy auth not blocked, no admin-specific policy, MFA policy with 14 user exclusions (six inactive 90+ days), two stale report-only policies, one disabled policy from 2024, and no risk-based policies.",
   "tenant_id": "00000000-bbbb-2222-2222-222222222222",
-  "scenario_tags": ["gaps", "stale-policies", "exclusion-bloat", "no-risk-policies"],
+  "scenario_tags": [
+    "gaps",
+    "stale-policies",
+    "exclusion-bloat",
+    "no-risk-policies"
+  ],
   "expected_findings": {
     "total": 29,
     "by_category": {
@@ -41,5 +46,25 @@
     }
   },
   "calibrated_at": "2026-04-28",
-  "notes": "calibrated against rules engine v0.0.1; CRITICAL admin-MFA gap matches the 'no admin-specific policy' scenario tag."
+  "notes": "calibrated against rules engine v0.0.1; CRITICAL admin-MFA gap matches the 'no admin-specific policy' scenario tag.",
+  "signin_scenarios": [
+    {
+      "name": "baseline",
+      "description": "30 days of normal behaviour, no injected anomalies.",
+      "signins_path": "signins/baseline/signins.json",
+      "ground_truth_path": "signins/baseline/ground_truth.json"
+    },
+    {
+      "name": "replay-attacks",
+      "description": "Baseline plus scripted impossible-travel, MFA bypass, off-hours admin, credential stuffing, new ASN.",
+      "signins_path": "signins/replay-attacks/signins.json",
+      "ground_truth_path": "signins/replay-attacks/ground_truth.json"
+    },
+    {
+      "name": "noisy",
+      "description": "Operationally noisy normals plus the same scripted attacks.",
+      "signins_path": "signins/noisy/signins.json",
+      "ground_truth_path": "signins/noisy/ground_truth.json"
+    }
+  ]
 }

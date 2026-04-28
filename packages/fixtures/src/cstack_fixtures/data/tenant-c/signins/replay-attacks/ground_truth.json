@@ -1,0 +1,164 @@
+[
+  {
+    "signin_id": "acb261fa-ce4f-7a4f-0a9c-c7f1ddf63d69",
+    "user_id": "user-tenant-c-0006",
+    "anomaly_type": "impossible_travel",
+    "injected_at": "2026-03-16T14:00:00Z"
+  },
+  {
+    "signin_id": "a677c0a6-06f6-ed20-dcfc-e331c1aa37c9",
+    "user_id": "user-tenant-c-0006",
+    "anomaly_type": "impossible_travel",
+    "injected_at": "2026-03-16T14:30:00Z"
+  },
+  {
+    "signin_id": "5c72a5a7-750f-1b8f-6a94-b1d628daca19",
+    "user_id": "user-tenant-c-0011",
+    "anomaly_type": "mfa_bypass",
+    "injected_at": "2026-03-19T14:00:00Z"
+  },
+  {
+    "signin_id": "b7d5b36a-9096-adb8-11e0-2f4a1c5c6ac8",
+    "user_id": "user-tenant-c-0016",
+    "anomaly_type": "off_hours_admin_action",
+    "injected_at": "2026-03-21T15:12:00Z"
+  },
+  {
+    "signin_id": "e847e525-c07a-02d1-b354-ef4b46785181",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:00:00Z"
+  },
+  {
+    "signin_id": "eb8b5a4d-3dc2-abb1-ebaa-4ffe25918df2",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:00:14Z"
+  },
+  {
+    "signin_id": "85a573ba-680f-4b9a-1f65-4b5f74f534a6",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:00:28Z"
+  },
+  {
+    "signin_id": "cc620887-3976-e6a1-c8c9-ad21d7843e24",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:00:42Z"
+  },
+  {
+    "signin_id": "7848af7d-468b-9513-2330-d6adc64cb45c",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:00:57Z"
+  },
+  {
+    "signin_id": "ac8638a4-749d-a4d3-b6a2-0e0b6b7ffd65",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:01:11Z"
+  },
+  {
+    "signin_id": "6f6f332c-5924-7756-03fe-5c00d67be956",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:01:25Z"
+  },
+  {
+    "signin_id": "6ea234cc-00c1-58c1-80d6-a4d1ab73d031",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:01:40Z"
+  },
+  {
+    "signin_id": "06629f58-5484-0d40-5bb4-b9afa0dcbeb4",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:01:54Z"
+  },
+  {
+    "signin_id": "3a3bec6f-68d5-7e8e-0f42-00171230b8b2",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:02:08Z"
+  },
+  {
+    "signin_id": "c76c6fb7-48f8-3b2a-e1b8-81d7e7e2b739",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:02:22Z"
+  },
+  {
+    "signin_id": "9bc55565-dfe2-263b-23c4-8147cd0bc894",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:02:37Z"
+  },
+  {
+    "signin_id": "a79895fc-214b-0975-6b62-5cef2c261fce",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:02:51Z"
+  },
+  {
+    "signin_id": "eeabd3ba-2951-1f61-2659-8ec019e85ad9",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:03:05Z"
+  },
+  {
+    "signin_id": "32129b1e-9f08-fa50-945f-55b86576d4cd",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:03:20Z"
+  },
+  {
+    "signin_id": "d3329aa9-2d4b-2d11-0fa5-2b1424d0e737",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:03:34Z"
+  },
+  {
+    "signin_id": "bf3b37f1-5af6-5223-541b-09498abb2499",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:03:48Z"
+  },
+  {
+    "signin_id": "2912fe9c-f43d-fa88-f424-23eba1bc6352",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:04:02Z"
+  },
+  {
+    "signin_id": "bae54a3f-df0d-6a49-298c-54b37befd700",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:04:17Z"
+  },
+  {
+    "signin_id": "05d5e41f-1d54-f38d-efe0-787bcf5cf0e6",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:04:31Z"
+  },
+  {
+    "signin_id": "bfaf9cf0-6cac-985e-bdb8-72ce9225b483",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:04:45Z"
+  },
+  {
+    "signin_id": "5d72d81e-07e4-1ef2-cce2-ed187cc71d99",
+    "user_id": "user-tenant-c-0021",
+    "anomaly_type": "credential_stuffing_burst",
+    "injected_at": "2026-03-26T14:05:00Z"
+  },
+  {
+    "signin_id": "81333c41-0e00-61b7-07a9-036a1b6bf4c2",
+    "user_id": "user-tenant-c-0026",
+    "anomaly_type": "new_asn",
+    "injected_at": "2026-03-29T14:00:00Z"
+  }
+]

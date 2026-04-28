@@ -2,7 +2,12 @@
   "name": "tenant-a",
   "description": "Well-configured SMB tenant. MFA covers all users with break-glass exclusion, legacy auth blocked, admin MFA enforced, sign-in and user risk policies in place, guest restrictions on untrusted countries, and compliant device required for sensitive apps.",
   "tenant_id": "00000000-aaaa-1111-1111-111111111111",
-  "scenario_tags": ["well-configured", "smb", "mfa-coverage", "risk-based"],
+  "scenario_tags": [
+    "well-configured",
+    "smb",
+    "mfa-coverage",
+    "risk-based"
+  ],
   "expected_findings": {
     "total": 8,
     "by_category": {
@@ -24,5 +29,25 @@
     }
   },
   "calibrated_at": "2026-04-28",
-  "notes": "calibrated against rules engine v0.0.1; all findings are LOW or MEDIUM hygiene observations, no CRITICAL or HIGH gaps."
+  "notes": "calibrated against rules engine v0.0.1; all findings are LOW or MEDIUM hygiene observations, no CRITICAL or HIGH gaps.",
+  "signin_scenarios": [
+    {
+      "name": "baseline",
+      "description": "30 days of normal behaviour, no injected anomalies.",
+      "signins_path": "signins/baseline/signins.json",
+      "ground_truth_path": "signins/baseline/ground_truth.json"
+    },
+    {
+      "name": "replay-attacks",
+      "description": "Baseline plus scripted impossible-travel, MFA bypass, off-hours admin, credential stuffing, new ASN.",
+      "signins_path": "signins/replay-attacks/signins.json",
+      "ground_truth_path": "signins/replay-attacks/ground_truth.json"
+    },
+    {
+      "name": "noisy",
+      "description": "Operationally noisy normals plus the same scripted attacks.",
+      "signins_path": "signins/noisy/signins.json",
+      "ground_truth_path": "signins/noisy/ground_truth.json"
+    }
+  ]
 }

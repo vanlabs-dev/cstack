@@ -46,6 +46,17 @@ class FixtureExpectedFindings(BaseModel):
     by_rule_id: dict[str, int]
 
 
+class FixtureSigninScenario(BaseModel):
+    """Per-scenario sign-in corpus location and ground-truth pointer."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str
+    description: str
+    signins_path: str
+    ground_truth_path: str
+
+
 class FixtureMetadata(BaseModel):
     """Header for a fixture tenant. Mirrors metadata.json on disk."""
 
@@ -58,6 +69,17 @@ class FixtureMetadata(BaseModel):
     scenario_tags: list[str]
     calibrated_at: str | None = None
     notes: str | None = None
+    signin_scenarios: list[FixtureSigninScenario] = []
+    anomaly_calibration: dict[str, Any] | None = None
+
+
+class SigninLoadResult(BaseModel):
+    """Counts returned by load_signins."""
+
+    tenant_id: str
+    scenario: str
+    rows_written: int
+    ground_truth_count: int
 
 
 class FixtureLoadResult(BaseModel):
@@ -137,6 +159,50 @@ def clear_fixture(name: str, conn: duckdb.DuckDBPyConnection) -> None:
         (_DATA_DIR / name / "metadata.json").read_text(encoding="utf-8")
     )
     remove_tenant_db(conn, meta.tenant_id)
+
+
+def load_signins(name: str, scenario: str, conn: duckdb.DuckDBPyConnection) -> SigninLoadResult:
+    """Hydrate sign-ins for a fixture tenant and named scenario into DuckDB."""
+    from cstack_schemas import SignIn
+    from cstack_storage import upsert_signins
+
+    tenant_dir = _DATA_DIR / name
+    meta = FixtureMetadata.model_validate_json(
+        (tenant_dir / "metadata.json").read_text(encoding="utf-8")
+    )
+    scenario_dir = tenant_dir / "signins" / scenario
+    payload = json.loads((scenario_dir / "signins.json").read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        raise ValueError(f"{scenario_dir}: signins.json must be a JSON array")
+    parsed = [SignIn.model_validate(item) for item in payload if isinstance(item, dict)]
+    rows = upsert_signins(conn, meta.tenant_id, parsed)
+    ground_truth = json.loads((scenario_dir / "ground_truth.json").read_text(encoding="utf-8"))
+    return SigninLoadResult(
+        tenant_id=meta.tenant_id,
+        scenario=scenario,
+        rows_written=rows,
+        ground_truth_count=len(ground_truth) if isinstance(ground_truth, list) else 0,
+    )
+
+
+def clear_signins(name: str, scenario: str, conn: duckdb.DuckDBPyConnection) -> None:
+    """Remove sign-ins matching the scenario's ids. ``scenario`` here is purely
+    informative: rows are scoped by tenant_id, but the caller passes the name
+    so it can clear before reloading a different scenario."""
+    meta = FixtureMetadata.model_validate_json(
+        (_DATA_DIR / name / "metadata.json").read_text(encoding="utf-8")
+    )
+    conn.execute("DELETE FROM signins WHERE tenant_id = ?", [meta.tenant_id])
+    _ = scenario  # currently unused; reserved for per-scenario partitioning later
+
+
+def ground_truth_for(name: str, scenario: str) -> list[dict[str, Any]]:
+    """Read the ground-truth label list for a fixture/scenario pair."""
+    path = _DATA_DIR / name / "signins" / scenario / "ground_truth.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        return []
+    return [item for item in payload if isinstance(item, dict)]
 
 
 def clear_all_fixtures(conn: duckdb.DuckDBPyConnection) -> None:
