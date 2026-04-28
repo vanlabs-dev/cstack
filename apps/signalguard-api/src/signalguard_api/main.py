@@ -1,0 +1,63 @@
+"""FastAPI app factory.
+
+The factory pattern keeps the app construction overridable from tests so a
+test client can inject scratch settings (e.g. a tmp_path DB) without
+mutating the global lru_cache on ``get_settings``.
+"""
+
+from __future__ import annotations
+
+from importlib.metadata import PackageNotFoundError, version
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from signalguard_api.config import Settings, get_settings
+from signalguard_api.correlation import CorrelationIdMiddleware
+from signalguard_api.lifespan import lifespan
+from signalguard_api.routers import health
+
+OPENAPI_TAGS: list[dict[str, str]] = [
+    {"name": "health", "description": "Liveness and readiness probes."},
+    {"name": "tenants", "description": "Registered tenant inventory."},
+    {"name": "findings", "description": "Audit and anomaly findings."},
+    {"name": "anomaly", "description": "Per-signin anomaly scores and alerts."},
+    {"name": "coverage", "description": "User-app coverage matrix snapshot."},
+    {"name": "signins", "description": "Sign-in stats and per-user history."},
+    {"name": "audit", "description": "Trigger audit runs and dry runs."},
+    {"name": "models", "description": "MLflow model registry view."},
+]
+
+
+def _resolve_version() -> str:
+    try:
+        return version("signalguard-api")
+    except PackageNotFoundError:
+        return "0.0.0"
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    resolved = settings if settings is not None else get_settings()
+    app = FastAPI(
+        title="signalguard-api",
+        version=_resolve_version(),
+        description=(
+            "HTTP surface over the cstack signalguard data and audit packages. "
+            "See /docs for OpenAPI 3.1 and /redoc for the rendered spec."
+        ),
+        openapi_tags=OPENAPI_TAGS,
+        lifespan=lifespan,
+        contact={"name": "cstack maintainers", "email": "leunis@vanlabs.dev"},
+        license_info={"name": "MIT"},
+    )
+    app.state.settings = resolved
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved.cors_allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(CorrelationIdMiddleware)
+    app.include_router(health.router)
+    return app
