@@ -9,7 +9,8 @@ node_modules/
 !.yarn/versions
 
 # testing
-coverage/
+/coverage/
+# (the bare `coverage/` would also shadow our coverage matrix feature folders)
 
 # next.js
 .next/
