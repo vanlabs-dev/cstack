@@ -92,3 +92,6 @@ desktop.ini
 *.swo
 *~
 .claude/
+
+# design working materials
+.design/

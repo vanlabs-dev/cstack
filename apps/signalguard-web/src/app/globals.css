@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Cstack design tokens — Tailwind 4 native @theme syntax.
+   Single source of truth at docs/DESIGN_TOKENS.md.
+   ========================================================================== */
+
+@theme {
+  /* Surfaces */
+  --color-bg: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f4f4f2;
+  --color-surface-hover: #f2f2f0;
+  --color-surface-inset: #f7f7f5;
+
+  /* Borders */
+  --color-border: #e8e8e6;
+  --color-border-strong: #d8d8d5;
+  --color-border-subtle: #efefec;
+
+  /* Text */
+  --color-fg: #1a1a19;
+  --color-fg-secondary: #525250;
+  --color-fg-tertiary: #76766f;
+  --color-fg-quaternary: #a3a39c;
+
+  /* Brand */
+  --color-brand: #4338ca;
+  --color-brand-hover: #3730a3;
+  --color-brand-subtle: #eef0ff;
+  --color-brand-text: #312e81;
+
+  /* SignalGuard module accent */
+  --color-sg: #0f766e;
+  --color-sg-subtle: #e6f4f2;
+  --color-sg-text: #134e4a;
+
+  /* Severity */
+  --color-crit: #b91c1c;
+  --color-crit-bg: #fbe9e9;
+  --color-high: #c2410c;
+  --color-high-bg: #fbebe0;
+  --color-med: #a16207;
+  --color-med-bg: #faf1dd;
+  --color-low: #1e40af;
+  --color-low-bg: #e6eaf7;
+  --color-info: #525252;
+  --color-info-bg: #ececea;
+
+  /* Status */
+  --color-ok: #15803d;
+  --color-ok-bg: #e5f2ea;
+  --color-warn: #a16207;
+  --color-err: #b91c1c;
+  --color-neutral: #a3a3a3;
+
+  /* Coverage palette */
+  --color-cov-strong: #15803d;
+  --color-cov-strong-bg: #ddeedf;
+  --color-cov-good: #5ea982;
+  --color-cov-good-bg: #e6f0e5;
+  --color-cov-amber: #c2880c;
+  --color-cov-amber-bg: #faefd0;
+  --color-cov-weak: #d97757;
+  --color-cov-weak-bg: #fde6dc;
+  --color-cov-bad: #b91c1c;
+  --color-cov-bad-bg: #fbe3e3;
+
+  /* Type scale */
+  --font-sans: var(--font-inter), -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-12: 12px;
+  --text-12--line-height: 1.5;
+  --text-13: 13px;
+  --text-13--line-height: 1.5;
+  --text-14: 14px;
+  --text-14--line-height: 1.5;
+  --text-16: 16px;
+  --text-16--line-height: 1.45;
+  --text-18: 18px;
+  --text-18--line-height: 1.4;
+  --text-22: 22px;
+  --text-22--line-height: 1.3;
+  --text-28: 28px;
+  --text-28--line-height: 1.2;
+  --text-36: 36px;
+  --text-36--line-height: 1.15;
+
+  /* Radii */
+  --radius-r-sm: 3px;
+  --radius-r: 5px;
+  --radius-r-md: 6px;
+  --radius-r-lg: 8px;
+
+  /* Shadows */
+  --shadow-pop: 0 2px 8px rgba(15, 15, 20, 0.04), 0 1px 2px rgba(15, 15, 20, 0.04);
+  --shadow-modal: 0 10px 40px rgba(15, 15, 20, 0.08), 0 2px 8px rgba(15, 15, 20, 0.04);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+
+  /* Motion */
+  --ease-cs: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+}
+
+/* Body baseline */
+html,
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Numerics utility */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Eyebrow label */
+.eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-fg-tertiary);
+}
+
+/* Severity badge primitives.
+   Triangle uses CSS border trick; diamond uses rotation; hollow circle uses
+   border only. These cannot be expressed in pure Tailwind classes. */
+.sev {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.sev-shape {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+.sev-crit {
+  background: var(--color-crit-bg);
+  color: var(--color-crit);
+}
+.sev-crit .sev-shape {
+  background: var(--color-crit);
+  border-radius: 50%;
+}
+.sev-high {
+  background: var(--color-high-bg);
+  color: var(--color-high);
+}
+.sev-high .sev-shape {
+  width: 0;
+  height: 0;
+  background: transparent;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 8px solid var(--color-high);
+}
+.sev-med {
+  background: var(--color-med-bg);
+  color: var(--color-med);
+}
+.sev-med .sev-shape {
+  background: var(--color-med);
+  transform: rotate(45deg);
+}
+.sev-low {
+  background: var(--color-low-bg);
+  color: var(--color-low);
+}
+.sev-low .sev-shape {
+  background: var(--color-low);
+  border-radius: 1px;
+}
+.sev-info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.sev-info .sev-shape {
+  background: transparent;
+  border: 1.5px solid var(--color-info);
+  border-radius: 50%;
+}
+
+/* Status dot */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-block;
+}
+.dot-ok {
+  background: var(--color-ok);
+}
+.dot-warn {
+  background: var(--color-warn);
+}
+.dot-err {
+  background: var(--color-err);
+}
+.dot-idle {
+  background: var(--color-neutral);
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+/* Kbd */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: var(--color-fg-tertiary);
+}
