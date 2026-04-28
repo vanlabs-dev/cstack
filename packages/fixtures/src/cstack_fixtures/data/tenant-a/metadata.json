@@ -51,30 +51,46 @@
     }
   ],
   "anomaly_calibration": {
-    "model_version": "signalguard-anomaly-pooled-tenant-a:v1",
+    "model_version": "signalguard-anomaly-pooled-00000000-aaaa-1111-1111-111111111111:v1",
+    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42) + rule-based score booster",
     "contamination": 0.05,
-    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42)",
+    "feature_count": 20,
     "scenarios": {
       "baseline": {
-        "flagged": 67,
-        "flagged_high": 17,
-        "ground_truth_anomalies": 0,
+        "rows": 3321,
+        "flagged": 157,
+        "flagged_high": 62,
+        "gt": 0,
+        "tp": 0,
         "precision": null,
         "recall": null,
         "f1": null,
-        "false_positive_rate": 0.02,
-        "note": "all 17 high-score flags are false positives (no injected anomalies in this scenario)."
+        "false_positive_rate": 0.019
       },
       "replay-attacks": {
-        "flagged": 310,
-        "flagged_high": 53,
-        "ground_truth_anomalies": 27,
-        "precision": 0.003,
-        "recall": 0.037,
-        "f1": 0.006,
-        "false_positive_rate": 0.092,
-        "note": "V1 model has poor recall: only 1 of 22 credential-stuffing events caught and zero impossible-travel/MFA-bypass/off-hours/new-ASN events. Tracked as Sprint 3.5 follow-up."
+        "rows": 3489,
+        "flagged": 171,
+        "flagged_high": 84,
+        "gt": 27,
+        "tp": 25,
+        "precision": 0.298,
+        "recall": 0.926,
+        "f1": 0.45,
+        "false_positive_rate": 0.017
+      },
+      "noisy": {
+        "rows": 3718,
+        "flagged": 275,
+        "flagged_high": 96,
+        "gt": 27,
+        "tp": 25,
+        "precision": 0.26,
+        "recall": 0.926,
+        "f1": 0.407,
+        "false_positive_rate": 0.019
       }
-    }
+    },
+    "calibrated_at": "2026-04-29",
+    "notes": "rule booster catches impossible-travel and credential-stuffing reliably; 2 ground-truth events per attack scenario miss because they look like normal events that lead into the attack chain (the first impossible-travel event is itself an Auckland sign-in)."
   }
 }

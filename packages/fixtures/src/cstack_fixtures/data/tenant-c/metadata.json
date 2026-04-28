@@ -54,5 +54,48 @@
       "signins_path": "signins/noisy/signins.json",
       "ground_truth_path": "signins/noisy/ground_truth.json"
     }
-  ]
+  ],
+  "anomaly_calibration": {
+    "model_version": "signalguard-anomaly-pooled-00000000-cccc-3333-3333-333333333333:v1",
+    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42) + rule-based score booster",
+    "contamination": 0.05,
+    "feature_count": 20,
+    "scenarios": {
+      "baseline": {
+        "rows": 4459,
+        "flagged": 201,
+        "flagged_high": 68,
+        "gt": 0,
+        "tp": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "false_positive_rate": 0.015
+      },
+      "replay-attacks": {
+        "rows": 4461,
+        "flagged": 249,
+        "flagged_high": 88,
+        "gt": 27,
+        "tp": 24,
+        "precision": 0.273,
+        "recall": 0.889,
+        "f1": 0.417,
+        "false_positive_rate": 0.014
+      },
+      "noisy": {
+        "rows": 4522,
+        "flagged": 295,
+        "flagged_high": 95,
+        "gt": 27,
+        "tp": 23,
+        "precision": 0.242,
+        "recall": 0.852,
+        "f1": 0.377,
+        "false_positive_rate": 0.016
+      }
+    },
+    "calibrated_at": "2026-04-29",
+    "notes": "highest sign-in volume; off-hours admin event still missed in noisy because the user is a tier-0 admin with broader work-hour distribution from the noise injection."
+  }
 }

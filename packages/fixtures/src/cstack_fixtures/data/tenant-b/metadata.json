@@ -66,5 +66,48 @@
       "signins_path": "signins/noisy/signins.json",
       "ground_truth_path": "signins/noisy/ground_truth.json"
     }
-  ]
+  ],
+  "anomaly_calibration": {
+    "model_version": "signalguard-anomaly-pooled-00000000-bbbb-2222-2222-222222222222:v1",
+    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42) + rule-based score booster",
+    "contamination": 0.05,
+    "feature_count": 20,
+    "scenarios": {
+      "baseline": {
+        "rows": 2909,
+        "flagged": 122,
+        "flagged_high": 44,
+        "gt": 0,
+        "tp": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "false_positive_rate": 0.015
+      },
+      "replay-attacks": {
+        "rows": 2876,
+        "flagged": 157,
+        "flagged_high": 80,
+        "gt": 27,
+        "tp": 22,
+        "precision": 0.275,
+        "recall": 0.815,
+        "f1": 0.411,
+        "false_positive_rate": 0.02
+      },
+      "noisy": {
+        "rows": 2958,
+        "flagged": 169,
+        "flagged_high": 82,
+        "gt": 27,
+        "tp": 23,
+        "precision": 0.28,
+        "recall": 0.852,
+        "f1": 0.422,
+        "false_positive_rate": 0.02
+      }
+    },
+    "calibrated_at": "2026-04-29",
+    "notes": "similar shape to tenant-a but slightly lower recall on credential stuffing in replay-attacks; the messy CA fixture profile produced a marginally noisier baseline."
+  }
 }
