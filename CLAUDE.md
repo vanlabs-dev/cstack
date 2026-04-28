@@ -41,6 +41,10 @@ These rules apply to every file Claude (or any contributor) creates or edits.
   and anomaly subcommands.
 - `apps/signalguard-api/` FastAPI HTTP surface over the same packages.
   Read endpoints, two action endpoints, OpenAPI 3.1, dual-key auth.
+- `apps/signalguard-web/` Next.js 15 dashboard. Server-components-first,
+  typed @hey-api client generated from openapi.json, Tailwind 4 with the
+  cstack design tokens. Three core screens in 5a. Build: `pnpm --filter
+signalguard-web {dev|build|test}`.
 - `packages/schemas/` pydantic models for tenants, CA policies, named locations,
   directory objects.
 - `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers,
