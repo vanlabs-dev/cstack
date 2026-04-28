@@ -1,15 +1,32 @@
-import type { AnomalyScoreDetail } from '@/lib/api/generated/types.gen';
+import type { AnomalyScoreDetail, SignIn } from '@/lib/api/generated/types.gen';
+
+import { WorldMap } from './WorldMap';
 
 interface LocationCardProps {
   detail: AnomalyScoreDetail;
+  history: SignIn[];
   typicalCountries: string[];
   distanceFromLastKm: number | null;
 }
 
-export function LocationCard({ detail, typicalCountries, distanceFromLastKm }: LocationCardProps) {
+export function LocationCard({
+  detail,
+  history,
+  typicalCountries,
+  distanceFromLastKm,
+}: LocationCardProps) {
   const loc = detail.signin.location ?? null;
   const country = loc?.countryOrRegion ?? '—';
   const city = loc?.city ?? '—';
+  const pin = {
+    country,
+    lat: loc?.geoCoordinates?.latitude ?? null,
+    lon: loc?.geoCoordinates?.longitude ?? null,
+  };
+  const historyPoints = history.map((s) => ({
+    lat: s.location?.geoCoordinates?.latitude ?? null,
+    lon: s.location?.geoCoordinates?.longitude ?? null,
+  }));
   return (
     <div className="overflow-hidden rounded-r-md border border-border bg-surface">
       <div className="flex items-center justify-between border-b border-border px-3.5 py-3">
@@ -43,9 +60,12 @@ export function LocationCard({ detail, typicalCountries, distanceFromLastKm }: L
           </div>
         </div>
       </div>
-      <div className="border-t border-border-subtle px-3.5 py-2 text-11 text-fg-tertiary">
+      <div className="border-t border-border-subtle">
+        <WorldMap pin={pin} history={historyPoints} width={undefined} height={130} />
+      </div>
+      <div className="px-3.5 py-2 text-11 text-fg-tertiary">
         {distanceFromLastKm === null
-          ? 'Map view in 5b'
+          ? 'Stylised view; lat/lon precision matches Graph signIn data.'
           : `~${Math.round(distanceFromLastKm).toLocaleString()} km from previous sign-in`}
       </div>
     </div>

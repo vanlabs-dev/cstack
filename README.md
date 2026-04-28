@@ -24,8 +24,8 @@ Status: early development. Public APIs and repository structure are unstable.
     (against fixtures); recall calibration ongoing, see [MLOPS.md](docs/MLOPS.md)
   - HTTP API (read + action endpoints, OpenAPI 3.1): complete; see
     [apps/signalguard-api/README.md](apps/signalguard-api/README.md)
-  - web dashboard (3 core screens against fixture data): 5a complete; see
-    [apps/signalguard-web/README.md](apps/signalguard-web/README.md)
+  - web dashboard (7 screens, component tests, tablet responsive): 5b complete;
+    see [apps/signalguard-web/README.md](apps/signalguard-web/README.md)
 
 ## Running locally
 

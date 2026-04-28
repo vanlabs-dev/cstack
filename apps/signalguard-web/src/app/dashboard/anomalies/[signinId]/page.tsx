@@ -126,6 +126,7 @@ export default async function AnomalyDrillDownPage({ params, searchParams }: Dri
         <div className="flex flex-col gap-3">
           <LocationCard
             detail={detail}
+            history={sortedHistory}
             typicalCountries={typicalCountries}
             distanceFromLastKm={null}
           />

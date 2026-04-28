@@ -213,3 +213,75 @@ attributions surface on flagged events, drift PSI / shadow scoring
 helpers are in place, and the calibrated metrics in each fixture's
 `metadata.json` give Sprint 4's API and Sprint 6's narrator a
 trustworthy baseline to consume.
+
+## Sprint 5b completion (2026-04-28)
+
+Closed out the SignalGuard frontend with breadth + quality.
+
+### What shipped
+
+- **Four new screens** wired against the live API:
+  - `/dashboard/signalguard` per-tenant overview (4 KPI cards, severity
+    breakdown bars, anomaly summary, coverage preview, freshness panel).
+  - `/dashboard/signalguard/coverage` full coverage matrix heatmap with a
+    cell drill-down side panel that lists applicable policies and a
+    derived "what's missing" summary.
+  - `/dashboard/anomalies` timeline list with time-range segmented control,
+    severity threshold chips, status filter (open + 2 placeholder states),
+    bulk-select header, and pagination.
+  - `/dashboard/settings/{general,audit-rules,anomaly-tuning,api-keys}`
+    plus three V2 placeholders (notifications, data-sync, integrations).
+
+- **API additions**: two new endpoints under `/tenants/{id}/api-keys`
+  (POST mints + returns plaintext once; DELETE revokes by label). 7
+  pytest cases cover the full happy path and 401/403/404/409 edges.
+
+- **74 component tests** across 27 test files: system primitives, layout
+  shell, all four 5b screens' key components, and the 5a backfill
+  (FindingsTable inline expansion, MetadataTable, ShapWaterfall,
+  CopyButton clipboard mock, ApiKeyGate gate logic, FilterChipStrip URL
+  push, etc.). Vitest + jsdom + @testing-library/react.
+
+- **Tablet pass at 768px**: the sidebar collapses behind a hamburger
+  toggle, KPI grid drops to 2-col, two-column rows stack, the findings
+  table hides ID/Age columns, the coverage side panel becomes a bottom
+  sheet, and the anomaly feed hides the device column.
+
+- **ShapWaterfall promotion**: the 5a div-based bars are now a real
+  recharts horizontal `BarChart` with per-cell colour and a custom
+  tooltip. KPI cards use a new `KpiSparkline` (recharts AreaChart).
+
+- **WorldMap polish**: the 5a "Map view in 5b" placeholder is replaced
+  with an inline equirectangular SVG showing the current sign-in dot
+  in critical-red and historical countries in soft green. No map
+  library dependency; ships in the static bundle.
+
+### Concessions
+
+- Audit rules listing is read-only and uses a static catalogue mirroring
+  `cstack-audit-rules`; per-rule enable/disable lands in V2 with API
+  support (UI is wired, API is not).
+- Anomaly tuning threshold and General settings preferences persist to
+  `localStorage` only; per-tenant tuning needs an API setter.
+- Settings tabs Notifications, Data & sync, and Integrations render
+  V2-marked placeholder cards. They were explicitly out of scope for 5b.
+- Mobile (<768px) renders correctly but the explicit responsive audit
+  was scoped to tablet (`md:` breakpoint).
+- The world map is stylised, not geographic; we considered shipping
+  TopoJSON country shapes but the size + license churn outweighed the
+  legibility gain at 130px tall.
+
+### Test stats
+
+- Web: 27 test files, 74 tests, full suite runs in ~13 seconds.
+- API: +7 tests for the new API-key endpoints (existing 50 still green).
+- Total green: 81 web + API tests on top of the existing Python suite.
+
+### Verdict
+
+SignalGuard's frontend is feature-complete on fixture data. The CLI is
+the only path to retrain/promote models, but every read surface and
+the audit/score action endpoints are reachable through the dashboard.
+Sprint 6 (LLM narratives) is the highest-leverage next step: every
+finding-expansion "Why this fired" section is currently the raw
+`summary` string; an LLM rewrite would lift triage UX significantly.

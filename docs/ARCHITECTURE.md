@@ -160,6 +160,19 @@ The committed design reference is `docs/DESIGN_TOKENS.md` plus
 `docs/DESIGN_SYSTEM.md`. The `.design/` source folder is gitignored and is
 not required for the build.
 
+The dashboard ships seven screens after Sprint 5b:
+
+- `/dashboard` workspace home
+- `/dashboard/signalguard` per-tenant overview (4 KPI cards, summaries, coverage preview)
+- `/dashboard/signalguard/coverage` full coverage matrix heatmap with cell drill-down
+- `/dashboard/findings` CA audit findings list with inline expansion
+- `/dashboard/anomalies` anomaly feed timeline with bulk select
+- `/dashboard/anomalies/[signinId]` per-sign-in drill-down with map + SHAP waterfall
+- `/dashboard/settings/*` general, audit-rules, anomaly-tuning, api-keys (plus three V2 placeholders)
+
+Every screen is fully wired against the live API; component tests cover
+both the 5a and 5b surfaces (74 tests across 27 files).
+
 ## Adding a new rule
 
 1. Drop a module under `packages/audit-rules/src/cstack_audit_rules/rules/`.

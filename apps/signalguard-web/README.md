@@ -25,16 +25,51 @@ asks for the dev key. Enter `dev-secret` (or whichever value you set in
 both server and client components can authenticate against the API on the
 same value.
 
-## Routes implemented in 5a
+## Routes
 
-| Path                              | Description                                                                                       |
-| --------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `/dashboard`                      | Home: workspace greeting, module grid, tenant connections, recent activity.                       |
-| `/dashboard/findings`             | CA audit findings with filter chips, paginated table, inline expansion, right rail.               |
-| `/dashboard/anomalies/[signinId]` | Sign-in drill-down with metadata table, location card, SHAP waterfall, history strip, action bar. |
+| Path                                 | Description                                                                                      |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `/dashboard`                         | Home: workspace greeting, module grid, tenant connections, recent activity.                      |
+| `/dashboard/signalguard`             | SignalGuard tenant overview: 4 KPI cards, CA + anomaly summary, coverage preview, freshness.     |
+| `/dashboard/signalguard/coverage`    | Full coverage matrix heatmap with cell drill-down side panel.                                    |
+| `/dashboard/findings`                | CA audit findings with filter chips, paginated table, inline expansion, right rail.              |
+| `/dashboard/anomalies`               | Anomaly feed timeline with filter rail, bulk select, paginated rows.                             |
+| `/dashboard/anomalies/[signinId]`    | Sign-in drill-down with metadata table, location map, SHAP waterfall, history strip, action bar. |
+| `/dashboard/settings/general`        | Workspace preferences: default tenant, theme, density.                                           |
+| `/dashboard/settings/audit-rules`    | Read-only catalogue of the 15 CA audit rules with descriptions and references.                   |
+| `/dashboard/settings/anomaly-tuning` | Current model summary, threshold preference, calibration metrics, retrain placeholders.          |
+| `/dashboard/settings/api-keys`       | Mint and revoke per-tenant API keys.                                                             |
 
-5b will add `/dashboard/overview`, `/dashboard/coverage-matrix`,
-`/dashboard/anomalies` (feed list), the onboarding wizard, and settings.
+The Notifications, Data & sync, and Integrations tabs are placeholders
+until their backend lands.
+
+## Testing
+
+```sh
+pnpm --filter signalguard-web test          # one-shot vitest run
+pnpm --filter signalguard-web test:watch    # watch mode
+```
+
+- Test files live in `__tests__/` directories adjacent to the source.
+- `src/test-utils/render.tsx` provides `renderWithProviders` (QueryClient,
+  fresh per test).
+- `src/test-utils/fixtures.ts` holds deterministic fixtures for findings,
+  anomaly scores, coverage matrices, model summaries, and tenant rows.
+- recharts and `next-themes` rely on browser APIs (ResizeObserver,
+  matchMedia) that jsdom does not implement; `vitest.setup.ts` stubs them.
+
+## Responsive design
+
+Desktop is the first-class target. The single tablet breakpoint is `md:`
+(>=768px in Tailwind 4):
+
+- Below 768px the sidebar collapses behind a hamburger toggle (see
+  `MobileNav`).
+- Multi-column grids fall back to single-column or 2-column layouts.
+- The findings table hides ID and Age columns; the coverage heatmap
+  scrolls horizontally; the coverage side panel becomes a bottom sheet.
+- Phone breakpoints (<768px) render correctly but have not been visually
+  audited; mobile polish is parked for a later sprint.
 
 ## Regenerating the API client
 
@@ -85,5 +120,6 @@ pnpm --filter signalguard-web build
 pnpm --filter signalguard-web start
 ```
 
-The build outputs a Next.js `standalone` bundle suitable for a containerised
-deployment in a future sprint.
+`output: "standalone"` is intentionally off (it symlinks the pnpm store,
+which fails on Windows). Re-enable on Linux CI for the container deploy
+sprint.
