@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { getApiKey, setApiKey } from "@/lib/api/key-storage";
+import { getApiKey, setApiKey } from '@/lib/api/key-storage';
 
 interface ApiKeyGateProps {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ interface ApiKeyGateProps {
 export function ApiKeyGate({ children }: ApiKeyGateProps) {
   const [resolved, setResolved] = useState<boolean>(false);
   const [hasKey, setHasKey] = useState<boolean>(false);
-  const [draft, setDraft] = useState<string>("");
+  const [draft, setDraft] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -40,14 +40,14 @@ export function ApiKeyGate({ children }: ApiKeyGateProps) {
       <form
         onSubmit={onSubmit}
         className="w-[360px] rounded-r-md border border-border bg-surface p-6"
-        style={{ boxShadow: "var(--shadow-modal)" }}
+        style={{ boxShadow: 'var(--shadow-modal)' }}
       >
         <div className="mb-1 flex items-center gap-2">
           <span
             className="grid h-6 w-6 place-items-center rounded-r-md text-white"
             style={{
-              background: "linear-gradient(135deg, #1A1A19 0%, #3A3A37 100%)",
-              fontFamily: "var(--font-mono)",
+              background: 'linear-gradient(135deg, #1A1A19 0%, #3A3A37 100%)',
+              fontFamily: 'var(--font-mono)',
               fontSize: 13,
               fontWeight: 700,
             }}
@@ -58,13 +58,10 @@ export function ApiKeyGate({ children }: ApiKeyGateProps) {
         </div>
         <h1 className="mb-1 text-16 font-semibold">Enter dev API key</h1>
         <p className="mb-4 text-13 text-fg-tertiary">
-          The signalguard-api dev key, configured locally via{" "}
+          The signalguard-api dev key, configured locally via{' '}
           <code className="mono text-12 text-fg">SIGNALGUARD_API_DEV_API_KEY</code>.
         </p>
-        <label
-          htmlFor="api-key"
-          className="eyebrow mb-1.5 block"
-        >
+        <label htmlFor="api-key" className="eyebrow mb-1.5 block">
           API key
         </label>
         <input

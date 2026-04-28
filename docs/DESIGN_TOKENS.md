@@ -8,53 +8,53 @@ Reference points: Linear, Stripe, Attio.
 
 Warm light, never pure white as the page background. Pure white is reserved for elevated surfaces (cards, panels) so they feel raised against the warm page tone.
 
-| Token            | Value     | Use                              |
-| ---------------- | --------- | -------------------------------- |
-| `bg`             | `#FAFAF9` | Page background, warm off-white  |
-| `surface`        | `#FFFFFF` | Cards, panels, table rows        |
-| `surface-subtle` | `#F4F4F2` | Subdued sections, expanded rows  |
-| `surface-hover`  | `#F2F2F0` | Row and item hover state         |
-| `surface-inset`  | `#F7F7F5` | Input wells, embedded selectors  |
+| Token            | Value     | Use                             |
+| ---------------- | --------- | ------------------------------- |
+| `bg`             | `#FAFAF9` | Page background, warm off-white |
+| `surface`        | `#FFFFFF` | Cards, panels, table rows       |
+| `surface-subtle` | `#F4F4F2` | Subdued sections, expanded rows |
+| `surface-hover`  | `#F2F2F0` | Row and item hover state        |
+| `surface-inset`  | `#F7F7F5` | Input wells, embedded selectors |
 
 ## Borders
 
-| Token             | Value     | Use                        |
-| ----------------- | --------- | -------------------------- |
-| `border`          | `#E8E8E6` | Primary hairline, default  |
-| `border-strong`   | `#D8D8D5` | Hover affordance on cards  |
-| `border-subtle`   | `#EFEFEC` | Internal table row dividers |
+| Token           | Value     | Use                         |
+| --------------- | --------- | --------------------------- |
+| `border`        | `#E8E8E6` | Primary hairline, default   |
+| `border-strong` | `#D8D8D5` | Hover affordance on cards   |
+| `border-subtle` | `#EFEFEC` | Internal table row dividers |
 
 ## Text
 
 Four-step text scale. Use `fg` for primary content, `fg-secondary` for supporting copy, `fg-tertiary` for metadata and labels, `fg-quaternary` for disabled or placeholder.
 
-| Token             | Value     |
-| ----------------- | --------- |
-| `fg`              | `#1A1A19` |
-| `fg-secondary`    | `#525250` |
-| `fg-tertiary`     | `#76766F` |
-| `fg-quaternary`   | `#A3A39C` |
+| Token           | Value     |
+| --------------- | --------- |
+| `fg`            | `#1A1A19` |
+| `fg-secondary`  | `#525250` |
+| `fg-tertiary`   | `#76766F` |
+| `fg-quaternary` | `#A3A39C` |
 
 ## Brand
 
 Cstack indigo. The signature accent. Used sparingly: primary buttons, focus rings, active links, the "live" status indicator. Should appear on roughly 3 to 5 percent of any given screen.
 
-| Token           | Value     |
-| --------------- | --------- |
-| `brand`         | `#4338CA` |
-| `brand-hover`   | `#3730A3` |
-| `brand-subtle`  | `#EEF0FF` |
-| `brand-text`    | `#312E81` |
+| Token          | Value     |
+| -------------- | --------- |
+| `brand`        | `#4338CA` |
+| `brand-hover`  | `#3730A3` |
+| `brand-subtle` | `#EEF0FF` |
+| `brand-text`   | `#312E81` |
 
 ## Module accents
 
 Each module has a secondary accent for context cues (sidebar active state, breadcrumb pill, module card border on hover). Never used outside of module context.
 
-| Token         | Value     | Module             |
-| ------------- | --------- | ------------------ |
-| `sg`          | `#0F766E` | SignalGuard (teal) |
-| `sg-subtle`   | `#E6F4F2` |                    |
-| `sg-text`     | `#134E4A` |                    |
+| Token       | Value     | Module             |
+| ----------- | --------- | ------------------ |
+| `sg`        | `#0F766E` | SignalGuard (teal) |
+| `sg-subtle` | `#E6F4F2` |                    |
+| `sg-text`   | `#134E4A` |                    |
 
 Future modules (LicenseLens `#7C3AED`, Driftwatch `#0E7490`, ChangeRadar `#9F1239`, CompliancePulse `#A16207`) will be added when their sprints land. Do not use these until then.
 
@@ -62,47 +62,47 @@ Future modules (LicenseLens `#7C3AED`, Driftwatch `#0E7490`, ChangeRadar `#9F123
 
 Color paired with shape so the severity signal is colour-blind safe. Always render the shape next to the colour fill.
 
-| Token       | Color     | Shape          |
-| ----------- | --------- | -------------- |
-| `crit`      | `#B91C1C` | Filled circle  |
-| `crit-bg`   | `#FBE9E9` |                |
-| `high`      | `#C2410C` | Filled triangle |
-| `high-bg`   | `#FBEBE0` |                |
-| `med`       | `#A16207` | Filled diamond |
-| `med-bg`    | `#FAF1DD` |                |
-| `low`       | `#1E40AF` | Filled square  |
-| `low-bg`    | `#E6EAF7` |                |
-| `info`      | `#525252` | Hollow circle  |
-| `info-bg`   | `#ECECEA` |                |
+| Token     | Color     | Shape           |
+| --------- | --------- | --------------- |
+| `crit`    | `#B91C1C` | Filled circle   |
+| `crit-bg` | `#FBE9E9` |                 |
+| `high`    | `#C2410C` | Filled triangle |
+| `high-bg` | `#FBEBE0` |                 |
+| `med`     | `#A16207` | Filled diamond  |
+| `med-bg`  | `#FAF1DD` |                 |
+| `low`     | `#1E40AF` | Filled square   |
+| `low-bg`  | `#E6EAF7` |                 |
+| `info`    | `#525252` | Hollow circle   |
+| `info-bg` | `#ECECEA` |                 |
 
 ## Status
 
 Used for sync status, health indicators, validation states. Never for severity (severity has its own scale above).
 
-| Token       | Value     | Use            |
-| ----------- | --------- | -------------- |
-| `ok`        | `#15803D` | Healthy, synced |
-| `ok-bg`     | `#E5F2EA` |                |
-| `warn`      | `#A16207` | Stale, attention needed |
-| `err`       | `#B91C1C` | Failed, blocked |
-| `neutral`   | `#A3A3A3` | Idle, inactive |
+| Token     | Value     | Use                     |
+| --------- | --------- | ----------------------- |
+| `ok`      | `#15803D` | Healthy, synced         |
+| `ok-bg`   | `#E5F2EA` |                         |
+| `warn`    | `#A16207` | Stale, attention needed |
+| `err`     | `#B91C1C` | Failed, blocked         |
+| `neutral` | `#A3A3A3` | Idle, inactive          |
 
 ## Coverage matrix
 
 Five-step protection scale for the heatmap. Always paired with an icon for accessibility.
 
-| Token             | Value     | Meaning                |
-| ----------------- | --------- | ---------------------- |
-| `cov-strong`      | `#15803D` | MFA + compliant device |
-| `cov-strong-bg`   | `#DDEEDF` |                        |
-| `cov-good`        | `#5EA982` | MFA only               |
-| `cov-good-bg`     | `#E6F0E5` |                        |
-| `cov-amber`       | `#C2880C` | Compliant device only  |
-| `cov-amber-bg`    | `#FAEFD0` |                        |
-| `cov-weak`        | `#D97757` | Report-only            |
-| `cov-weak-bg`     | `#FDE6DC` |                        |
-| `cov-bad`         | `#B91C1C` | Unprotected            |
-| `cov-bad-bg`      | `#FBE3E3` |                        |
+| Token           | Value     | Meaning                |
+| --------------- | --------- | ---------------------- |
+| `cov-strong`    | `#15803D` | MFA + compliant device |
+| `cov-strong-bg` | `#DDEEDF` |                        |
+| `cov-good`      | `#5EA982` | MFA only               |
+| `cov-good-bg`   | `#E6F0E5` |                        |
+| `cov-amber`     | `#C2880C` | Compliant device only  |
+| `cov-amber-bg`  | `#FAEFD0` |                        |
+| `cov-weak`      | `#D97757` | Report-only            |
+| `cov-weak-bg`   | `#FDE6DC` |                        |
+| `cov-bad`       | `#B91C1C` | Unprotected            |
+| `cov-bad-bg`    | `#FBE3E3` |                        |
 
 ## Typography
 
@@ -115,16 +115,16 @@ mono:  JetBrains Mono, ui-monospace, "SF Mono", Menlo, monospace
 
 Base font size: **13px**. Engineers want density. Common sizes:
 
-| Token   | Size  | Use                              |
-| ------- | ----- | -------------------------------- |
-| `t-12`  | 12px  | Eyebrow labels, microcopy        |
-| `t-13`  | 13px  | Body, table content, default     |
-| `t-14`  | 14px  | Section labels, sidebar items    |
-| `t-16`  | 16px  | Card titles, callouts            |
-| `t-18`  | 18px  | H3 within content                |
-| `t-22`  | 22px  | Page titles                      |
-| `t-28`  | 28px  | Hero stat numbers                |
-| `t-36`  | 36px  | Onboarding wizard headlines      |
+| Token  | Size | Use                           |
+| ------ | ---- | ----------------------------- |
+| `t-12` | 12px | Eyebrow labels, microcopy     |
+| `t-13` | 13px | Body, table content, default  |
+| `t-14` | 14px | Section labels, sidebar items |
+| `t-16` | 16px | Card titles, callouts         |
+| `t-18` | 18px | H3 within content             |
+| `t-22` | 22px | Page titles                   |
+| `t-28` | 28px | Hero stat numbers             |
+| `t-36` | 36px | Onboarding wizard headlines   |
 
 Weights: 400 (body), 500 (medium emphasis, labels, button text), 600 (headings). Never 700.
 
@@ -134,12 +134,12 @@ Eyebrow labels (10.5px, weight 600, uppercase, letter-spacing 0.07em, `fg-tertia
 
 ## Shape (border radius)
 
-| Token   | Value | Use                          |
-| ------- | ----- | ---------------------------- |
-| `r-sm`  | 3px   | Pills, chips, small badges   |
-| `r`     | 5px   | Buttons, inputs, default     |
-| `r-md`  | 6px   | Cards, panels                |
-| `r-lg`  | 8px   | Modal panels, popovers       |
+| Token  | Value | Use                        |
+| ------ | ----- | -------------------------- |
+| `r-sm` | 3px   | Pills, chips, small badges |
+| `r`    | 5px   | Buttons, inputs, default   |
+| `r-md` | 6px   | Cards, panels              |
+| `r-lg` | 8px   | Modal panels, popovers     |
 
 ## Shadow
 
@@ -155,11 +155,11 @@ No glows. No coloured shadows. No glassmorphism.
 
 ## Motion
 
-| Token       | Value                              |
-| ----------- | ---------------------------------- |
-| `ease`      | `cubic-bezier(0.2, 0, 0, 1)`       |
-| `dur-fast`  | 100ms                              |
-| `dur`       | 150ms                              |
+| Token      | Value                        |
+| ---------- | ---------------------------- |
+| `ease`     | `cubic-bezier(0.2, 0, 0, 1)` |
+| `dur-fast` | 100ms                        |
+| `dur`      | 150ms                        |
 
 Fast transitions for hover and focus state changes (100ms). Slightly slower for layout shifts and panel transitions (150ms). Nothing longer. No bouncy springs. No staggered list animations.
 

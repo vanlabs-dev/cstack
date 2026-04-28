@@ -44,6 +44,7 @@ Every authenticated screen sits inside the same shell:
 ### Topbar (44px)
 
 Three regions:
+
 - **Left**: breadcrumbs. First breadcrumb is a module pill (e.g. `[shield] SignalGuard`) with the module accent background. Subsequent breadcrumbs are plain text separated by chevrons.
 - **Centre**: empty (no tabs in topbar).
 - **Right**: contextual actions for the current screen. Always at least one secondary button (`btn`) and one primary button (`btn-primary`) when actions exist. Examples: `[refresh] Sync all` + `[plus] Add tenant`.
@@ -157,6 +158,7 @@ Per-tenant dashboard. Top row of 4 stat cards (critical, high, anomalies last 24
 Two-column layout: main content + 240px right rail.
 
 **Main**:
+
 - Filter chip strip at top showing active filters with X to remove. "Clear all" link. "Add filter" button opens dropdown of filter dimensions.
 - Findings table with columns: checkbox, severity badge, title + affected object, finding ID (mono), age, status, row actions menu.
 - Row click toggles inline expansion. Expanded row shows:
@@ -168,6 +170,7 @@ Two-column layout: main content + 240px right rail.
   - Action bar at bottom of expansion: snooze, mark resolved, copy as JSON, open in Entra portal.
 
 **Right rail**:
+
 - **Summary** card: total findings, by-severity breakdown (with mini bars), filtered count.
 - **Snoozed** count.
 - **Bulk actions** card (visible when rows selected): snooze selected, mark resolved selected, export selected.
@@ -187,6 +190,7 @@ Two-column layout, 60/40 split.
 **Left (60%)**: Full sign-in metadata table grouped into sections (identity, location, network, client, auth, outcome). Mono font for IDs, IPs, GUIDs, timestamps. Each row is a label (`fg-tertiary`) and value (`fg`). Some values have copy-to-clipboard affordance.
 
 **Right (40%)**:
+
 - **Location card** (top): country, city, ASN, with comparison to user's typical countries from history.
 - **SHAP waterfall** (middle): horizontal bar chart. Each bar is one feature contribution. Bar colour follows direction (`crit` for "pushes anomalous", `neutral` for "pushes normal"). Sorted by absolute value descending. Use `recharts` for rendering.
 - **User history strip** (bottom): horizontal scroll of last 30 sign-ins. Each is a small block, anomalies highlighted with severity colour.
@@ -222,6 +226,7 @@ Skeleton elements matching the layout. Width and height of the actual content. A
 ## Error boundaries
 
 Plain panel with:
+
 - Eyebrow: error type (e.g. "API request failed")
 - Title: short summary
 - Body: the RFC 7807 problem detail's `detail` field

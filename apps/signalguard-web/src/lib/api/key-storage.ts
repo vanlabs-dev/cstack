@@ -7,11 +7,11 @@
  * this is dev-only auth, not a production credential store.
  */
 
-const STORAGE_KEY = "cstack-api-key";
-const COOKIE_NAME = "cstack-api-key";
+const STORAGE_KEY = 'cstack-api-key';
+const COOKIE_NAME = 'cstack-api-key';
 const COOKIE_MAX_AGE_S = 60 * 60 * 24 * 365;
 
-const isBrowser = (): boolean => typeof window !== "undefined";
+const isBrowser = (): boolean => typeof window !== 'undefined';
 
 export function getApiKey(): string | null {
   if (!isBrowser()) return null;

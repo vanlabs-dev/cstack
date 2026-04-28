@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ==========================================================================
    Cstack design tokens — Tailwind 4 native @theme syntax.
@@ -67,8 +67,8 @@
   --color-cov-bad-bg: #fbe3e3;
 
   /* Type scale */
-  --font-sans: var(--font-inter), -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: var(--font-inter), -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, 'SF Mono', Menlo, monospace;
 
   --text-12: 12px;
   --text-12--line-height: 1.5;
@@ -117,13 +117,13 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv11", "ss01";
+  font-feature-settings: 'cv11', 'ss01';
 }
 
 /* Numerics utility */
 .num {
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
+  font-feature-settings: 'tnum';
 }
 .mono {
   font-family: var(--font-mono);

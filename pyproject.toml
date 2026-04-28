@@ -8,6 +8,7 @@ package = false
 
 [tool.uv.workspace]
 members = ["apps/*", "packages/*"]
+exclude = ["apps/signalguard-web"]
 
 [tool.uv.sources]
 cstack-schemas = { workspace = true }

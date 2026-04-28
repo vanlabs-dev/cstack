@@ -11,11 +11,11 @@
  * The generated client lives at `lib/api/generated/`; never edit it.
  */
 
-import { createClient, createConfig } from "@hey-api/client-fetch";
+import { createClient, createConfig } from '@hey-api/client-fetch';
 
-import { resolveApiKey } from "./auth";
+import { resolveApiKey } from './auth';
 
-const DEFAULT_BASE_URL = "http://localhost:8000";
+const DEFAULT_BASE_URL = 'http://localhost:8000';
 
 export interface ProblemDetail {
   type: string;
@@ -36,7 +36,7 @@ export class ApiError extends Error {
 
   constructor(problem: ProblemDetail) {
     super(`${problem.title}: ${problem.detail}`);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.status = problem.status;
     this.type = problem.type;
     this.title = problem.title;
@@ -48,8 +48,8 @@ export class ApiError extends Error {
 
 function generateCorrelationId(): string {
   if (
-    typeof globalThis.crypto !== "undefined" &&
-    typeof globalThis.crypto.randomUUID === "function"
+    typeof globalThis.crypto !== 'undefined' &&
+    typeof globalThis.crypto.randomUUID === 'function'
   ) {
     return globalThis.crypto.randomUUID();
   }
@@ -65,9 +65,9 @@ function buildClient(): ReturnType<typeof createClient> {
   instance.interceptors.request.use(async (request) => {
     const key = await resolveApiKey();
     if (key) {
-      request.headers.set("X-API-Key", key);
+      request.headers.set('X-API-Key', key);
     }
-    request.headers.set("X-Correlation-Id", generateCorrelationId());
+    request.headers.set('X-Correlation-Id', generateCorrelationId());
     return request;
   });
 
@@ -79,11 +79,11 @@ function buildClient(): ReturnType<typeof createClient> {
       problem = JSON.parse(text) as ProblemDetail;
     } catch {
       problem = {
-        type: "https://signalguard.dev/errors/unknown",
-        title: response.statusText || "Error",
+        type: 'https://signalguard.dev/errors/unknown',
+        title: response.statusText || 'Error',
         status: response.status,
         detail: text || `Request failed with status ${response.status}`,
-        correlation_id: response.headers.get("X-Correlation-Id") ?? "",
+        correlation_id: response.headers.get('X-Correlation-Id') ?? '',
       };
     }
     throw new ApiError(problem);
