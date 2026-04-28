@@ -41,6 +41,21 @@ src = ["apps", "packages"]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 ignore = []
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's Depends/Query/Path/Header sentinels are designed to live in
+# argument defaults; B008 fires false-positive on every dependency-injected
+# parameter without this allowlist.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Header",
+    "fastapi.Cookie",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Body",
+]
+
 [tool.ruff.format]
 quote-style = "double"
 

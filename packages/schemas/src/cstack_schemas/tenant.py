@@ -4,6 +4,28 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+class TenantApiKey(BaseModel):
+    """A hashed API key authorised to act on behalf of a tenant.
+
+    Plaintext keys are never persisted: the CLI generates a key, prints it
+    once, stores its SHA-256 hex digest here, and forgets the original.
+    """
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    key_hash: str = Field(description="SHA-256 hex digest of the issued key")
+    label: str = Field(description="Human-readable label, e.g. 'gha-dashboard'")
+    created_at: datetime
+
+    @field_validator("key_hash")
+    @classmethod
+    def _validate_hash(cls, value: str) -> str:
+        normalised = value.lower()
+        if len(normalised) != 64 or any(c not in "0123456789abcdef" for c in normalised):
+            raise ValueError("key_hash must be a 64-char SHA-256 hex digest")
+        return normalised
+
+
 class TenantConfig(BaseModel):
     """Persistent registration record for a tenant in the local cstack store."""
 
@@ -16,6 +38,7 @@ class TenantConfig(BaseModel):
     cert_subject: str
     added_at: datetime
     is_fixture: bool = False
+    api_keys: list[TenantApiKey] = Field(default_factory=list)
 
     @field_validator("tenant_id", "client_id")
     @classmethod

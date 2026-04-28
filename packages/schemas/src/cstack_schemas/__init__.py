@@ -31,7 +31,7 @@ from cstack_schemas.graph.signin import (
     SignInLocation,
     SignInStatus,
 )
-from cstack_schemas.tenant import TenantConfig
+from cstack_schemas.tenant import TenantApiKey, TenantConfig
 
 __all__ = [
     "Applications",
@@ -57,6 +57,7 @@ __all__ = [
     "SignInActivity",
     "SignInLocation",
     "SignInStatus",
+    "TenantApiKey",
     "TenantConfig",
     "User",
     "Users",

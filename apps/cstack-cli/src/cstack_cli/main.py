@@ -19,7 +19,7 @@ from cstack_fixtures import (
     load_fixture as fixtures_load_helper,
 )
 from cstack_graph_client import build_client, load_certificate_credential
-from cstack_schemas import TenantConfig
+from cstack_schemas import TenantApiKey, TenantConfig
 from cstack_storage import (
     connection_scope,
     list_tenants_db,
@@ -169,6 +169,41 @@ def tenant_remove(ctx: click.Context, identifier: str) -> None:
         run_migrations(conn)
         remove_tenant_db(conn, target.tenant_id)
     click.echo(f"removed {target.display_name} ({target.tenant_id})")
+
+
+@tenant.command("create-api-key")
+@click.argument("identifier")
+@click.option("--label", default="default", show_default=True, help="Human-readable label.")
+@click.pass_context
+def tenant_create_api_key(ctx: click.Context, identifier: str, label: str) -> None:
+    """Mint an API key for a tenant. Prints the plaintext key once.
+
+    The plaintext is never stored: only the SHA-256 digest is appended to
+    tenants.json. Save the output of this command somewhere safe.
+    """
+    import hashlib
+    import secrets
+    from datetime import UTC, datetime
+
+    settings = _settings(ctx)
+    existing = load_tenants(settings.tenants_file)
+    target = find_tenant(existing, identifier)
+    if target is None:
+        raise click.ClickException(f"no tenant matching '{identifier}' in {settings.tenants_file}")
+    plaintext = secrets.token_urlsafe(32)
+    digest = hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
+    key = TenantApiKey(key_hash=digest, label=label, created_at=datetime.now(UTC))
+    updated = TenantConfig.model_validate(
+        {**target.model_dump(mode="json"), "api_keys": [*target.api_keys, key]}
+    )
+    survivors = [t if t.tenant_id != target.tenant_id else updated for t in existing]
+    save_tenants(settings.tenants_file, survivors)
+    click.echo(plaintext)
+    click.echo(
+        f"saved hash for label='{label}' on tenant {target.display_name}; "
+        "this plaintext key will not be shown again",
+        err=True,
+    )
 
 
 @tenant.command("verify")
