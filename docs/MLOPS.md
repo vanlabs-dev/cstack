@@ -214,33 +214,56 @@ the IF score-direction convention.
 
 ## Calibration results
 
-Tenant-a calibration on 2026-04-29; full pipeline ran from a clean
-DuckDB and `mlruns/`.
+Full pipeline ran from a clean DuckDB and `mlruns/` against all three
+fixture tenants and all three scenarios on 2026-04-29.
 
-| Scenario       | rows scored | flagged | flagged ge 0.7 | ground-truth | TP  | precision | recall | F1   | FPR   |
-| -------------- | ----------- | ------- | -------------- | ------------ | --- | --------- | ------ | ---- | ----- |
-| baseline       | 3321        | 67      | 17             | 0            | 0   | n/a       | n/a    | n/a  | 0.020 |
-| replay-attacks | 6810        | 310     | 53             | 27           | 1   | 0.003     | 0.037  | 0.01 | 0.092 |
+| tenant   | scenario       | rows | flagged | ge 0.7 | GT  | TP  | precision | recall | F1    | FPR   |
+| -------- | -------------- | ---- | ------- | ------ | --- | --- | --------- | ------ | ----- | ----- |
+| tenant-a | baseline       | 3321 | 157     | 62     | 0   | 0   | n/a       | n/a    | n/a   | 0.019 |
+| tenant-a | replay-attacks | 3489 | 171     | 84     | 27  | 25  | 0.298     | 0.926  | 0.450 | 0.017 |
+| tenant-a | noisy          | 3718 | 275     | 96     | 27  | 25  | 0.260     | 0.926  | 0.407 | 0.019 |
+| tenant-b | baseline       | 2909 | 122     | 44     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
+| tenant-b | replay-attacks | 2876 | 157     | 80     | 27  | 22  | 0.275     | 0.815  | 0.411 | 0.020 |
+| tenant-b | noisy          | 2958 | 169     | 82     | 27  | 23  | 0.280     | 0.852  | 0.422 | 0.020 |
+| tenant-c | baseline       | 4459 | 201     | 68     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
+| tenant-c | replay-attacks | 4461 | 249     | 88     | 27  | 24  | 0.273     | 0.889  | 0.417 | 0.014 |
+| tenant-c | noisy          | 4522 | 295     | 95     | 27  | 23  | 0.242     | 0.852  | 0.377 | 0.016 |
 
-Recall is the open problem. The full discussion is in
-`docs/SPRINT_NOTES.md` under "Sprint 3 anomaly calibration"; the short
-version is that the pooled IF treats injected anomalies as
-"normal-rare" because their feature region overlaps with legitimate-but-
-infrequent baseline events. Sprint 3.5 will move to per-user models and
-likely add a rule-based pre-filter for unambiguous patterns
-(impossible travel, new ASN + new country combo) to backstop the IF.
+Recall sits between 0.815 and 0.926 on attacks across all tenants.
+Precision is 0.24-0.30 because the pooled IF still surfaces baseline
+outliers (legitimate travel, mobile-carrier ASN swaps) above the 0.7
+threshold. The missed events are the off-hours admin sign-in (no
+unambiguous feature signal at the tenant level) and the first sign-in
+of an attack chain that on its own looks like a normal sign-in.
+
+The first scoring run with the IF alone produced TP = 0 across all
+attacks. Three structural fixes restored recall:
+
+1. A row-alignment bug between `_build_score_features` and
+   `score_batch` was applying IF predictions to the wrong rows.
+2. A `travel_speed_kmh` interaction feature lets the IF isolate
+   physically-impossible velocity directly.
+3. A small rule-based booster (`_rule_score_boosts`) raises the
+   normalised score to a hard floor for four unambiguous attack
+   patterns (impossible travel, new country + new ASN, failure +
+   new ASN, MFA bypass + legacy auth).
+
+`docs/SPRINT_NOTES.md` under "Sprint 3 anomaly calibration" carries
+the full investigation; the booster + interaction feature pattern is
+a deliberately small layer on top of the IF and does not replace it.
 
 ## Known limitations
 
-- Pooled-only model. Per-user models, the `noisy` scenario, and
-  multi-tenant calibration are Sprint 3.5.
-- Recall is low on injected anomalies. See calibration discussion above.
+- Pooled-only model. Per-user models, autoencoder fallback, and
+  weekly automated retrain are Sprint 3.5 work.
+- Off-hours admin sign-ins are not caught by the booster. Per-user
+  hour distributions in Sprint 3.5 should fix this.
 - ASN lookup is stubbed via IP prefix matching. Real GeoIP integration
   is Sprint 7.
 - Scoring is batch only. Real-time scoring is V2.
-- No autoencoder. Sprint 3.5 will reassess if IF + per-user fit cannot
-  be calibrated; if not, the autoencoder package will plug into the
-  same `ml-features.pipeline` contract.
+- No autoencoder yet. Sprint 3.5 will reassess once we have live
+  tenant baselines; if needed, the autoencoder package will plug into
+  the same `ml-features.pipeline` contract.
 - MLflow file-backend deprecation warning (MLflow 2.18+). Migration to
   a SQLite backend is a Sprint 3.5 housekeeping item; the warning does
   not affect functionality.

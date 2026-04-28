@@ -133,56 +133,83 @@ and scored against `baseline` and `replay-attacks`. Per-user models and the
   `configure_tracking` to use `Path.as_uri()` so Windows drive letters round-
   trip correctly. Linux/macOS paths are unaffected.
 
-### Tenant-a results
+### Three structural fixes during calibration
 
-| Scenario       | flagged | flagged ge 0.7 | ground-truth | TP  | precision | recall | F1   | FPR   |
-| -------------- | ------- | -------------- | ------------ | --- | --------- | ------ | ---- | ----- |
-| baseline       | 67      | 17             | 0            | 0   | n/a       | n/a    | n/a  | 0.020 |
-| replay-attacks | 310     | 53             | 27           | 1   | 0.003     | 0.037  | 0.01 | 0.092 |
+The first scoring run produced precision / recall = 0 / 0 across the attack
+scenarios. Three structural problems came out of the investigation:
 
-Only one ground-truth event was caught (a single credential-stuffing
-sign-in). Impossible travel, MFA bypass, off-hours admin, and the new-ASN
-injection all scored as more normal than baseline outliers despite their
-features being unambiguously anomalous (eg the second impossible-travel
-event has `distance_from_last_signin_km=2625`, `is_new_country=1`,
-`is_new_asn=1`).
+1. **Row-alignment bug.** `_build_score_features` iterated users in dict
+   order while `score_batch` reordered the source list to match
+   "alphabetical user, then chronological". The two orders did not line
+   up, so IF predictions and SHAP rows were applied to the wrong sign-ins.
+   Switched both code paths to `sorted(by_user.keys())` so the layout is
+   identical.
+2. **Feature interaction missing.** Pure-feature signals (huge distance,
+   new country, new ASN) showed up in baseline travel events too. Added
+   `travel_speed_kmh = distance / max(hours_since, 1min)` as a 20th
+   feature so the IF can isolate "5000 km/h between sign-ins" directly.
+3. **Hybrid booster.** Even with the new feature, the IF treated the
+   injected attacks as "rare-but-normal" because tree splits chose among
+   20 random features and the unambiguous signals were diluted. Added a
+   deterministic post-IF score booster (`_rule_score_boosts`) for four
+   obvious attack patterns: impossible travel, new country + new ASN
+   combo, failure from a new ASN, and MFA bypass to legacy auth. The
+   booster takes a `max` against the IF's normalised score so it never
+   drops a strong IF signal.
 
-### Why recall is low
+### Calibration table (all three tenants, all three scenarios)
 
-The pooled IF was trained on baseline data that already contains 1% travel
-events, occasional mobile-carrier ASN changes, and 2% MFA failures. The
-injected anomalies share their feature regions with these legitimate-but-
-rare events, so the model treats them as "normal-rare" rather than
-"abnormal". Two structural fixes are parked for Sprint 3.5:
+| tenant   | scenario       | rows | flagged | ge 0.7 | GT  | TP  | precision | recall | F1    | FPR   |
+| -------- | -------------- | ---- | ------- | ------ | --- | --- | --------- | ------ | ----- | ----- |
+| tenant-a | baseline       | 3321 | 157     | 62     | 0   | 0   | n/a       | n/a    | n/a   | 0.019 |
+| tenant-a | replay-attacks | 3489 | 171     | 84     | 27  | 25  | 0.298     | 0.926  | 0.450 | 0.017 |
+| tenant-a | noisy          | 3718 | 275     | 96     | 27  | 25  | 0.260     | 0.926  | 0.407 | 0.019 |
+| tenant-b | baseline       | 2909 | 122     | 44     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
+| tenant-b | replay-attacks | 2876 | 157     | 80     | 27  | 22  | 0.275     | 0.815  | 0.411 | 0.020 |
+| tenant-b | noisy          | 2958 | 169     | 82     | 27  | 23  | 0.280     | 0.852  | 0.422 | 0.020 |
+| tenant-c | baseline       | 4459 | 201     | 68     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
+| tenant-c | replay-attacks | 4461 | 249     | 88     | 27  | 24  | 0.273     | 0.889  | 0.417 | 0.014 |
+| tenant-c | noisy          | 4522 | 295     | 95     | 27  | 23  | 0.242     | 0.852  | 0.377 | 0.016 |
 
-- Per-user models will catch the deviations from individual baselines (a
-  user who never roams suddenly travelling is anomalous to that user even if
-  it is normal at the tenant level).
-- A hybrid rules + IF detector adds rule-based pre-filters for unambiguous
-  patterns (impossible travel, new ASN + new country combinations) and uses
-  IF for behavioural drift only.
+Recall on attack scenarios sits between 0.815 and 0.926; the missed events
+are the off-hours admin sign-in (no obvious feature signal) and the first
+sign-in of an attack chain that on its own looks like a normal sign-in
+(eg the Auckland event before impossible travel).
+
+### Surprising and unsurprising findings
+
+- The pure IF found nothing meaningful by itself; the booster does the
+  heavy lifting for the unambiguous attack patterns. That matches the
+  literature on tree-based anomaly detectors when train and test
+  distributions overlap.
+- The off-hours admin sign-in is the only attack pattern not caught by
+  the booster. Sprint 3.5 will add per-user hour distributions so this
+  event becomes anomalous to its specific user even if it looks normal
+  at the tenant level.
+- The `noisy` scenario adds operational noise (frequent travel, shifted
+  hours, mobile-heavy users) but recall stays within ~5 points of
+  `replay-attacks`. The rule-based signals are robust to the noise the
+  IF struggles with.
 
 ### Deviations from the spec
 
-- Per-user models, `tenant-b` / `tenant-c` calibration, and the `noisy`
-  scenario are deferred to Sprint 3.5. Token budget and the recall problem
-  surfaced during tenant-a calibration both pointed to "fix the model first,
-  then run the full sweep".
-- Per-user model registration in MLflow (one registered model per user) was
-  scoped out for V1: the registry would carry tens of small models per
-  tenant and the per-user fits did not survive calibration anyway. Pooled
-  registered model + per-user fits in memory is cleaner once Sprint 3.5
-  revisits the modelling approach.
+- Per-user model registration in MLflow (one registered model per user)
+  was scoped out for V1: the registry would carry tens of small models
+  per tenant and the per-user fits did not survive calibration anyway.
+  Pooled registered model + the rule-based booster covers the same ground
+  for Sprint 3 and per-user fits land in Sprint 3.5 once we have a real
+  tenant baseline to learn from.
 - MLflow file backend emits a deprecation warning under MLflow 2.18+; the
-  warning is harmless for fixture work and the migration to a SQLite backend
-  is a Sprint 3.5 housekeeping item.
+  warning is harmless for fixture work and the migration to a SQLite
+  backend is a Sprint 3.5 housekeeping item.
 
 ### Verdict
 
 The pipeline runs end-to-end (`signins extract` -> `anomaly train` ->
 `anomaly promote --force` -> `anomaly score` -> findings landing in
-DuckDB), MLflow tracks every run with @champion / @challenger aliases,
-SHAP attributions surface on flagged events, and drift PSI / shadow
-scoring helpers are in place. Recall is the open problem and the next
-calibration pass (Sprint 3.5) needs structural changes, not a parameter
-tweak.
+DuckDB) on all three fixture tenants across all three scenarios. MLflow
+tracks every run with `@champion` / `@challenger` aliases, SHAP
+attributions surface on flagged events, drift PSI / shadow scoring
+helpers are in place, and the calibrated metrics in each fixture's
+`metadata.json` give Sprint 4's API and Sprint 6's narrator a
+trustworthy baseline to consume.
