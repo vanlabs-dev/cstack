@@ -58,6 +58,7 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 
 Note: model artefacts and the local `mlruns/` directory are gitignored; never
 check them in.
+
 - `scripts/` PowerShell app registration and cert rotation scripts.
 - `infra/` deployment artifacts (TBD).
 
