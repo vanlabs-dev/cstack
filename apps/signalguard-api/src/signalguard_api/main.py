@@ -22,6 +22,7 @@ from signalguard_api.routers import (
     coverage,
     findings,
     health,
+    models,
     signins,
     tenants,
     whoami,
@@ -79,4 +80,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(signins.user_router)
     app.include_router(audit.router)
     app.include_router(anomaly_actions.router)
+    app.include_router(models.router)
     return app

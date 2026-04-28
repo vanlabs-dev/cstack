@@ -45,3 +45,32 @@ def get_alias_version(model_name: str, alias: str) -> Any:
 def load_by_alias(model_name: str, alias: str) -> Any:
     """Load a sklearn model by alias. Raises if alias not set."""
     return mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
+
+
+def search_registered_models(name_prefix: str | None = None) -> list[Any]:
+    """Return RegisteredModel objects, optionally filtered by name prefix.
+
+    Used by the API to enumerate models for a tenant. The MLflow file
+    backend supports a SQL-like ``filter_string``; the REST backend supports
+    the same string syntax.
+    """
+    client = MlflowClient()
+    filter_string = f"name LIKE '{name_prefix}%'" if name_prefix else ""
+    return list(client.search_registered_models(filter_string=filter_string))
+
+
+def list_model_versions(model_name: str) -> list[Any]:
+    """Return every ModelVersion for ``model_name`` ordered newest-first."""
+    client = MlflowClient()
+    versions = client.search_model_versions(filter_string=f"name='{model_name}'")
+    return sorted(versions, key=lambda v: int(v.version), reverse=True)
+
+
+def get_run_metrics(run_id: str) -> dict[str, float]:
+    """Read the final metrics dict from a finished run, or {} on missing."""
+    client = MlflowClient()
+    try:
+        run = client.get_run(run_id)
+    except (mlflow.exceptions.RestException, mlflow.exceptions.MlflowException):
+        return {}
+    return dict(run.data.metrics or {})
