@@ -49,5 +49,32 @@
       "signins_path": "signins/noisy/signins.json",
       "ground_truth_path": "signins/noisy/ground_truth.json"
     }
-  ]
+  ],
+  "anomaly_calibration": {
+    "model_version": "signalguard-anomaly-pooled-tenant-a:v1",
+    "contamination": 0.05,
+    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42)",
+    "scenarios": {
+      "baseline": {
+        "flagged": 67,
+        "flagged_high": 17,
+        "ground_truth_anomalies": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null,
+        "false_positive_rate": 0.02,
+        "note": "all 17 high-score flags are false positives (no injected anomalies in this scenario)."
+      },
+      "replay-attacks": {
+        "flagged": 310,
+        "flagged_high": 53,
+        "ground_truth_anomalies": 27,
+        "precision": 0.003,
+        "recall": 0.037,
+        "f1": 0.006,
+        "false_positive_rate": 0.092,
+        "note": "V1 model has poor recall: only 1 of 22 credential-stuffing events caught and zero impossible-travel/MFA-bypass/off-hours/new-ASN events. Tracked as Sprint 3.5 follow-up."
+      }
+    }
+  }
 }
