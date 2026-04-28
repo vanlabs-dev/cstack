@@ -39,6 +39,8 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 
 - `apps/cstack-cli/` Click CLI exposing tenant, extract, fixtures, audit, signins,
   and anomaly subcommands.
+- `apps/signalguard-api/` FastAPI HTTP surface over the same packages.
+  Read endpoints, two action endpoints, OpenAPI 3.1, dual-key auth.
 - `packages/schemas/` pydantic models for tenants, CA policies, named locations,
   directory objects.
 - `packages/storage/` DuckDB connection, migrations, and per-resource upsert helpers,

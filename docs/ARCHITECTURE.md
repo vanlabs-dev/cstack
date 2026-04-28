@@ -10,6 +10,9 @@ runs as an independent service or library.
 
 - `apps/cstack-cli/` Click-based CLI exposing tenant, extract, fixtures, audit,
   signins, and anomaly subcommands.
+- `apps/signalguard-api/` FastAPI HTTP surface over the same packages the CLI
+  consumes. Read endpoints (tenants, findings, anomaly scores, coverage,
+  sign-ins, models) plus two action endpoints (audit run, anomaly score).
 - `packages/schemas/` Pydantic v2 models for tenants, conditional access policies,
   named locations, and directory objects.
 - `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
@@ -98,6 +101,33 @@ fixtures load-all                   live extract
 Both code paths share the same downstream tables. The audit modules read an
 `AuditContext` (policies + directory + locations + as_of) and emit `Finding`
 records the storage layer dedupes by id.
+
+## API service
+
+```
+HTTP client (curl, dashboard, scripts)
+        |
+        v
++--------------------------+
+| signalguard-api          |
+| - X-API-Key auth         |
+| - per-request DuckDB     |
+| - asyncio.to_thread for  |
+|   blocking storage calls |
++-----------+--------------+
+            |
+            v
+   data/cstack.duckdb        mlruns/  (MLflow file backend)
+            |                    |
+            v                    v
++----------- existing cstack-* packages -----------+
+| audit-core   audit-coverage   audit-rules        |
+| audit-exclusions  ml-anomaly  ml-mlops  storage  |
++--------------------------------------------------+
+```
+
+The API never duplicates business logic; routers parse input, dispatch into
+the package functions the CLI already calls, and shape the response.
 
 ## Adding a new rule
 

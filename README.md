@@ -7,6 +7,7 @@ Status: early development. Public APIs and repository structure are unstable.
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [API reference](docs/API.md)
 - [MLOps walkthrough](docs/MLOPS.md)
 - [Rules catalogue](docs/RULES.md)
 - [Contributing](docs/CONTRIBUTING.md)
@@ -21,6 +22,8 @@ Status: early development. Public APIs and repository structure are unstable.
   - CA audit (coverage matrix, 15 rules, exclusion hygiene): complete (against fixtures)
   - sign-in anomaly detection (Isolation Forest + SHAP + MLflow): pipeline complete
     (against fixtures); recall calibration ongoing, see [MLOPS.md](docs/MLOPS.md)
+  - HTTP API (read + action endpoints, OpenAPI 3.1): complete; see
+    [apps/signalguard-api/README.md](apps/signalguard-api/README.md)
 
 ## Running locally
 
@@ -59,6 +62,17 @@ The model is a pooled per-tenant Isolation Forest with SHAP top-3 attributions
 on every flagged sign-in. MLflow tracks every run; aliases `@champion` and
 `@challenger` gate promotion. See [MLOPS.md](docs/MLOPS.md) for the full
 lifecycle.
+
+### Starting the API
+
+```sh
+echo 'SIGNALGUARD_API_DEV_API_KEY=dev-secret' >> .env
+uv run signalguard-api --port 8000
+# OpenAPI UI: http://localhost:8000/docs
+```
+
+See [apps/signalguard-api/README.md](apps/signalguard-api/README.md) for the
+auth model and curl examples.
 
 ### Running an audit
 
