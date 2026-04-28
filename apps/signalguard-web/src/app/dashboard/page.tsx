@@ -138,7 +138,7 @@ export default async function DashboardPage({ searchParams }: HomePageProps) {
             {modules.filter((m) => m.status === 'active').length} / {modules.length} active
           </span>
         </div>
-        <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-5">
           {modules.map((m) => (
             <ModuleCard key={m.id} module={m} />
           ))}
@@ -146,10 +146,7 @@ export default async function DashboardPage({ searchParams }: HomePageProps) {
       </section>
 
       {/* Two columns */}
-      <section
-        className="grid gap-4"
-        style={{ gridTemplateColumns: 'minmax(0, 1.05fr) minmax(0, 1fr)' }}
-      >
+      <section className="grid gap-4 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
         {/* Tenants */}
         <div className="overflow-hidden rounded-r-md border border-border bg-surface">
           <div className="flex items-center justify-between border-b border-border px-3.5 py-3">

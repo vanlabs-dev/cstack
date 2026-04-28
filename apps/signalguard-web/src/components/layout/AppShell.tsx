@@ -1,3 +1,4 @@
+import { MobileNav } from './MobileNav';
 import { Sidebar } from './Sidebar';
 import { TopBar, type Crumb } from './TopBar';
 
@@ -14,11 +15,21 @@ export interface AppShellProps {
 export function AppShell({ tenants, activeTenantId, crumbs, actions, children }: AppShellProps) {
   return (
     <div className="flex h-screen w-full bg-bg">
-      <Sidebar tenants={tenants} activeTenantId={activeTenantId} />
+      <div className="hidden md:flex">
+        <Sidebar tenants={tenants} activeTenantId={activeTenantId} />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar crumbs={crumbs} actions={actions} />
+        <div className="flex flex-none items-center gap-2 border-b border-border bg-surface pl-2 md:hidden">
+          <MobileNav tenants={tenants} activeTenantId={activeTenantId} />
+          <div className="min-w-0 flex-1">
+            <TopBar crumbs={crumbs} actions={actions} />
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <TopBar crumbs={crumbs} actions={actions} />
+        </div>
         <main className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-[1600px] p-6">{children}</div>
+          <div className="mx-auto max-w-[1600px] p-4 md:p-6">{children}</div>
         </main>
       </div>
     </div>

@@ -121,12 +121,7 @@ export default async function AnomalyDrillDownPage({ params, searchParams }: Dri
         </div>
       </header>
 
-      <div
-        className="grid gap-3.5"
-        style={{
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.05fr)',
-        }}
-      >
+      <div className="grid gap-3.5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
         <MetadataTable signin={detail.signin} />
         <div className="flex flex-col gap-3">
           <LocationCard

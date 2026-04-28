@@ -47,8 +47,8 @@ export function FindingsTable({ findings }: FindingsTableProps) {
             <Th className="w-8" />
             <Th className="w-[100px]">Severity</Th>
             <Th>Finding</Th>
-            <Th className="w-[200px]">ID</Th>
-            <Th className="w-[70px]">Age</Th>
+            <Th className="hidden w-[200px] lg:table-cell">ID</Th>
+            <Th className="hidden w-[70px] md:table-cell">Age</Th>
             <Th className="w-[24px]" />
           </tr>
         </thead>
@@ -132,10 +132,13 @@ function FindingRowFragment({ finding, expanded, onToggle, sev, affected }: Find
             <div className="mono mt-0.5 text-11 text-fg-tertiary">{affected}</div>
           </div>
         </td>
-        <td className="mono px-2.5 py-2.5 align-middle text-11 text-fg-tertiary">
+        <td className="mono hidden px-2.5 py-2.5 align-middle text-11 text-fg-tertiary lg:table-cell">
           {finding.id.slice(0, 16)}
         </td>
-        <td className="mono px-2.5 py-2.5 align-middle text-fg-tertiary" style={{ fontSize: 11.5 }}>
+        <td
+          className="mono hidden px-2.5 py-2.5 align-middle text-fg-tertiary md:table-cell"
+          style={{ fontSize: 11.5 }}
+        >
           {formatRelativeTime(finding.first_seen_at)}
         </td>
         <td className="px-2.5 py-2.5 align-middle">

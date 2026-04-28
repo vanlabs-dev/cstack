@@ -116,7 +116,7 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
         </>
       }
     >
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'minmax(0, 1fr) 240px' }}>
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <div>
           <header className="mb-4 flex items-end justify-between gap-4">
             <div>
