@@ -9,11 +9,21 @@ from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from signalguard_api.config import Settings, get_settings
 from signalguard_api.correlation import CorrelationIdMiddleware
+from signalguard_api.errors import (
+    APIProblem,
+    api_problem_handler,
+    http_exception_handler,
+    starlette_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
 from signalguard_api.lifespan import lifespan
 from signalguard_api.routers import (
     anomaly,
@@ -70,6 +80,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.add_middleware(CorrelationIdMiddleware)
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(StarletteHTTPException, starlette_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(APIProblem, api_problem_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
     app.include_router(health.router)
     app.include_router(whoami.router)
     app.include_router(tenants.router)

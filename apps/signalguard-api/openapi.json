@@ -1,0 +1,2622 @@
+{
+  "components": {
+    "schemas": {
+      "AffectedObject": {
+        "description": "A target the finding refers to. Carries enough identification for the\nLLM narrator and the UI to render the object without re-querying Graph.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "policy",
+              "user",
+              "group",
+              "role",
+              "location",
+              "app",
+              "tenant"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "display_name"
+        ],
+        "title": "AffectedObject",
+        "type": "object"
+      },
+      "AnomalyScore": {
+        "description": "Per-signin anomaly score with full provenance. Immutable; rerunning\nthe scorer with the same model+signin yields the same id key.",
+        "properties": {
+          "is_anomaly": {
+            "title": "Is Anomaly",
+            "type": "boolean"
+          },
+          "model_name": {
+            "title": "Model Name",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "normalised_score": {
+            "title": "Normalised Score",
+            "type": "number"
+          },
+          "raw_score": {
+            "title": "Raw Score",
+            "type": "number"
+          },
+          "scored_at": {
+            "format": "date-time",
+            "title": "Scored At",
+            "type": "string"
+          },
+          "shap_top_features": {
+            "items": {
+              "$ref": "#/components/schemas/ShapFeatureContribution"
+            },
+            "title": "Shap Top Features",
+            "type": "array"
+          },
+          "signin_id": {
+            "title": "Signin Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "signin_id",
+          "user_id",
+          "model_name",
+          "model_version",
+          "raw_score",
+          "normalised_score",
+          "is_anomaly",
+          "shap_top_features",
+          "scored_at"
+        ],
+        "title": "AnomalyScore",
+        "type": "object"
+      },
+      "AnomalyScoreDetail": {
+        "description": "Per-signin anomaly bundle: score, raw signin row, and linked finding.",
+        "properties": {
+          "finding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Finding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score": {
+            "$ref": "#/components/schemas/AnomalyScore"
+          },
+          "signin": {
+            "$ref": "#/components/schemas/SignIn"
+          }
+        },
+        "required": [
+          "score",
+          "signin",
+          "finding"
+        ],
+        "title": "AnomalyScoreDetail",
+        "type": "object"
+      },
+      "AnomalyScoreRequest": {
+        "properties": {
+          "generate_findings": {
+            "default": true,
+            "title": "Generate Findings",
+            "type": "boolean"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Since"
+          },
+          "threshold": {
+            "default": 0.7,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Threshold",
+            "type": "number"
+          },
+          "until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Until"
+          }
+        },
+        "title": "AnomalyScoreRequest",
+        "type": "object"
+      },
+      "AnomalyScoreRunResponse": {
+        "properties": {
+          "anomalies_flagged": {
+            "title": "Anomalies Flagged",
+            "type": "integer"
+          },
+          "duration_seconds": {
+            "title": "Duration Seconds",
+            "type": "number"
+          },
+          "findings_written": {
+            "title": "Findings Written",
+            "type": "integer"
+          },
+          "model_name": {
+            "title": "Model Name",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "signins_scored": {
+            "title": "Signins Scored",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "signins_scored",
+          "anomalies_flagged",
+          "findings_written",
+          "model_name",
+          "model_version",
+          "duration_seconds",
+          "run_id"
+        ],
+        "title": "AnomalyScoreRunResponse",
+        "type": "object"
+      },
+      "ApiCaller": {
+        "description": "Identity of the caller as resolved from the API key.",
+        "properties": {
+          "key_label": {
+            "title": "Key Label",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "dev",
+              "tenant"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          }
+        },
+        "required": [
+          "kind",
+          "tenant_id",
+          "key_label"
+        ],
+        "title": "ApiCaller",
+        "type": "object"
+      },
+      "AppSegment": {
+        "enum": [
+          "all_apps",
+          "m365_core",
+          "admin_portals",
+          "legacy_auth",
+          "high_risk_apps"
+        ],
+        "title": "AppSegment",
+        "type": "string"
+      },
+      "AuditDryRunResponse": {
+        "properties": {
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Category",
+            "type": "object"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "findings",
+          "by_category",
+          "run_id"
+        ],
+        "title": "AuditDryRunResponse",
+        "type": "object"
+      },
+      "AuditRunRequest": {
+        "description": "Body of POST /tenants/{id}/audit/run.",
+        "properties": {
+          "categories": {
+            "description": "Subset of audit categories to execute. Empty list rejected.",
+            "items": {
+              "enum": [
+                "coverage",
+                "rules",
+                "exclusions"
+              ],
+              "type": "string"
+            },
+            "title": "Categories",
+            "type": "array"
+          }
+        },
+        "title": "AuditRunRequest",
+        "type": "object"
+      },
+      "AuditRunResponse": {
+        "properties": {
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Category",
+            "type": "object"
+          },
+          "duration_seconds": {
+            "title": "Duration Seconds",
+            "type": "number"
+          },
+          "findings_written": {
+            "title": "Findings Written",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "findings_written",
+          "by_category",
+          "duration_seconds",
+          "run_id"
+        ],
+        "title": "AuditRunResponse",
+        "type": "object"
+      },
+      "CoverageCell": {
+        "properties": {
+          "app_segment": {
+            "$ref": "#/components/schemas/AppSegment"
+          },
+          "applicable_policy_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Applicable Policy Ids",
+            "type": "array"
+          },
+          "member_count": {
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "protection_level": {
+            "$ref": "#/components/schemas/ProtectionLevel"
+          },
+          "user_segment": {
+            "$ref": "#/components/schemas/UserSegment"
+          }
+        },
+        "required": [
+          "user_segment",
+          "app_segment",
+          "applicable_policy_ids",
+          "protection_level",
+          "member_count"
+        ],
+        "title": "CoverageCell",
+        "type": "object"
+      },
+      "CoverageMatrix": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/CoverageCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "computed_at": {
+            "format": "date-time",
+            "title": "Computed At",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "cells",
+          "computed_at"
+        ],
+        "title": "CoverageMatrix",
+        "type": "object"
+      },
+      "DeviceDetail": {
+        "additionalProperties": true,
+        "properties": {
+          "browser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Browser"
+          },
+          "deviceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviceid"
+          },
+          "displayName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Displayname"
+          },
+          "isCompliant": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iscompliant"
+          },
+          "isManaged": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ismanaged"
+          },
+          "operatingSystem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operatingsystem"
+          },
+          "trustType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trusttype"
+          }
+        },
+        "title": "DeviceDetail",
+        "type": "object"
+      },
+      "Finding": {
+        "description": "An immutable audit finding. Identity is computed from inputs so the\nsame finding produced twice in a row writes one row.",
+        "properties": {
+          "affected_objects": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedObject"
+            },
+            "title": "Affected Objects",
+            "type": "array"
+          },
+          "category": {
+            "enum": [
+              "coverage",
+              "rule",
+              "exclusion",
+              "anomaly"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "detected_at": {
+            "format": "date-time",
+            "title": "Detected At",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "remediation_hint": {
+            "title": "Remediation Hint",
+            "type": "string"
+          },
+          "rule_id": {
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tenant_id",
+          "rule_id",
+          "category",
+          "severity",
+          "title",
+          "summary",
+          "affected_objects",
+          "evidence",
+          "remediation_hint",
+          "references",
+          "detected_at",
+          "first_seen_at"
+        ],
+        "title": "Finding",
+        "type": "object"
+      },
+      "FindingsSummary": {
+        "description": "Aggregate counts for a tenant's findings table.",
+        "properties": {
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Counts grouped by category (coverage|rule|exclusion|anomaly).",
+            "title": "By Category",
+            "type": "object"
+          },
+          "by_rule_id": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Rule Id",
+            "type": "object"
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Counts grouped by severity (INFO|LOW|MEDIUM|HIGH|CRITICAL).",
+            "title": "By Severity",
+            "type": "object"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_category",
+          "by_severity",
+          "by_rule_id",
+          "generated_at"
+        ],
+        "title": "FindingsSummary",
+        "type": "object"
+      },
+      "GeoCoordinates": {
+        "additionalProperties": true,
+        "properties": {
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          }
+        },
+        "title": "GeoCoordinates",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ModelSummary": {
+        "description": "Top-level entry in GET /tenants/{id}/models.",
+        "properties": {
+          "current_challenger_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Challenger Version"
+          },
+          "current_champion_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Champion Version"
+          },
+          "last_trained_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Trained At"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "training_metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Training Metrics",
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "current_champion_version",
+          "current_challenger_version",
+          "last_trained_at",
+          "training_metrics"
+        ],
+        "title": "ModelSummary",
+        "type": "object"
+      },
+      "ModelVersionEntry": {
+        "description": "One ModelVersion projected to fields the dashboard needs.",
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "creation_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Creation Timestamp"
+          },
+          "last_updated_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated Timestamp"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Metrics",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "run_id",
+          "aliases",
+          "creation_timestamp",
+          "last_updated_timestamp",
+          "metrics"
+        ],
+        "title": "ModelVersionEntry",
+        "type": "object"
+      },
+      "Paginated_AnomalyScore_": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalyScore"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Total rows matching the query, ignoring limit/offset.",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "has_more"
+        ],
+        "title": "Paginated[AnomalyScore]",
+        "type": "object"
+      },
+      "Paginated_Finding_": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Total rows matching the query, ignoring limit/offset.",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "has_more"
+        ],
+        "title": "Paginated[Finding]",
+        "type": "object"
+      },
+      "Paginated_SignIn_": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SignIn"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "description": "Total rows matching the query, ignoring limit/offset.",
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "has_more"
+        ],
+        "title": "Paginated[SignIn]",
+        "type": "object"
+      },
+      "ProtectionLevel": {
+        "description": "Strongest control any applicable policy applies. Higher is stronger.",
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "title": "ProtectionLevel",
+        "type": "integer"
+      },
+      "Severity": {
+        "enum": [
+          "INFO",
+          "LOW",
+          "MEDIUM",
+          "HIGH",
+          "CRITICAL"
+        ],
+        "title": "Severity",
+        "type": "string"
+      },
+      "ShapFeatureContribution": {
+        "description": "One row of SHAP attribution. Direction names spell out the meaning so\nconsumers (CLI, future LLM narrator) do not have to interpret signs.",
+        "properties": {
+          "direction": {
+            "enum": [
+              "pushes_anomalous",
+              "pushes_normal"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "feature_name": {
+            "title": "Feature Name",
+            "type": "string"
+          },
+          "feature_value": {
+            "title": "Feature Value",
+            "type": "number"
+          },
+          "shap_value": {
+            "title": "Shap Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "feature_name",
+          "feature_value",
+          "shap_value",
+          "direction"
+        ],
+        "title": "ShapFeatureContribution",
+        "type": "object"
+      },
+      "SignIn": {
+        "additionalProperties": true,
+        "description": "Microsoft Graph signIn entity, narrowed to fields the anomaly model uses.",
+        "properties": {
+          "appDisplayName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appdisplayname"
+          },
+          "appId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appid"
+          },
+          "authenticationMethodsUsed": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authenticationmethodsused"
+          },
+          "authenticationRequirement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authenticationrequirement"
+          },
+          "clientAppUsed": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clientappused"
+          },
+          "conditionalAccessStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditionalaccessstatus"
+          },
+          "createdDateTime": {
+            "format": "date-time",
+            "title": "Createddatetime",
+            "type": "string"
+          },
+          "deviceDetail": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "ipAddress": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ipaddress"
+          },
+          "isInteractive": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isinteractive"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignInLocation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "riskLevelAggregated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risklevelaggregated"
+          },
+          "riskLevelDuringSignIn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risklevelduringsignin"
+          },
+          "riskState": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Riskstate"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignInStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          },
+          "userPrincipalName": {
+            "title": "Userprincipalname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdDateTime",
+          "userId",
+          "userPrincipalName"
+        ],
+        "title": "SignIn",
+        "type": "object"
+      },
+      "SignInLocation": {
+        "additionalProperties": true,
+        "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "countryOrRegion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Countryorregion"
+          },
+          "geoCoordinates": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeoCoordinates"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          }
+        },
+        "title": "SignInLocation",
+        "type": "object"
+      },
+      "SignInStatus": {
+        "additionalProperties": true,
+        "properties": {
+          "additionalDetails": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Additionaldetails"
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "failureReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failurereason"
+          }
+        },
+        "title": "SignInStatus",
+        "type": "object"
+      },
+      "SigninStats": {
+        "description": "Per-tenant aggregate counters over the sign-in table.",
+        "properties": {
+          "distinct_users": {
+            "title": "Distinct Users",
+            "type": "integer"
+          },
+          "earliest_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest At"
+          },
+          "failure_count": {
+            "title": "Failure Count",
+            "type": "integer"
+          },
+          "latest_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest At"
+          },
+          "success_count": {
+            "title": "Success Count",
+            "type": "integer"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "top_apps": {
+            "description": "Up to 10 app display names by sign-in volume.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Top Apps",
+            "type": "array"
+          },
+          "top_countries": {
+            "description": "Up to 10 countries by sign-in volume.",
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Top Countries",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "total",
+          "distinct_users",
+          "earliest_at",
+          "latest_at",
+          "success_count",
+          "failure_count",
+          "top_countries",
+          "top_apps"
+        ],
+        "title": "SigninStats",
+        "type": "object"
+      },
+      "TenantDetail": {
+        "description": "Full tenant detail. Drops cert_subject/thumbprint/client_id intentionally\nso the API surface does not become a credential exfiltration vector.",
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "api_key_count": {
+            "default": 0,
+            "title": "Api Key Count",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "is_fixture": {
+            "title": "Is Fixture",
+            "type": "boolean"
+          },
+          "last_anomaly_score_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent anomaly_scores.scored_at value.",
+            "title": "Last Anomaly Score At"
+          },
+          "last_audit_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent non-anomaly finding detected_at.",
+            "title": "Last Audit At"
+          },
+          "last_extract_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent raw ingestion across any resource type.",
+            "title": "Last Extract At"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "display_name",
+          "is_fixture",
+          "added_at"
+        ],
+        "title": "TenantDetail",
+        "type": "object"
+      },
+      "TenantSummary": {
+        "description": "Per-tenant entry in the GET /tenants list.",
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "api_key_count": {
+            "default": 0,
+            "title": "Api Key Count",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "is_fixture": {
+            "title": "Is Fixture",
+            "type": "boolean"
+          },
+          "last_anomaly_score_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent anomaly_scores.scored_at value.",
+            "title": "Last Anomaly Score At"
+          },
+          "last_audit_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent non-anomaly finding detected_at.",
+            "title": "Last Audit At"
+          },
+          "last_extract_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Most recent raw ingestion across any resource type.",
+            "title": "Last Extract At"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "display_name",
+          "is_fixture",
+          "added_at"
+        ],
+        "title": "TenantSummary",
+        "type": "object"
+      },
+      "UserSegment": {
+        "enum": [
+          "all_users",
+          "admins_any",
+          "guests",
+          "service_accounts",
+          "privileged_roles"
+        ],
+        "title": "UserSegment",
+        "type": "string"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "email": "leunis@vanlabs.dev",
+      "name": "cstack maintainers"
+    },
+    "description": "HTTP surface over the cstack signalguard data and audit packages. See /docs for OpenAPI 3.1 and /redoc for the rendered spec.",
+    "license": {
+      "name": "MIT"
+    },
+    "title": "signalguard-api",
+    "version": "0.0.1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "description": "Always 200 if the process is up.",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Healthz Healthz Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/readyz": {
+      "get": {
+        "description": "Opens a DuckDB connection and runs a trivial query.",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness probe",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/tenants": {
+      "get": {
+        "description": "Dev-only endpoint that returns every tenant the storage layer knows about.",
+        "operationId": "list_tenants_tenants_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TenantSummary"
+                  },
+                  "title": "Response List Tenants Tenants Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List registered tenants",
+        "tags": [
+          "tenants"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}": {
+      "get": {
+        "description": "Per-tenant detail. Tenant-scoped keys can only read their own row.",
+        "operationId": "get_tenant_detail_tenants__tenant_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get tenant detail",
+        "tags": [
+          "tenants"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/anomaly-scores": {
+      "get": {
+        "operationId": "list_scores_tenants__tenant_id__anomaly_scores_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_score",
+            "required": false,
+            "schema": {
+              "default": 0.0,
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Min Score",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_anomaly",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Anomaly"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginated_AnomalyScore_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List anomaly scores for a tenant",
+        "tags": [
+          "anomaly"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/anomaly-scores/feed": {
+      "get": {
+        "description": "Convenience read for dashboard timelines.",
+        "operationId": "feed_tenants__tenant_id__anomaly_scores_feed_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "n",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "N",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_score",
+            "required": false,
+            "schema": {
+              "default": 0.7,
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Min Score",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnomalyScore"
+                  },
+                  "title": "Response Feed Tenants  Tenant Id  Anomaly Scores Feed Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Latest anomalies above threshold",
+        "tags": [
+          "anomaly"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/anomaly-scores/{signin_id}": {
+      "get": {
+        "operationId": "get_detail_tenants__tenant_id__anomaly_scores__signin_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "signin_id",
+            "required": true,
+            "schema": {
+              "title": "Signin Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyScoreDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Anomaly score with linked sign-in and finding",
+        "tags": [
+          "anomaly"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/anomaly/score": {
+      "post": {
+        "description": "Loads sign-ins in the requested window, scores them with the current @champion (or @challenger fallback), persists scores, and optionally writes findings for anomalies above threshold.",
+        "operationId": "score_tenants__tenant_id__anomaly_score_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomalyScoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyScoreRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "No @champion or @challenger model registered for tenant."
+          }
+        },
+        "summary": "Score recent sign-ins against the registered model",
+        "tags": [
+          "anomaly"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/audit/dry-run": {
+      "post": {
+        "description": "Useful for previewing what an audit run would produce against the current data without writing rows to the findings table.",
+        "operationId": "dry_run_tenants__tenant_id__audit_dry_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditDryRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compute findings without persisting them",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/audit/run": {
+      "post": {
+        "description": "Runs the requested audit modules synchronously, writes findings via the deduplicated insert helper, and returns a per-category count plus the run id for log correlation.",
+        "operationId": "run_audit_tenants__tenant_id__audit_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Execute audit categories and persist findings",
+        "tags": [
+          "audit"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/coverage-matrix": {
+      "get": {
+        "description": "Coverage is cheap to compute (in-memory over the normalised tables) so the API recomputes per request rather than caching. This makes the response always reflect the current policy + directory state.",
+        "operationId": "get_coverage_tenants__tenant_id__coverage_matrix_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageMatrix"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compute the user/app coverage matrix on demand",
+        "tags": [
+          "coverage"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/findings": {
+      "get": {
+        "description": "Filterable, paginated read of the findings table. Severity filter is inclusive of the requested floor and above.",
+        "operationId": "list_findings_tenants__tenant_id__findings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "coverage",
+                      "rule",
+                      "exclusion",
+                      "anomaly"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_severity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Severity"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Severity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rule_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rule Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginated_Finding_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List findings for a tenant",
+        "tags": [
+          "findings"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/findings/summary": {
+      "get": {
+        "operationId": "findings_summary_tenants__tenant_id__findings_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindingsSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Per-tenant finding aggregates",
+        "tags": [
+          "findings"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/findings/{finding_id}": {
+      "get": {
+        "operationId": "get_finding_tenants__tenant_id__findings__finding_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Finding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read a single finding by id",
+        "tags": [
+          "findings"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/models": {
+      "get": {
+        "description": "Reads the MLflow registry for models matching the tenant's pooled-model naming convention. Returns an empty list when no models are registered.",
+        "operationId": "list_models_tenants__tenant_id__models_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelSummary"
+                  },
+                  "title": "Response List Models Tenants  Tenant Id  Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List registered models for a tenant",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/models/{model_name}/versions": {
+      "get": {
+        "operationId": "list_versions_tenants__tenant_id__models__model_name__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "model_name",
+            "required": true,
+            "schema": {
+              "title": "Model Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelVersionEntry"
+                  },
+                  "title": "Response List Versions Tenants  Tenant Id  Models  Model Name  Versions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List versions of a registered model",
+        "tags": [
+          "models"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/signins/stats": {
+      "get": {
+        "operationId": "get_stats_tenants__tenant_id__signins_stats_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SigninStats"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Tenant sign-in aggregates",
+        "tags": [
+          "signins"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/users/{user_id}/signins": {
+      "get": {
+        "operationId": "get_user_signins_tenants__tenant_id__users__user_id__signins_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginated_SignIn_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Per-user sign-in history",
+        "tags": [
+          "signins"
+        ]
+      }
+    },
+    "/whoami": {
+      "get": {
+        "description": "Returns the resolved API caller (dev or tenant-scoped).",
+        "operationId": "whoami_whoami_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiCaller"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Identify the caller",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Liveness and readiness probes.",
+      "name": "health"
+    },
+    {
+      "description": "Registered tenant inventory.",
+      "name": "tenants"
+    },
+    {
+      "description": "Audit and anomaly findings.",
+      "name": "findings"
+    },
+    {
+      "description": "Per-signin anomaly scores and alerts.",
+      "name": "anomaly"
+    },
+    {
+      "description": "User-app coverage matrix snapshot.",
+      "name": "coverage"
+    },
+    {
+      "description": "Sign-in stats and per-user history.",
+      "name": "signins"
+    },
+    {
+      "description": "Trigger audit runs and dry runs.",
+      "name": "audit"
+    },
+    {
+      "description": "MLflow model registry view.",
+      "name": "models"
+    }
+  ]
+}
