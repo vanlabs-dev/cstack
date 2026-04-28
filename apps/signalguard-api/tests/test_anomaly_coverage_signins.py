@@ -30,7 +30,6 @@ from cstack_storage import (
     write_scores,
 )
 from httpx import AsyncClient
-
 from signalguard_api.config import Settings
 
 from .conftest import DEV_KEY, TENANT_A, TENANT_B
@@ -174,9 +173,7 @@ async def test_anomaly_feed_returns_top_n(
 
 
 @pytest.mark.asyncio
-async def test_anomaly_detail_bundle(
-    client: AsyncClient, anomaly_seed: dict[str, int]
-) -> None:
+async def test_anomaly_detail_bundle(client: AsyncClient, anomaly_seed: dict[str, int]) -> None:
     response = await client.get(
         f"/tenants/{TENANT_A}/anomaly-scores/signin-anom",
         headers={"X-API-Key": DEV_KEY},
