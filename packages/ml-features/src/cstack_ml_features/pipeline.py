@@ -34,6 +34,7 @@ FEATURE_COLUMNS: tuple[str, ...] = (
     "is_weekend",
     "mfa_satisfied",
     "risk_level_during_signin_numeric",
+    "travel_speed_kmh",
 )
 
 
@@ -61,6 +62,7 @@ class FeatureSet(BaseModel):
     is_weekend: int
     mfa_satisfied: int
     risk_level_during_signin_numeric: int
+    travel_speed_kmh: float
 
 
 def extract_features(signin: SignIn, history: UserHistory) -> FeatureSet:
@@ -85,6 +87,7 @@ def extract_features(signin: SignIn, history: UserHistory) -> FeatureSet:
         is_weekend=extractors.is_weekend(signin),
         mfa_satisfied=extractors.mfa_satisfied(signin),
         risk_level_during_signin_numeric=extractors.risk_level_during_signin_numeric(signin),
+        travel_speed_kmh=extractors.travel_speed_kmh(signin, history),
     )
 
 

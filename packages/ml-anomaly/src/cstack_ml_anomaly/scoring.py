@@ -62,13 +62,18 @@ def _build_score_features(signins: list[SignIn]) -> pd.DataFrame:
     For scoring during a single CLI invocation we treat the batch as
     chronologically ordered; rolling state advances as we scan. This matches
     the training-time semantics so models see consistent feature shapes.
+
+    Iterates users in alphabetical order so callers that recover a parallel
+    ordering of the original sign-ins produce the same row layout. Without
+    this, dict-iteration order would diverge from any caller's reorder logic
+    and the IF predictions would be misaligned with the source rows.
     """
     by_user: dict[str, list[SignIn]] = {}
     for s in signins:
         by_user.setdefault(s.user_id, []).append(s)
     items: list[Any] = []
-    for _uid, group in by_user.items():
-        sorted_group = sorted(group, key=lambda s: s.created_date_time)
+    for _uid in sorted(by_user.keys()):
+        sorted_group = sorted(by_user[_uid], key=lambda s: s.created_date_time)
         for signin in sorted_group:
             history = build_history_from_signins(sorted_group, as_of=signin.created_date_time)
             items.append((signin, history))
@@ -114,6 +119,39 @@ def _shap_top_features(
     return out
 
 
+def _rule_score_boosts(feature_df: pd.DataFrame) -> list[float]:
+    """Per-row score floor from a small rule set.
+
+    Each rule encodes an unambiguous attack pattern that the IF should not be
+    asked to learn from baseline data alone. Boosts are computed independently
+    per rule and combined via max so the highest-confidence rule wins.
+
+    - travel_speed_kmh > 1500: physically impossible across a single hop
+      (commercial flights cap around 900 km/h with overhead).
+    - is_new_country & is_new_asn together: a sign-in arriving from a country
+      and ASN the user has never used.
+    - is_failure & is_new_asn: failed sign-in from a never-seen ASN, the
+      typical fingerprint of credential-stuffing bursts.
+    - mfa_satisfied=0 & is_legacy_auth=1: an interactive user falling back to
+      single-factor and a legacy client app at the same time.
+    """
+    boosts: list[float] = [0.0] * len(feature_df)
+    for i, row in enumerate(feature_df.itertuples(index=False)):
+        score = 0.0
+        if getattr(row, "travel_speed_kmh", 0.0) > 1500.0:
+            score = max(score, 0.95)
+        if getattr(row, "is_new_country_for_user", 0) and getattr(row, "is_new_asn_for_user", 0):
+            score = max(score, 0.85)
+        if getattr(row, "is_failure", 0) and getattr(row, "is_new_asn_for_user", 0):
+            score = max(score, 0.85)
+        mfa = getattr(row, "mfa_satisfied", 1)
+        legacy = getattr(row, "is_legacy_auth", 0)
+        if not mfa and legacy:
+            score = max(score, 0.80)
+        boosts[i] = score
+    return boosts
+
+
 def score_batch(
     signins: list[SignIn],
     tenant_id: str,
@@ -142,6 +180,14 @@ def score_batch(
     feature_only = score_df[list(FEATURE_COLUMNS)]
     raw_scores = model.decision_function(feature_only)
     predictions = model.predict(feature_only)
+    # Hybrid rules + IF: a small set of unambiguous attack patterns boost the
+    # IF score for rows the model would otherwise miss because the injected
+    # anomalies' feature values overlap with rare-but-legitimate baseline
+    # events. Without this, the IF treats injected impossible-travel and
+    # credential-stuffing rows as "normal-rare". Threshold values are
+    # deliberately conservative; tighten them only if false-positive volume
+    # rises above the on-call gate.
+    rule_boosts = _rule_score_boosts(feature_only)
 
     # Reorder the input list to match the order produced by _build_score_features,
     # which groups by user_id and then sorts by created_date_time.
@@ -166,6 +212,9 @@ def score_batch(
     for i in range(len(sorted_signins)):
         raw = float(raw_scores[i])
         normalised = normalise_score(raw)
+        # Apply the per-row boost; the maximum keeps a strong IF score from
+        # being downgraded by the booster.
+        normalised = max(normalised, rule_boosts[i])
         normalised_scores.append(normalised)
         is_anom_mask.append(bool(predictions[i] == -1) or normalised >= ANOMALY_THRESHOLD)
 

@@ -114,6 +114,25 @@ def distance_from_last_signin_km(signin: SignIn, history: UserHistory) -> float:
     return 6371.0 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def travel_speed_kmh(signin: SignIn, history: UserHistory) -> float:
+    """Effective km/h between this and the previous sign-in.
+
+    Interaction feature designed to separate legitimate travel (under
+    1000 km/h, typical of commercial flights) from impossible travel
+    (thousands of km/h, only achievable by session-token theft or VPN
+    bouncing). Returns 0 when either coordinate or the prior timestamp
+    is missing so absence of data does not look anomalous.
+    """
+    if history.last_signin_at is None:
+        return 0.0
+    distance = distance_from_last_signin_km(signin, history)
+    if distance <= 0.0:
+        return 0.0
+    delta = signin.created_date_time - history.last_signin_at
+    hours = max(delta.total_seconds() / 3600.0, 1.0 / 60.0)  # floor at 1 minute
+    return min(distance / hours, 100_000.0)
+
+
 def is_new_device_for_user(signin: SignIn, history: UserHistory) -> int:
     device = signin.device_detail
     if device is None or not device.device_id:
