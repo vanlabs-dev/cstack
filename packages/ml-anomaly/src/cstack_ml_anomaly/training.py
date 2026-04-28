@@ -32,6 +32,8 @@ from cstack_schemas import SignIn
 from cstack_storage import get_signins
 from pydantic import BaseModel, ConfigDict
 from sklearn.ensemble import IsolationForest
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 LOG = logging.getLogger(__name__)
 
@@ -91,11 +93,24 @@ def train_pooled_model(
     for signin in signins:
         user_signins[signin.user_id].append(signin)
     feature_df, n_rows = _build_training_features(user_signins)
-    model = IsolationForest(
-        n_estimators=200,
-        contamination=contamination,
-        random_state=random_state,
-        n_jobs=-1,
+    # StandardScaler in front of IsolationForest matters because feature
+    # scales differ by orders of magnitude (distance_from_last_signin_km is
+    # 0..20000 while is_weekend is 0/1); without scaling the IF tree splits
+    # are dominated by the high-range features and miss real anomalies on
+    # categorical signals like is_new_country.
+    model = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            (
+                "iforest",
+                IsolationForest(
+                    n_estimators=200,
+                    contamination=contamination,
+                    random_state=random_state,
+                    n_jobs=-1,
+                ),
+            ),
+        ]
     )
     model.fit(feature_df[list(FEATURE_COLUMNS)])
     LOG.info(

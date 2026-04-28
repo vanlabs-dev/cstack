@@ -139,12 +139,12 @@ def score_batch(
         else pd.DataFrame(columns=list(FEATURE_COLUMNS))
     )
     score_df = _build_score_features(signins)
-    raw_scores = model.decision_function(score_df[list(FEATURE_COLUMNS)])
-    predictions = model.predict(score_df[list(FEATURE_COLUMNS)])
-    shap_attribs = _shap_top_features(model, score_df[list(FEATURE_COLUMNS)], bg_df)
+    feature_only = score_df[list(FEATURE_COLUMNS)]
+    raw_scores = model.decision_function(feature_only)
+    predictions = model.predict(feature_only)
 
-    scored_at = datetime.now(UTC)
-    results: list[AnomalyScore] = []
+    # Reorder the input list to match the order produced by _build_score_features,
+    # which groups by user_id and then sorts by created_date_time.
     sorted_signins: list[SignIn] = []
     for _uid, group in sorted(
         (
@@ -156,12 +156,30 @@ def score_batch(
         key=lambda kv: kv[0],
     ):
         sorted_signins.extend(group)
-    # NB: the iteration order above mirrors _build_score_features so row i in
-    # raw_scores aligns with sorted_signins[i].
-    for i, signin in enumerate(sorted_signins):
+
+    # SHAP is expensive (~5 calls/sec for IsolationForest via PermutationExplainer);
+    # scoring 3000+ rows with full SHAP takes ~10 minutes. Restrict SHAP to rows the
+    # model already flags as anomalous so we still surface explanations on the rows
+    # that drive findings without paying for normal rows.
+    is_anom_mask: list[bool] = []
+    normalised_scores: list[float] = []
+    for i in range(len(sorted_signins)):
         raw = float(raw_scores[i])
         normalised = normalise_score(raw)
-        is_anom = bool(predictions[i] == -1) or normalised >= ANOMALY_THRESHOLD
+        normalised_scores.append(normalised)
+        is_anom_mask.append(bool(predictions[i] == -1) or normalised >= ANOMALY_THRESHOLD)
+
+    anom_indices = [i for i, flagged in enumerate(is_anom_mask) if flagged]
+    if anom_indices:
+        anom_df = feature_only.iloc[anom_indices].reset_index(drop=True)
+        shap_for_anom = _shap_top_features(model, anom_df, bg_df)
+    else:
+        shap_for_anom = []
+    shap_lookup = dict(zip(anom_indices, shap_for_anom, strict=False))
+
+    scored_at = datetime.now(UTC)
+    results: list[AnomalyScore] = []
+    for i, signin in enumerate(sorted_signins):
         results.append(
             AnomalyScore(
                 tenant_id=tenant_id,
@@ -169,10 +187,10 @@ def score_batch(
                 user_id=signin.user_id,
                 model_name=pooled_model_name(tenant_id),
                 model_version=version,
-                raw_score=raw,
-                normalised_score=normalised,
-                is_anomaly=is_anom,
-                shap_top_features=shap_attribs[i] if i < len(shap_attribs) else [],
+                raw_score=float(raw_scores[i]),
+                normalised_score=normalised_scores[i],
+                is_anomaly=is_anom_mask[i],
+                shap_top_features=shap_lookup.get(i, []),
                 scored_at=scored_at,
             )
         )

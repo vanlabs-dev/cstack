@@ -22,10 +22,18 @@ def configure_tracking(
 ) -> str:
     """Set tracking URI and experiment. Returns the resolved tracking URI.
 
-    Creates the experiment if it does not exist. Idempotent so repeat calls
-    from CLI invocations are safe.
+    Default backend is the local mlruns directory using a plain absolute path
+    rather than ``file://`` because MLflow on Windows treats Windows-drive
+    file URIs as remote and rejects them. Plain paths work cross-platform.
+    Creates the experiment if it does not exist; idempotent.
     """
-    resolved = uri or f"file://{(Path.cwd() / 'mlruns').as_posix()}"
+    if uri is None:
+        # Path.as_uri() emits the correct ``file:///`` form for Windows drives
+        # (three slashes before the drive letter); MLflow's registry requires
+        # this scheme rather than a bare path.
+        resolved = (Path.cwd() / "mlruns").resolve().as_uri()
+    else:
+        resolved = uri
     mlflow.set_tracking_uri(resolved)
     mlflow.set_experiment(experiment_name)
     return resolved
