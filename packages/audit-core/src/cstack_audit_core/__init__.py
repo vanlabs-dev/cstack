@@ -1,3 +1,8 @@
+from cstack_audit_core.anomaly import (
+    AnomalyScore,
+    ShapDirection,
+    ShapFeatureContribution,
+)
 from cstack_audit_core.finding import (
     AffectedObject,
     AffectedObjectType,
@@ -14,9 +19,12 @@ from cstack_audit_core.storage import (
 __all__ = [
     "AffectedObject",
     "AffectedObjectType",
+    "AnomalyScore",
     "Finding",
     "FindingCategory",
     "Severity",
+    "ShapDirection",
+    "ShapFeatureContribution",
     "findings_by_rule",
     "latest_findings",
     "write_findings",

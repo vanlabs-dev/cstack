@@ -155,6 +155,74 @@ MIGRATIONS: tuple[Migration, ...] = (
             ON findings(tenant_id, rule_id);
         """,
     ),
+    Migration(
+        version=7,
+        name="signins",
+        sql="""
+        CREATE TABLE IF NOT EXISTS signins (
+            tenant_id VARCHAR NOT NULL,
+            id VARCHAR NOT NULL,
+            user_id VARCHAR NOT NULL,
+            user_principal_name VARCHAR NOT NULL,
+            created_date_time TIMESTAMP NOT NULL,
+            app_id VARCHAR,
+            app_display_name VARCHAR,
+            client_app_used VARCHAR,
+            ip_address VARCHAR,
+            country_or_region VARCHAR,
+            city VARCHAR,
+            latitude DOUBLE,
+            longitude DOUBLE,
+            device_id VARCHAR,
+            device_os VARCHAR,
+            device_browser VARCHAR,
+            device_is_managed BOOLEAN,
+            device_is_compliant BOOLEAN,
+            device_trust_type VARCHAR,
+            error_code INTEGER,
+            failure_reason VARCHAR,
+            conditional_access_status VARCHAR,
+            authentication_requirement VARCHAR,
+            authentication_methods_used JSON,
+            risk_level_aggregated VARCHAR,
+            risk_level_during_signin VARCHAR,
+            risk_state VARCHAR,
+            is_interactive BOOLEAN,
+            raw_payload JSON NOT NULL,
+            ingested_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_signins_tenant_user
+            ON signins(tenant_id, user_id);
+        CREATE INDEX IF NOT EXISTS idx_signins_tenant_time
+            ON signins(tenant_id, created_date_time);
+        """,
+    ),
+    Migration(
+        version=8,
+        name="anomaly_scores",
+        sql="""
+        CREATE TABLE IF NOT EXISTS anomaly_scores (
+            tenant_id VARCHAR NOT NULL,
+            signin_id VARCHAR NOT NULL,
+            user_id VARCHAR NOT NULL,
+            model_name VARCHAR NOT NULL,
+            model_version VARCHAR NOT NULL,
+            raw_score DOUBLE NOT NULL,
+            normalised_score DOUBLE NOT NULL,
+            is_anomaly BOOLEAN NOT NULL,
+            shap_top_features JSON,
+            scored_at TIMESTAMP NOT NULL,
+            PRIMARY KEY (tenant_id, signin_id, model_name, model_version)
+        );
+        CREATE INDEX IF NOT EXISTS idx_anomaly_tenant_user
+            ON anomaly_scores(tenant_id, user_id);
+        CREATE INDEX IF NOT EXISTS idx_anomaly_tenant_time
+            ON anomaly_scores(tenant_id, scored_at);
+        CREATE INDEX IF NOT EXISTS idx_anomaly_isanom
+            ON anomaly_scores(tenant_id, is_anomaly);
+        """,
+    ),
 )
 
 

@@ -24,6 +24,13 @@ from cstack_schemas.graph.named_location import (
     NamedLocation,
     NamedLocationAdapter,
 )
+from cstack_schemas.graph.signin import (
+    DeviceDetail,
+    GeoCoordinates,
+    SignIn,
+    SignInLocation,
+    SignInStatus,
+)
 from cstack_schemas.tenant import TenantConfig
 
 __all__ = [
@@ -33,7 +40,9 @@ __all__ = [
     "ConditionalAccessPolicyState",
     "Conditions",
     "CountryNamedLocation",
+    "DeviceDetail",
     "DirectoryRole",
+    "GeoCoordinates",
     "GrantControls",
     "Group",
     "IpNamedLocation",
@@ -44,7 +53,10 @@ __all__ = [
     "Platforms",
     "RoleAssignment",
     "SessionControls",
+    "SignIn",
     "SignInActivity",
+    "SignInLocation",
+    "SignInStatus",
     "TenantConfig",
     "User",
     "Users",

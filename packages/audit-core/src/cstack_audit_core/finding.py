@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from cstack_audit_core.severity import Severity
 
 AffectedObjectType = Literal["policy", "user", "group", "role", "location", "app", "tenant"]
-FindingCategory = Literal["coverage", "rule", "exclusion"]
+FindingCategory = Literal["coverage", "rule", "exclusion", "anomaly"]
 
 
 class AffectedObject(BaseModel):
