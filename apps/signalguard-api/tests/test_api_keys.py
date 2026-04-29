@@ -8,7 +8,6 @@ from typing import Any
 
 import pytest
 from httpx import AsyncClient
-
 from signalguard_api.config import Settings
 
 from .conftest import DEV_KEY, TENANT_A, TENANT_B
