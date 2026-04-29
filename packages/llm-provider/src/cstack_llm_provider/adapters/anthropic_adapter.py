@@ -16,6 +16,11 @@ _SUPPORTED_MODELS = [
     "claude-haiku-4-5",
 ]
 
+# Claude 4.7+ no longer accepts the temperature parameter on the messages
+# endpoint; sending it returns a 400 invalid_request_error. The adapter
+# silently drops temperature for these models and surfaces a debug log.
+_MODELS_WITHOUT_TEMPERATURE = frozenset({"claude-opus-4-7"})
+
 
 class AnthropicProvider:
     """Maps the provider-agnostic ``LlmRequest`` onto Anthropic's Messages API.
@@ -46,8 +51,9 @@ class AnthropicProvider:
             "model": request.model,
             "messages": conversation,
             "max_tokens": request.max_tokens,
-            "temperature": request.temperature,
         }
+        if request.model not in _MODELS_WITHOUT_TEMPERATURE:
+            kwargs["temperature"] = request.temperature
         if system_prompt is not None:
             kwargs["system"] = system_prompt
 

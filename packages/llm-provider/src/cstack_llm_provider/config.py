@@ -1,7 +1,36 @@
+import os
 from functools import lru_cache
+from pathlib import Path
 
+from dotenv import dotenv_values
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _load_env_file_overriding_empty() -> None:
+    """Populate os.environ from the nearest .env, but only for keys that are
+    missing or empty. Some shell environments leak through empty
+    ANTHROPIC_API_KEY values; pydantic-settings reads the empty env var
+    rather than the .env, which silently breaks credential loading. This
+    helper loads .env with override semantics that win against empty env
+    values without clobbering anything genuinely set upstream.
+    """
+
+    candidates = (
+        Path.cwd() / ".env",
+        Path(__file__).resolve().parents[5] / ".env",
+    )
+    for path in candidates:
+        if path.exists():
+            for key, value in dotenv_values(path).items():
+                if value is None:
+                    continue
+                if not os.environ.get(key):
+                    os.environ[key] = value
+            return
+
+
+_load_env_file_overriding_empty()
 
 
 class LlmProviderSettings(BaseSettings):

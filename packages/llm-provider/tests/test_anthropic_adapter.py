@@ -35,18 +35,19 @@ async def test_complete_maps_request_to_messages_create() -> None:
     provider._client.messages.create = AsyncMock(return_value=response)  # type: ignore[method-assign]
 
     request = LlmRequest(
-        model="claude-opus-4-7",
+        model="claude-sonnet-4-6",
         messages=[LlmMessage(role="user", content="hello")],
         system="be concise",
         temperature=0.1,
         max_tokens=200,
     )
+    response.model = "claude-sonnet-4-6"
     result = await provider.complete(request)
 
     call_kwargs: dict[str, Any] = dict(
         provider._client.messages.create.await_args.kwargs  # type: ignore[union-attr]
     )
-    assert call_kwargs["model"] == "claude-opus-4-7"
+    assert call_kwargs["model"] == "claude-sonnet-4-6"
     assert call_kwargs["system"] == "be concise"
     assert call_kwargs["messages"] == [{"role": "user", "content": "hello"}]
     assert call_kwargs["temperature"] == 0.1
@@ -115,3 +116,22 @@ def test_supported_models() -> None:
     models = provider.supported_models()
     assert "claude-opus-4-7" in models
     assert "claude-sonnet-4-6" in models
+
+
+@pytest.mark.asyncio
+async def test_complete_drops_temperature_for_opus_4_7() -> None:
+    provider = AnthropicProvider(api_key="stub")
+    response = _build_response(model="claude-opus-4-7")
+    provider._client.messages.create = AsyncMock(return_value=response)  # type: ignore[method-assign]
+
+    request = LlmRequest(
+        model="claude-opus-4-7",
+        messages=[LlmMessage(role="user", content="hi")],
+        temperature=0.2,
+    )
+    await provider.complete(request)
+    call_kwargs: dict[str, Any] = dict(
+        provider._client.messages.create.await_args.kwargs  # type: ignore[union-attr]
+    )
+    # Opus 4.7 rejects temperature; the adapter silently drops it.
+    assert "temperature" not in call_kwargs
