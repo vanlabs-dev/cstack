@@ -213,7 +213,41 @@ all surfaces (78 tests across 28 files as of Sprint 6).
    `metadata.json` `expected_findings` block; the integration tests pull
    counts from there.
 
+## Containerisation
+
+Sprint 6.6 ships a Docker Compose stack that brings the full local
+environment up in one command. Two images:
+
+- `cstack-api:dev` (multi-stage Python build via uv, ~2.1 GB; hosts
+  both the FastAPI app and the cstack CLI so bootstrap services can
+  reuse it).
+- `cstack-web:dev` (multi-stage Node build with Next.js standalone
+  output, ~434 MB).
+
+Both run as a non-root `cstack:cstack` uid 1001. Bootstrap services
+(fixtures load, audit run, anomaly train + promote + score) chain
+sequentially via `service_completed_successfully` before the api and
+web services start.
+
+Inside containers the runtime paths are:
+
+- DuckDB: `/data/cstack.duckdb`
+- MLflow tracking SQLite: `/data/mlruns/mlflow.sqlite`
+- MLflow artefacts: `/data/mlruns/<run-id>/artifacts/` (cwd-relative
+  default; bootstrap services set `working_dir: /data` so this lands
+  inside the bind-mounted volume)
+- tenants.json: `/data/tenants.json`
+- raw extracts: `/data/raw/<tenant>/<date>/`
+
+`/data` is a Compose-managed named volume (`cstack-data`); a
+`docker compose down -v` wipes it for a clean slate. See
+[infra/docker/README.md](../infra/docker/README.md) for the build,
+run, and reset flow plus configuration of LLM provider keys and the
+fixtures-only override.
+
 ## Deployment model
 
-TBD. Sprint 2 ships a local CLI that operates against a DuckDB file. Container,
-runtime, and hosting decisions are deferred to a deployment sprint.
+The Compose stack is the supported local environment. A production
+deployment story (Kubernetes, managed runtime, or otherwise) lands when
+Sprint 7 introduces real-tenant pressure on availability and observability
+requirements.

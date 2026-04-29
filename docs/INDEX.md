@@ -24,8 +24,14 @@ Every major doc has a single home. Start here.
 - [DESIGN_TOKENS](./DESIGN_TOKENS.md) visual decisions, the source of truth
 - [DESIGN_SYSTEM](./DESIGN_SYSTEM.md) component patterns and screen blueprints
 
+## Operations
+
+- [infra/docker](../infra/docker/README.md) Docker Compose stack: build,
+  run, reset, troubleshooting
+
 ## Reference
 
 - [RULES](./RULES.md) CA audit rule catalogue (15 rules)
 - [SPRINT_NOTES](./SPRINT_NOTES.md) per-sprint calibration outcomes
 - [BACKLOG](./BACKLOG.md) parked work
+- [CHANGELOG](../CHANGELOG.md) per-version release notes

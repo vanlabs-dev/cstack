@@ -1,8 +1,14 @@
 # signalguard-api
 
 FastAPI HTTP surface over the cstack signalguard data and audit packages. The
-API is a thin reading layer plus two action endpoints; all business logic
-lives in the `cstack-*` workspace packages.
+API is a thin reading layer plus action endpoints (audit run, anomaly score,
+narrative regenerate); all business logic lives in the `cstack-*` workspace
+packages.
+
+The fastest way to run this against the populated fixture corpus is the
+Compose stack at [`infra/docker/`](../../infra/docker/README.md): one
+`docker compose up` brings the API, web, and a seeded DuckDB online.
+The from-source path below is for local hacking on the API code.
 
 ## Running locally
 
