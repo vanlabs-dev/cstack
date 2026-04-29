@@ -364,3 +364,33 @@ v2 attempt):
   not previously narrated)
 - Total: ~$4.30 against the $20 hard cap.
 
+## Sprint 6.6 containerization (2026-04-30)
+
+### Next.js standalone output
+
+Sprint 5a deferred `output: 'standalone'` because pnpm's symlink farm
+hits EPERM on Windows without SeCreateSymbolicLinkPrivilege. Sprint 6.6
+makes it opt-in via `BUILD_STANDALONE=true`: the Dockerfile sets it
+during the Linux build (where symlinks work) and Windows local builds
+default to off. Verified that `pnpm build` succeeds on Windows with
+the default and that the Dockerfile produces a working standalone
+artefact under Linux.
+
+### MLflow tracking backend
+
+The default tracking URI is now `sqlite:///./mlruns/mlflow.sqlite`.
+SQLite is multi-process safe and works correctly under Compose bind
+mounts; the file:// backend remains available for tests via explicit
+`tracking_uri` argument and for back-compat callers that pass the
+legacy `uri=` keyword. Existing tests still use file:// because per-test
+tmp_path filesystems are simpler than per-test SQLite databases; the
+production paths (CLI, FastAPI lifespan) pick up SQLite by default or
+via `MLFLOW_TRACKING_URI`.
+
+### Manual GitHub release step
+
+Tagging v0.6.0-alpha.1 and creating the GitHub release are user
+actions, not Claude Code actions. Claude Code prepares CHANGELOG.md
+and README status updates, then surfaces the manual steps in the
+final report.
+
