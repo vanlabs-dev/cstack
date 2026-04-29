@@ -419,3 +419,115 @@ let the bootstrap exit fast on warm starts; tracked as a near-term
 BACKLOG item so it can land alongside Sprint 3.5's per-user IF work
 where the same code path gets reorganised.
 
+
+## Sprint 3.5 per-user anomaly + off-hours admin (2026-04-30)
+
+Sprint 3 deferred per-user IF training to keep that sprint's scope
+tight. Sprint 3.5 closes that gap and folds in two parked items from
+Sprint 6.6 (`anomaly train --skip-if-registered`, MLflow
+`artifact_location` cleanup) since they all touch the same training
+path.
+
+### What shipped
+
+- `PerUserBundle` artefact in `cstack_ml_anomaly.per_user`. One fitted
+  pipeline per user with at least 30 sign-ins, plus one shared
+  cold-start pooled pipeline for everyone below the threshold. The
+  bundle is a single `model.joblib` registered under
+  `signalguard-anomaly-{tenant_id}` (the Sprint 3 `-pooled-` segment
+  is gone).
+- `AnomalyScore.model_tier` field carries which tier scored each row;
+  migration 11 adds the column with default `'unknown'`.
+- Off-hours-admin rule in `cstack_ml_anomaly.rules` fires on tier-0
+  admin sign-ins that the user's per-user time-only model rates in
+  the user's own training-distribution top decile (cold-start admins
+  fall back to a UTC 22:00-06:00 night band).
+- `cstack anomaly train --skip-if-registered` short-circuits when a
+  champion already exists.
+- MLflow `configure_tracking` resolves an explicit `artifact_location`
+  (or `MLFLOW_ARTIFACT_ROOT` env var, or sqlite-derived sibling) and
+  pins the experiment's artifact directory at create time. Compose
+  drops the `working_dir: /data` hack and sets
+  `MLFLOW_ARTIFACT_ROOT=file:///data/mlruns/artifacts`.
+- Three tenants' fixtures gain `members: ["user-tenant-X-0016"]` on
+  their global admin role so the off-hours-admin rule has someone to
+  fire on; surfaces two pre-existing coverage gaps that recalibrated
+  the audit metadata for tenants b and c.
+
+### Calibration outcome
+
+| tenant   | scenario       | precision | recall | F1    | FPR   | delta vs Sprint 3 |
+| -------- | -------------- | --------- | ------ | ----- | ----- | ----------------- |
+| tenant-a | replay-attacks | 0.209     | 0.852  | 0.336 | 0.025 | -0.089 P, -0.074 R |
+| tenant-a | noisy          | 0.205     | 0.889  | 0.333 | 0.025 | -0.055 P, -0.037 R |
+| tenant-b | replay-attacks | 0.235     | 0.852  | 0.368 | 0.026 | -0.040 P, +0.037 R |
+| tenant-b | noisy          | 0.225     | 0.852  | 0.357 | 0.027 | -0.055 P,  0.000 R |
+| tenant-c | replay-attacks | 0.209     | 0.852  | 0.336 | 0.020 | -0.064 P, -0.037 R |
+| tenant-c | noisy          | 0.180     | 0.741  | 0.290 | 0.020 | -0.062 P, -0.111 R |
+
+Layer attribution on tenant-a x replay-attacks (same trained bundle,
+different layer subsets):
+
+| layers                            | precision | recall | F1    |
+| --------------------------------- | --------- | ------ | ----- |
+| per-user IF only                  | 0.057     | 0.074  | 0.065 |
+| per-user + cold-start (no rules)  | 0.057     | 0.074  | 0.065 |
+| per-user + pooled + hybrid rules  | 0.224     | 0.815  | 0.352 |
+| full (+ off-hours-admin)          | 0.209     | 0.852  | 0.336 |
+
+The four hybrid rules drive recall from 0.07 to 0.82. The
+off-hours-admin rule adds the 0.85 plateau by closing the Sprint 3
+admin-time miss (the 23rd of 27 attacks per scenario). Per-user IF
+on synthetic data does not lift precision: train and test
+distributions overlap by construction, the rules cover the
+unambiguous attack patterns, and the per-user fits are too sensitive
+on each user's small training distribution.
+
+Tier distribution across all 9 scenarios is 100% `per_user`. Every
+fixture user has at least 30 sign-ins, so the cold-start pool and
+the rule-only path are dormant. Sprint 7 with real tenant data is
+expected to exercise both: live tenants typically have a long tail
+of low-volume users.
+
+### Success gate
+
+The spec's strict floor was recall >= 0.80 on replay-attacks across
+all three tenants; that passes (0.852 on each). The precision target
+of 0.40+ is not met (best 0.235); per the spec this is documented as
+a real ceiling on synthetic data rather than artificially boosted.
+`tenant-c noisy` recall (0.741) slips below 0.80 on the noisy
+scenario (not a strict criterion); noise injection broadens the
+admin user's time distribution and dilutes the off-hours-admin
+per-user anchor.
+
+### Deviations from the prompt
+
+- The prompt's "if calibration is off, investigate before continuing"
+  step found contamination drift: the metadata documented 0.05 but
+  the CLI default has always been 0.02. Sprint 3 must have been run
+  with explicit `--contamination 0.05`. Phase 0 baseline was
+  re-captured at 0.05 to match. The CLI default is now 0.05.
+- The prompt described the off-hours-admin rule scoring against the
+  user's full per-user IF on time-feature columns; in practice the
+  bundle carries a separate small time-only IF per user (4 features)
+  fitted alongside the 20-feature pipeline at training time. This is
+  what the spec's "extract time features for the signin, run through
+  StandardScaler from the per-user model, run through IsolationForest"
+  resolves to mechanically; making it a separate fitted pipeline keeps
+  the input matrix shape correct.
+- Web frontend tests and `apps/signalguard-web/src/test-utils/fixtures.ts`
+  still reference the old `signalguard-anomaly-pooled-test` literal
+  for synthetic test data; that string is fixture-only and does not
+  affect rendering, so no web changes were made.
+
+### Verdict
+
+Per-user IF + cold-start pooled + 4 hybrid rules + off-hours-admin
+rule lands as the new architecture. Recall meets the strict floor on
+all three tenants' replay-attacks scenarios; precision sits below
+the Sprint 3.5 target on synthetic data because the rules carry
+recall and the per-user IF is bound by the synthesizer's structure.
+The infrastructure (bundle, cold-start fallback, per-user time
+anchor, single registry artefact, `MLFLOW_ARTIFACT_ROOT` plumbing,
+`--skip-if-registered`) is all in place for Sprint 7 real-data
+calibration.
