@@ -32,7 +32,7 @@ in one command.
 ### Sprint 3: Anomaly detection
 - Per-tenant pooled IsolationForest with rule-based score booster.
 - SHAP top-3 attributions on every flagged sign-in.
-- MLflow model registry with `@champion` and `@challenger` aliases.
+- MLflow model registry with `champion` and `challenger` aliases.
 - PSI drift monitoring and shadow scoring framework.
 - Calibrated against three scenarios (baseline, replay-attacks,
   noisy) on all three fixture tenants. Recall 0.81 to 0.93 on
@@ -54,7 +54,7 @@ in one command.
   matrix, findings, anomaly feed, anomaly drill-down, settings tabs.
 - 78 component tests (Vitest + RTL + jsdom) across 28 files.
 - Tablet responsive at 768px; phone breakpoints parked.
-- Typed `@hey-api` client generated from openapi.json with CI drift
+- Typed client (via `hey-api/openapi-ts`) generated from openapi.json with CI drift
   detection.
 
 ### Sprint 6: LLM narrative layer
