@@ -16,6 +16,7 @@ import {
   getCoverageTenantsTenantIdCoverageMatrixGet,
   getDetailTenantsTenantIdAnomalyScoresSigninIdGet,
   getFindingTenantsTenantIdFindingsFindingIdGet,
+  getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet,
   getStatsTenantsTenantIdSigninsStatsGet,
   getTenantDetailTenantsTenantIdGet,
   getUserSigninsTenantsTenantIdUsersUserIdSigninsGet,
@@ -24,8 +25,10 @@ import {
   listModelsTenantsTenantIdModelsGet,
   listScoresTenantsTenantIdAnomalyScoresGet,
   listTenantsTenantsGet,
+  regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost,
   runAuditTenantsTenantIdAuditRunPost,
   scoreTenantsTenantIdAnomalyScorePost,
+  whoamiWhoamiGet,
 } from '@/lib/api/generated';
 import type {
   AnomalyScore,
@@ -34,6 +37,7 @@ import type {
   AnomalyScoreRunResponse,
   ApiKeyCreateRequest,
   ApiKeyCreateResponse,
+  ApiCaller,
   ApiKeySummary,
   AuditRunRequest,
   AuditRunResponse,
@@ -41,9 +45,11 @@ import type {
   Finding,
   FindingsSummary,
   ModelSummary,
+  NarrativeResponse,
   PaginatedAnomalyScore,
   PaginatedFinding,
   PaginatedSignIn,
+  RegenerateRequest,
   SigninStats,
   TenantDetail,
   TenantSummary,
@@ -63,6 +69,15 @@ interface FindingsListQuery extends WithAbort {
   since?: string;
   limit?: number;
   offset?: number;
+}
+
+export async function callWhoami(opts: WithAbort = {}): Promise<ApiCaller> {
+  const { data } = await whoamiWhoamiGet({
+    client: apiClient(),
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as ApiCaller;
 }
 
 export async function callListTenants(opts: WithAbort = {}): Promise<TenantSummary[]> {
@@ -117,6 +132,38 @@ export async function callFinding(
     throwOnError: true,
   });
   return data as unknown as Finding;
+}
+
+export async function callFindingNarrative(
+  tenantId: string,
+  findingId: string,
+  opts: WithAbort = {},
+): Promise<NarrativeResponse> {
+  const { data } = await getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet({
+    client: apiClient(),
+    path: { tenant_id: tenantId, finding_id: findingId },
+    signal: opts.signal,
+    throwOnError: true,
+  });
+  return data as unknown as NarrativeResponse;
+}
+
+export async function callRegenerateFindingNarrative(
+  tenantId: string,
+  findingId: string,
+  body: RegenerateRequest = { prompt_version: 'v1' },
+  opts: WithAbort = {},
+): Promise<NarrativeResponse> {
+  const { data } = await regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost(
+    {
+      client: apiClient(),
+      path: { tenant_id: tenantId, finding_id: findingId },
+      body,
+      signal: opts.signal,
+      throwOnError: true,
+    },
+  );
+  return data as unknown as NarrativeResponse;
 }
 
 export async function callFindingsSummary(

@@ -6,7 +6,7 @@ import { Pagination } from '@/components/findings/Pagination';
 import { RightRail } from '@/components/findings/RightRail';
 import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/Button';
-import { callFindingsSummary, callListFindings } from '@/lib/api/calls';
+import { callFindingsSummary, callListFindings, callWhoami } from '@/lib/api/calls';
 import { fetchTenantList, resolveActiveTenantId } from '@/lib/tenant';
 
 import type { TenantSummary } from '@/lib/tenant';
@@ -75,7 +75,7 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
   const limit = Math.min(Math.max(parseInt(pickFirst(params.limit) ?? '25', 10) || 25, 1), 100);
   const offset = Math.max(parseInt(pickFirst(params.offset) ?? '0', 10) || 0, 0);
 
-  const [page, summary] = await Promise.all([
+  const [page, summary, caller] = await Promise.all([
     callListFindings({
       tenantId: activeTenantId,
       minSeverity,
@@ -85,7 +85,9 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
       offset,
     }),
     callFindingsSummary(activeTenantId),
+    callWhoami().catch(() => ({ kind: 'tenant' as const, tenant_id: null, key_label: 'unknown' })),
   ]);
+  const isDev = caller.kind === 'dev';
 
   return (
     <AppShell
@@ -131,7 +133,7 @@ export default async function FindingsPage({ searchParams }: FindingsPageProps) 
 
           <FilterChipStrip />
 
-          <FindingsTable findings={page.items} />
+          <FindingsTable findings={page.items} isDev={isDev} />
 
           <Pagination total={page.total} limit={limit} offset={offset} hasMore={page.has_more} />
         </div>

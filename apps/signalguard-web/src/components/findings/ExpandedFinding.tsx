@@ -9,9 +9,11 @@ import type { Finding } from '@/lib/api/generated/types.gen';
 
 import { CopyButton } from './CopyButton';
 import { EvidenceJson } from './EvidenceJson';
+import { FindingNarrative } from './FindingNarrative';
 
 interface ExpandedFindingProps {
   finding: Finding;
+  isDev: boolean;
 }
 
 function splitRemediation(text: string): string[] {
@@ -32,7 +34,7 @@ function entraPortalUrl(finding: Finding): string {
   return 'https://entra.microsoft.com/';
 }
 
-export function ExpandedFinding({ finding }: ExpandedFindingProps) {
+export function ExpandedFinding({ finding, isDev }: ExpandedFindingProps) {
   const evidence = (finding.evidence ?? {}) as Record<string, unknown>;
   const summary = finding.summary ?? '';
   const remediationSteps = splitRemediation(finding.remediation_hint ?? '');
@@ -44,9 +46,17 @@ export function ExpandedFinding({ finding }: ExpandedFindingProps) {
           <p className="text-13 leading-[1.55] text-fg">{summary}</p>
         ) : (
           <p className="text-13 italic text-fg-tertiary">
-            Narrative pending LLM integration in Sprint 6.
+            (rule-supplied summary unavailable)
           </p>
         )}
+      </Section>
+
+      <Section eyebrow="Narrative">
+        <FindingNarrative
+          tenantId={finding.tenant_id}
+          findingId={finding.id}
+          isDev={isDev}
+        />
       </Section>
 
       <Section eyebrow="Affected objects">

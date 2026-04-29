@@ -13,6 +13,7 @@ import { ExpandedFinding } from './ExpandedFinding';
 
 interface FindingsTableProps {
   findings: Finding[];
+  isDev: boolean;
 }
 
 function affectedDescription(f: Finding): string {
@@ -25,7 +26,7 @@ function affectedDescription(f: Finding): string {
   return `${objs.length} affected · ${objs[0]?.type ?? ''}`;
 }
 
-export function FindingsTable({ findings }: FindingsTableProps) {
+export function FindingsTable({ findings, isDev }: FindingsTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (findings.length === 0) {
@@ -64,6 +65,7 @@ export function FindingsTable({ findings }: FindingsTableProps) {
                 onToggle={() => setExpandedId(expanded ? null : f.id)}
                 sev={sev}
                 affected={affectedDescription(f)}
+                isDev={isDev}
               />
             );
           })}
@@ -93,9 +95,17 @@ interface FindingRowProps {
   onToggle: () => void;
   sev: ReturnType<typeof severityFromString>;
   affected: string;
+  isDev: boolean;
 }
 
-function FindingRowFragment({ finding, expanded, onToggle, sev, affected }: FindingRowProps) {
+function FindingRowFragment({
+  finding,
+  expanded,
+  onToggle,
+  sev,
+  affected,
+  isDev,
+}: FindingRowProps) {
   return (
     <>
       <tr
@@ -157,7 +167,7 @@ function FindingRowFragment({ finding, expanded, onToggle, sev, affected }: Find
             className="border-b border-border p-0"
             style={{ background: 'var(--color-surface-subtle)' }}
           >
-            <ExpandedFinding finding={finding} />
+            <ExpandedFinding finding={finding} isDev={isDev} />
           </td>
         </tr>
       )}
