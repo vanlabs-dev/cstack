@@ -278,6 +278,14 @@ MIGRATIONS: tuple[Migration, ...] = (
             ON eval_scores(eval_id);
         """,
     ),
+    Migration(
+        version=11,
+        name="anomaly_scores_model_tier",
+        sql="""
+        ALTER TABLE anomaly_scores ADD COLUMN model_tier VARCHAR DEFAULT 'unknown';
+        UPDATE anomaly_scores SET model_tier = 'unknown' WHERE model_tier IS NULL;
+        """,
+    ),
 )
 
 

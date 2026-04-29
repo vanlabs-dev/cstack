@@ -25,14 +25,16 @@ def write_scores(conn: duckdb.DuckDBPyConnection, scores: list[AnomalyScore]) ->
                 s.is_anomaly,
                 json.dumps([f.model_dump() for f in s.shap_top_features]),
                 s.scored_at,
+                s.model_tier,
             )
         )
     conn.executemany(
         """
         INSERT OR REPLACE INTO anomaly_scores (
             tenant_id, signin_id, user_id, model_name, model_version,
-            raw_score, normalised_score, is_anomaly, shap_top_features, scored_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            raw_score, normalised_score, is_anomaly, shap_top_features, scored_at,
+            model_tier
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         rows,
     )
@@ -51,7 +53,8 @@ def get_scores(
     sql_parts = [
         """
         SELECT tenant_id, signin_id, user_id, model_name, model_version,
-               raw_score, normalised_score, is_anomaly, shap_top_features, scored_at
+               raw_score, normalised_score, is_anomaly, shap_top_features, scored_at,
+               model_tier
         FROM anomaly_scores WHERE tenant_id = ?
         """
     ]
@@ -83,7 +86,8 @@ def latest_anomalies(
     sql_parts = [
         """
         SELECT tenant_id, signin_id, user_id, model_name, model_version,
-               raw_score, normalised_score, is_anomaly, shap_top_features, scored_at
+               raw_score, normalised_score, is_anomaly, shap_top_features, scored_at,
+               model_tier
         FROM anomaly_scores WHERE tenant_id = ? AND is_anomaly = TRUE
         """
     ]
@@ -109,4 +113,5 @@ def _row_to_score(row: tuple[Any, ...]) -> AnomalyScore:
         is_anomaly=row[7],
         shap_top_features=[ShapFeatureContribution.model_validate(f) for f in json.loads(row[8])],
         scored_at=row[9],
+        model_tier=row[10] if len(row) > 10 else "unknown",
     )

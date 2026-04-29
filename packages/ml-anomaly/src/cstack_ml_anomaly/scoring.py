@@ -1,26 +1,31 @@
 """Per-signin scoring with SHAP attribution.
 
-Loads the @champion (or @challenger fallback) pooled model, runs scoring
-on a feature batch, and computes top-3 SHAP contributions per signin via
-``shap.Explainer`` over the model's ``score_samples`` function.
+Loads the @champion (or @challenger fallback) tenant bundle and routes
+each row through either its per-user pipeline or the cold-start pooled
+pipeline. SHAP attributions are computed only on flagged rows because
+SHAP is expensive (~5 calls/sec for IsolationForest); restricting to
+flagged rows keeps a 3000-row score pass under 30 seconds.
 
-We use ``shap.Explainer`` instead of ``shap.TreeExplainer`` deliberately:
-TreeExplainer has known footguns with IsolationForest because IF's leaf
-weighting differs from random forests; the Explainer-over-prediction-fn
-path is the community-standard route.
+We use ``shap.Explainer`` over ``score_samples`` rather than
+``shap.TreeExplainer`` deliberately: TreeExplainer has known footguns
+with IsolationForest because IF leaf weighting differs from random
+forests. The Explainer-over-prediction-fn path is the community-standard
+route.
 """
 
 from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import duckdb
+import joblib
 import numpy as np
 import pandas as pd
 import shap
-from cstack_audit_core import AnomalyScore, ShapDirection, ShapFeatureContribution
+from cstack_audit_core import AnomalyScore, ModelTier, ShapDirection, ShapFeatureContribution
 from cstack_ml_features import (
     FEATURE_COLUMNS,
     build_history_from_signins,
@@ -30,14 +35,16 @@ from cstack_ml_mlops import (
     CHALLENGER_ALIAS,
     CHAMPION_ALIAS,
     configure_tracking,
+    download_artifact_by_alias,
     get_alias_version,
-    load_by_alias,
 )
 from cstack_schemas import SignIn
 from cstack_storage import get_signins
 
+from cstack_ml_anomaly.per_user import PerUserBundle
+from cstack_ml_anomaly.rules import rule_score_boosts
 from cstack_ml_anomaly.score import normalise_score
-from cstack_ml_anomaly.training import pooled_model_name
+from cstack_ml_anomaly.training import tenant_model_name
 
 LOG = logging.getLogger(__name__)
 
@@ -45,111 +52,139 @@ ANOMALY_THRESHOLD = 0.7
 SHAP_BACKGROUND_SAMPLE = 100
 
 
-def _resolve_model(tenant_id: str) -> tuple[Any, str, str]:
-    """Return (model, alias_used, version). Champion wins; challenger fallback."""
-    name = pooled_model_name(tenant_id)
-    for alias in (CHAMPION_ALIAS, CHALLENGER_ALIAS):
+def load_bundle(
+    tenant_id: str, prefer_alias: str = CHAMPION_ALIAS
+) -> tuple[PerUserBundle, str, str]:
+    """Load the tenant's @champion (or @challenger fallback) bundle.
+
+    Returns ``(bundle, alias_used, version)``. Raises ``LookupError`` if
+    no version is registered.
+    """
+    name = tenant_model_name(tenant_id)
+    if prefer_alias != CHALLENGER_ALIAS:
+        aliases: tuple[str, ...] = (prefer_alias, CHALLENGER_ALIAS)
+    else:
+        aliases = (CHALLENGER_ALIAS,)
+    seen: set[str] = set()
+    for alias in aliases:
+        if alias in seen:
+            continue
+        seen.add(alias)
         version = get_alias_version(name, alias)
-        if version is not None:
-            model = load_by_alias(name, alias)
-            return model, alias, str(version.version)
+        if version is None:
+            continue
+        artefact_dir = download_artifact_by_alias(name, alias)
+        bundle_path = Path(artefact_dir) / "model.joblib"
+        if not bundle_path.exists():
+            raise LookupError(
+                f"alias @{alias} of {name} resolved but model.joblib not found at {bundle_path}"
+            )
+        bundle: PerUserBundle = joblib.load(bundle_path)
+        return bundle, alias, str(version.version)
     raise LookupError(f"no @{CHAMPION_ALIAS} or @{CHALLENGER_ALIAS} version of {name} registered")
 
 
-def _build_score_features(signins: list[SignIn]) -> pd.DataFrame:
+def _build_score_features(signins: list[SignIn]) -> tuple[pd.DataFrame, list[str]]:
     """Compute features for each signin using prefix history of the same batch.
 
-    For scoring during a single CLI invocation we treat the batch as
-    chronologically ordered; rolling state advances as we scan. This matches
-    the training-time semantics so models see consistent feature shapes.
-
-    Iterates users in alphabetical order so callers that recover a parallel
-    ordering of the original sign-ins produce the same row layout. Without
-    this, dict-iteration order would diverge from any caller's reorder logic
-    and the IF predictions would be misaligned with the source rows.
+    Returns ``(feature_df, user_ids)`` where ``user_ids[i]`` is the user
+    that owns ``feature_df.iloc[i]``. Iterates users in alphabetical order
+    so callers that recover a parallel ordering of the original sign-ins
+    produce the same row layout.
     """
     by_user: dict[str, list[SignIn]] = {}
     for s in signins:
         by_user.setdefault(s.user_id, []).append(s)
     items: list[Any] = []
-    for _uid in sorted(by_user.keys()):
-        sorted_group = sorted(by_user[_uid], key=lambda s: s.created_date_time)
+    user_ids: list[str] = []
+    for uid in sorted(by_user.keys()):
+        sorted_group = sorted(by_user[uid], key=lambda s: s.created_date_time)
         for signin in sorted_group:
             history = build_history_from_signins(sorted_group, as_of=signin.created_date_time)
             items.append((signin, history))
+            user_ids.append(uid)
     df = extract_features_batch(items)
-    return df
+    return df, user_ids
 
 
-def _shap_top_features(
-    model: Any,
+def _bundle_score_rows(
+    bundle: PerUserBundle, feature_df: pd.DataFrame, user_ids: list[str]
+) -> tuple[list[float], list[ModelTier], list[bool]]:
+    """Score every row through its per-user or cold-start pipeline.
+
+    Returns ``(raw_scores, model_tiers, predictions)`` where ``predictions``
+    is True when the IF predicts -1 (anomaly) for that row. Rule-only
+    rows (no per-user, no pooled) have raw_score=0.0 and prediction=False.
+    """
+    raw_scores: list[float] = []
+    tiers: list[ModelTier] = []
+    predictions: list[bool] = []
+    feature_cols = list(bundle.feature_columns)
+    for i, user_id in enumerate(user_ids):
+        row = feature_df.iloc[[i]][feature_cols]
+        per_user_model = bundle.per_user_models.get(user_id)
+        tier: ModelTier
+        if per_user_model is not None:
+            model = per_user_model
+            tier = "per_user"
+        elif bundle.cold_start_pooled is not None:
+            model = bundle.cold_start_pooled
+            tier = "cold_start_pooled"
+        else:
+            raw_scores.append(0.0)
+            tiers.append("rule_only")
+            predictions.append(False)
+            continue
+        raw = float(model.decision_function(row)[0])
+        pred = int(model.predict(row)[0])
+        raw_scores.append(raw)
+        tiers.append(tier)
+        predictions.append(pred == -1)
+    return raw_scores, tiers, predictions
+
+
+def _shap_for_anomalous_rows(
+    bundle: PerUserBundle,
     feature_df: pd.DataFrame,
+    user_ids: list[str],
+    anom_indices: list[int],
     background_df: pd.DataFrame,
-    top_k: int = 3,
-) -> list[list[ShapFeatureContribution]]:
-    """Compute SHAP top-K contributions for each row via shap.Explainer."""
-    if feature_df.empty:
-        return []
-    bg = background_df.sample(
-        n=min(len(background_df), SHAP_BACKGROUND_SAMPLE),
+) -> dict[int, list[ShapFeatureContribution]]:
+    """Compute SHAP top-3 for flagged rows. Background pulls from the same
+    pipeline that scored the row so attributions match the routing path."""
+    if not anom_indices:
+        return {}
+    feature_cols = list(bundle.feature_columns)
+    bg_pool = background_df[feature_cols] if not background_df.empty else feature_df[feature_cols]
+    bg = bg_pool.sample(
+        n=min(len(bg_pool), SHAP_BACKGROUND_SAMPLE),
         random_state=42,
     )
-    explainer = shap.Explainer(model.score_samples, bg)
-    shap_values = explainer(feature_df).values
-    out: list[list[ShapFeatureContribution]] = []
-    columns = list(feature_df.columns)
-    for i in range(feature_df.shape[0]):
-        row = shap_values[i]
-        order = np.argsort(np.abs(row))[::-1][:top_k]
+    shap_lookup: dict[int, list[ShapFeatureContribution]] = {}
+    for idx in anom_indices:
+        user_id = user_ids[idx]
+        model = bundle.per_user_models.get(user_id) or bundle.cold_start_pooled
+        if model is None:
+            shap_lookup[idx] = []
+            continue
+        explainer = shap.Explainer(model.score_samples, bg)
+        row = feature_df.iloc[[idx]][feature_cols]
+        shap_values = explainer(row).values[0]
+        order = np.argsort(np.abs(shap_values))[::-1][:3]
         contributions: list[ShapFeatureContribution] = []
-        for idx in order:
-            shap_val = float(row[int(idx)])
-            # decision_function is "higher = more normal", so a negative SHAP
-            # value pushes the prediction toward anomaly.
+        for col_idx in order:
+            shap_val = float(shap_values[int(col_idx)])
             direction: ShapDirection = "pushes_anomalous" if shap_val < 0 else "pushes_normal"
             contributions.append(
                 ShapFeatureContribution(
-                    feature_name=columns[int(idx)],
-                    feature_value=float(feature_df.iloc[i, int(idx)]),
+                    feature_name=feature_cols[int(col_idx)],
+                    feature_value=float(row.iloc[0, int(col_idx)]),
                     shap_value=shap_val,
                     direction=direction,
                 )
             )
-        out.append(contributions)
-    return out
-
-
-def _rule_score_boosts(feature_df: pd.DataFrame) -> list[float]:
-    """Per-row score floor from a small rule set.
-
-    Each rule encodes an unambiguous attack pattern that the IF should not be
-    asked to learn from baseline data alone. Boosts are computed independently
-    per rule and combined via max so the highest-confidence rule wins.
-
-    - travel_speed_kmh > 1500: physically impossible across a single hop
-      (commercial flights cap around 900 km/h with overhead).
-    - is_new_country & is_new_asn together: a sign-in arriving from a country
-      and ASN the user has never used.
-    - is_failure & is_new_asn: failed sign-in from a never-seen ASN, the
-      typical fingerprint of credential-stuffing bursts.
-    - mfa_satisfied=0 & is_legacy_auth=1: an interactive user falling back to
-      single-factor and a legacy client app at the same time.
-    """
-    boosts: list[float] = [0.0] * len(feature_df)
-    for i, row in enumerate(feature_df.itertuples(index=False)):
-        score = 0.0
-        if getattr(row, "travel_speed_kmh", 0.0) > 1500.0:
-            score = max(score, 0.95)
-        if getattr(row, "is_new_country_for_user", 0) and getattr(row, "is_new_asn_for_user", 0):
-            score = max(score, 0.85)
-        if getattr(row, "is_failure", 0) and getattr(row, "is_new_asn_for_user", 0):
-            score = max(score, 0.85)
-        mfa = getattr(row, "mfa_satisfied", 1)
-        legacy = getattr(row, "is_legacy_auth", 0)
-        if not mfa and legacy:
-            score = max(score, 0.80)
-        boosts[i] = score
-    return boosts
+        shap_lookup[idx] = contributions
+    return shap_lookup
 
 
 def score_batch(
@@ -158,89 +193,76 @@ def score_batch(
     conn: duckdb.DuckDBPyConnection,
     background_signins: list[SignIn] | None = None,
     tracking_uri: str | None = None,
+    enable_rules: bool = True,
 ) -> list[AnomalyScore]:
-    """Score a batch of sign-ins. Loads @champion (or @challenger) model.
+    """Score a batch of sign-ins. Loads the bundle, routes per user, then
+    layers the rule booster on top.
 
-    ``background_signins`` is the reference distribution SHAP samples from;
-    defaults to the full sign-in history for the tenant in the DB.
+    ``enable_rules=False`` returns the raw model score without the booster
+    floor. Used by the layer-attribution sweep in Phase 4 to measure
+    each tier's contribution independently.
     """
     if not signins:
         return []
     configure_tracking(uri=tracking_uri)
-    model, _alias, version = _resolve_model(tenant_id)
+    bundle, _alias, version = load_bundle(tenant_id)
     background = (
         background_signins if background_signins is not None else (get_signins(conn, tenant_id))
     )
-    bg_df = (
+    bg_df, _ = (
         _build_score_features(background)
         if background
-        else pd.DataFrame(columns=list(FEATURE_COLUMNS))
+        else (pd.DataFrame(columns=list(FEATURE_COLUMNS)), [])
     )
-    score_df = _build_score_features(signins)
-    feature_only = score_df[list(FEATURE_COLUMNS)]
-    raw_scores = model.decision_function(feature_only)
-    predictions = model.predict(feature_only)
-    # Hybrid rules + IF: a small set of unambiguous attack patterns boost the
-    # IF score for rows the model would otherwise miss because the injected
-    # anomalies' feature values overlap with rare-but-legitimate baseline
-    # events. Without this, the IF treats injected impossible-travel and
-    # credential-stuffing rows as "normal-rare". Threshold values are
-    # deliberately conservative; tighten them only if false-positive volume
-    # rises above the on-call gate.
-    rule_boosts = _rule_score_boosts(feature_only)
+    feature_df, user_ids = _build_score_features(signins)
+    raw_scores, tiers, predictions = _bundle_score_rows(bundle, feature_df, user_ids)
+    rule_boosts = rule_score_boosts(feature_df) if enable_rules else [0.0] * len(feature_df)
 
-    # Reorder the input list to match the order produced by _build_score_features,
-    # which groups by user_id and then sorts by created_date_time.
     sorted_signins: list[SignIn] = []
-    for _uid, group in sorted(
-        (
-            (uid, sorted(grp, key=lambda s: s.created_date_time))
-            for uid, grp in (
-                {s.user_id: [s2 for s2 in signins if s2.user_id == s.user_id] for s in signins}
-            ).items()
-        ),
-        key=lambda kv: kv[0],
-    ):
-        sorted_signins.extend(group)
+    by_user: dict[str, list[SignIn]] = {}
+    for s in signins:
+        by_user.setdefault(s.user_id, []).append(s)
+    for uid in sorted(by_user.keys()):
+        sorted_signins.extend(sorted(by_user[uid], key=lambda s: s.created_date_time))
 
-    # SHAP is expensive (~5 calls/sec for IsolationForest via PermutationExplainer);
-    # scoring 3000+ rows with full SHAP takes ~10 minutes. Restrict SHAP to rows the
-    # model already flags as anomalous so we still surface explanations on the rows
-    # that drive findings without paying for normal rows.
     is_anom_mask: list[bool] = []
     normalised_scores: list[float] = []
     for i in range(len(sorted_signins)):
-        raw = float(raw_scores[i])
-        normalised = normalise_score(raw)
-        # Apply the per-row boost; the maximum keeps a strong IF score from
-        # being downgraded by the booster.
+        normalised = normalise_score(raw_scores[i]) if tiers[i] != "rule_only" else 0.0
         normalised = max(normalised, rule_boosts[i])
         normalised_scores.append(normalised)
-        is_anom_mask.append(bool(predictions[i] == -1) or normalised >= ANOMALY_THRESHOLD)
+        is_anom_mask.append(predictions[i] or normalised >= ANOMALY_THRESHOLD)
 
     anom_indices = [i for i, flagged in enumerate(is_anom_mask) if flagged]
-    if anom_indices:
-        anom_df = feature_only.iloc[anom_indices].reset_index(drop=True)
-        shap_for_anom = _shap_top_features(model, anom_df, bg_df)
-    else:
-        shap_for_anom = []
-    shap_lookup = dict(zip(anom_indices, shap_for_anom, strict=False))
+    shap_lookup = _shap_for_anomalous_rows(bundle, feature_df, user_ids, anom_indices, bg_df)
 
     scored_at = datetime.now(UTC)
     results: list[AnomalyScore] = []
+    model_name = tenant_model_name(tenant_id)
     for i, signin in enumerate(sorted_signins):
         results.append(
             AnomalyScore(
                 tenant_id=tenant_id,
                 signin_id=signin.id,
                 user_id=signin.user_id,
-                model_name=pooled_model_name(tenant_id),
+                model_name=model_name,
                 model_version=version,
-                raw_score=float(raw_scores[i]),
+                raw_score=raw_scores[i],
                 normalised_score=normalised_scores[i],
                 is_anomaly=is_anom_mask[i],
                 shap_top_features=shap_lookup.get(i, []),
                 scored_at=scored_at,
+                model_tier=tiers[i],
             )
+        )
+        LOG.debug(
+            "anomaly score row",
+            extra={
+                "tenant_id": tenant_id,
+                "user_id": signin.user_id,
+                "signin_id": signin.id,
+                "model_tier": tiers[i],
+                "normalised_score": normalised_scores[i],
+            },
         )
     return results

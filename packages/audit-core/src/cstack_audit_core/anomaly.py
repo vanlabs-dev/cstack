@@ -12,6 +12,8 @@ from pydantic import BaseModel, ConfigDict
 
 ShapDirection = Literal["pushes_anomalous", "pushes_normal"]
 
+ModelTier = Literal["per_user", "cold_start_pooled", "rule_only", "unknown"]
+
 
 class ShapFeatureContribution(BaseModel):
     """One row of SHAP attribution. Direction names spell out the meaning so
@@ -41,3 +43,4 @@ class AnomalyScore(BaseModel):
     is_anomaly: bool
     shap_top_features: list[ShapFeatureContribution]
     scored_at: datetime
+    model_tier: ModelTier = "unknown"

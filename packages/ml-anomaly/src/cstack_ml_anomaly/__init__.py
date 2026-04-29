@@ -1,4 +1,9 @@
 from cstack_ml_anomaly.findings import findings_from_anomalies
+from cstack_ml_anomaly.per_user import (
+    DEFAULT_MIN_SAMPLES_FOR_PER_USER_MODEL,
+    PerUserBundle,
+    min_samples_default,
+)
 from cstack_ml_anomaly.promotion import (
     PromotionDecision,
     evaluate_for_promotion,
@@ -10,31 +15,39 @@ from cstack_ml_anomaly.score import (
     ShapFeatureContribution,
     normalise_score,
 )
-from cstack_ml_anomaly.scoring import ANOMALY_THRESHOLD, score_batch
+from cstack_ml_anomaly.scoring import ANOMALY_THRESHOLD, load_bundle, score_batch
 from cstack_ml_anomaly.training import (
     DEFAULT_RANDOM_STATE,
     MIN_SIGNINS_FOR_TRAINING,
+    TIME_FEATURE_COLUMNS,
     TrainingResult,
     pooled_model_name,
-    train_pooled_model,
+    tenant_model_name,
+    train_per_user_bundle,
     train_tenant,
 )
 
 __all__ = [
     "ANOMALY_THRESHOLD",
+    "DEFAULT_MIN_SAMPLES_FOR_PER_USER_MODEL",
     "DEFAULT_RANDOM_STATE",
     "MIN_SIGNINS_FOR_TRAINING",
+    "TIME_FEATURE_COLUMNS",
     "AnomalyScore",
+    "PerUserBundle",
     "PromotionDecision",
     "ShapDirection",
     "ShapFeatureContribution",
     "TrainingResult",
     "evaluate_for_promotion",
     "findings_from_anomalies",
+    "load_bundle",
+    "min_samples_default",
     "normalise_score",
     "pooled_model_name",
     "promote_challenger_to_champion",
     "score_batch",
-    "train_pooled_model",
+    "tenant_model_name",
+    "train_per_user_bundle",
     "train_tenant",
 ]

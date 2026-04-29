@@ -45,6 +45,17 @@
             "title": "Model Name",
             "type": "string"
           },
+          "model_tier": {
+            "default": "unknown",
+            "enum": [
+              "per_user",
+              "cold_start_pooled",
+              "rule_only",
+              "unknown"
+            ],
+            "title": "Model Tier",
+            "type": "string"
+          },
           "model_version": {
             "title": "Model Version",
             "type": "string"
@@ -304,6 +315,7 @@
         "type": "object"
       },
       "AppSegment": {
+        "description": "Coarse app buckets the coverage matrix evaluates against.\n\nEach segment maps to a set of well-known app IDs (or to \"any\" for\nALL_APPS and LEGACY_AUTH). The matrix walks every (UserSegment x\nAppSegment) cell and records the strongest applicable policy.",
         "enum": [
           "all_apps",
           "m365_core",
@@ -423,6 +435,7 @@
         "type": "object"
       },
       "CoverageCell": {
+        "description": "One (user-segment x app-segment) cell of the coverage matrix.\n\n``applicable_policy_ids`` is the subset of CA policies whose conditions\noverlap the cell; ``protection_level`` is the strongest grant control\nsurfaced from those policies.",
         "properties": {
           "app_segment": {
             "$ref": "#/components/schemas/AppSegment"
@@ -456,6 +469,7 @@
         "type": "object"
       },
       "CoverageMatrix": {
+        "description": "Computed-at-a-point-in-time grid of CoverageCell rows for one tenant.",
         "properties": {
           "cells": {
             "items": {
@@ -1097,6 +1111,7 @@
         "type": "object"
       },
       "Severity": {
+        "description": "Finding severity ladder, ordered Info < Low < Medium < High < Critical.\n\nStrEnum so JSON serialisation uses the string value directly. Comparison\noperators delegate to a fixed rank table so members compare by intent, not\nby definition order.",
         "enum": [
           "INFO",
           "LOW",
@@ -1662,6 +1677,7 @@
         "type": "object"
       },
       "UserSegment": {
+        "description": "Coarse user buckets the coverage matrix evaluates against.\n\nResolution from raw directory data lives in this module's helpers; the\nmatrix consumes the resolved sets only.",
         "enum": [
           "all_users",
           "admins_any",

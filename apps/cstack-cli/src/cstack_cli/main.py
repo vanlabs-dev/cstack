@@ -658,13 +658,27 @@ def anomaly() -> None:
 @anomaly.command("train")
 @click.option("--tenant", "tenant_identifier", required=True)
 @click.option("--lookback-days", default=60, show_default=True)
-@click.option("--contamination", default=0.02, show_default=True)
+@click.option("--contamination", default=0.05, show_default=True)
+@click.option(
+    "--min-samples",
+    default=None,
+    type=int,
+    help="Per-user sample threshold; below it users fall back to the cold-start pooled model.",
+)
+@click.option(
+    "--skip-if-registered",
+    is_flag=True,
+    default=False,
+    help="No-op when a @champion already exists for the tenant.",
+)
 @click.pass_context
 def anomaly_train_cmd(
     ctx: click.Context,
     tenant_identifier: str,
     lookback_days: int,
     contamination: float,
+    min_samples: int | None,
+    skip_if_registered: bool,
 ) -> None:
     from cstack_ml_anomaly import train_tenant
 
@@ -677,10 +691,18 @@ def anomaly_train_cmd(
             conn,
             lookback_days=lookback_days,
             contamination=contamination,
+            min_samples=min_samples,
+            skip_if_registered=skip_if_registered,
         )
+    if result.skipped_existing:
+        click.echo(
+            f"{target.display_name}: skipped (champion v{result.model_version} already registered)"
+        )
+        return
     click.echo(
         f"{target.display_name}: trained {result.model_name} v{result.model_version} "
         f"on {result.n_signins_used} sign-ins / {result.n_users} users "
+        f"({result.n_users_per_user} per-user, {result.n_users_cold_start} cold-start) "
         f"in {result.training_duration_seconds:.1f}s; alias=@challenger"
     )
 

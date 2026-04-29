@@ -1,5 +1,6 @@
 from cstack_audit_core.anomaly import (
     AnomalyScore,
+    ModelTier,
     ShapDirection,
     ShapFeatureContribution,
 )
@@ -22,6 +23,7 @@ __all__ = [
     "AnomalyScore",
     "Finding",
     "FindingCategory",
+    "ModelTier",
     "Severity",
     "ShapDirection",
     "ShapFeatureContribution",

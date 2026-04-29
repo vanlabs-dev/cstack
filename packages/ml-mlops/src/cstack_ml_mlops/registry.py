@@ -17,9 +17,28 @@ CHALLENGER_ALIAS = "challenger"
 
 
 def register_model(run_id: str, artifact_path: str, name: str) -> Any:
-    """Register a model artifact under ``name``. Returns the ModelVersion."""
-    model_uri = f"runs:/{run_id}/{artifact_path}"
-    return mlflow.register_model(model_uri, name)
+    """Register a model artifact under ``name``. Returns the ModelVersion.
+
+    Works with both sklearn-flavour models (logged via
+    ``mlflow.sklearn.log_model``) and generic artifacts (logged via
+    ``mlflow.log_artifact``). For the generic case we go through
+    ``MlflowClient.create_model_version`` because ``mlflow.register_model``
+    requires a logged_model entry under the run.
+    """
+    client = MlflowClient()
+    if not client.get_registered_model(name) if False else True:
+        # Idempotent: if the registered model already exists, this raises;
+        # we swallow that and reuse the existing entry.
+        try:
+            client.create_registered_model(name)
+        except mlflow.exceptions.RestException:
+            pass
+        except mlflow.exceptions.MlflowException as exc:
+            if "RESOURCE_ALREADY_EXISTS" not in str(exc):
+                raise
+    run = client.get_run(run_id)
+    source = f"{run.info.artifact_uri}/{artifact_path}"
+    return client.create_model_version(name=name, source=source, run_id=run_id)
 
 
 def set_alias(model_name: str, version: str | int, alias: str) -> None:
@@ -45,6 +64,17 @@ def get_alias_version(model_name: str, alias: str) -> Any:
 def load_by_alias(model_name: str, alias: str) -> Any:
     """Load a sklearn model by alias. Raises if alias not set."""
     return mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
+
+
+def download_artifact_by_alias(model_name: str, alias: str) -> str:
+    """Download the registered model's artifact directory and return its path.
+
+    Useful when the registered artefact is not in the sklearn flavour
+    (e.g. a joblib-serialised wrapper bundle that callers need to load
+    with ``joblib.load``). The returned path points at the directory the
+    artefact was logged under at training time.
+    """
+    return mlflow.artifacts.download_artifacts(f"models:/{model_name}@{alias}")
 
 
 def search_registered_models(name_prefix: str | None = None) -> list[Any]:

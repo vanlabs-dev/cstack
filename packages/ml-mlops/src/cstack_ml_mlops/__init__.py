@@ -9,6 +9,7 @@ from cstack_ml_mlops.drift import (
 from cstack_ml_mlops.registry import (
     CHALLENGER_ALIAS,
     CHAMPION_ALIAS,
+    download_artifact_by_alias,
     get_alias_version,
     get_run_metrics,
     list_model_versions,
@@ -35,6 +36,7 @@ __all__ = [
     "ShadowComparison",
     "compute_feature_drift",
     "configure_tracking",
+    "download_artifact_by_alias",
     "flag_drifting_features",
     "get_alias_version",
     "get_run_metrics",
