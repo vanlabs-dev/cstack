@@ -12,6 +12,7 @@ Every major doc has a single home. Start here.
 - [ARCHITECTURE](./ARCHITECTURE.md) system design and data flow
 - [CONTRIBUTING](./CONTRIBUTING.md) local dev workflow, conventions
 - [API](./API.md) REST API reference, auth model, error format
+- [SECURITY](../SECURITY.md) reporting and disclosure policy
 
 ## For ML and LLM engineers
 

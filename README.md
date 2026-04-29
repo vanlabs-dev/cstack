@@ -212,3 +212,8 @@ Start at [docs/INDEX.md](docs/INDEX.md). The major docs:
 cstack is a personal portfolio project that welcomes external contribution. See
 [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the local dev workflow,
 conventional-commit rules, and the project's hard rules on code style and tone.
+
+## Security
+
+Security issues go to [leunis@vanlabs.dev](mailto:leunis@vanlabs.dev) per
+[SECURITY.md](SECURITY.md), not GitHub issues.
