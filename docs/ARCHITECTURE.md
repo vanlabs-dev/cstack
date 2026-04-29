@@ -43,8 +43,18 @@ runs as an independent service or library.
 - `packages/ml-anomaly/` Per-tenant pooled IsolationForest training,
   scoring with SHAP attributions, anomaly Finding generation, promotion
   gating.
-- `docs/` prose, sprint notes, the rules catalogue, and the MLOps
-  walkthrough.
+- `packages/llm-provider/` Provider abstraction (Protocol) with adapters
+  for Anthropic, OpenAI, and Ollama. Factory caches adapter instances
+  per process; tests register fakes via `register_provider`.
+- `packages/llm-narrative/` Finding-to-narrative pipeline with
+  content-addressed prompt cache, prompt loader, and structured
+  validation/retry. Default model `claude-opus-4-7`, default prompt
+  version `v1`.
+- `packages/llm-eval/` Rubric-based LLM-as-judge evaluation harness with
+  pointwise and pairwise scoring, position-swap bias mitigation, and a
+  20-example hand-curated golden set sourced from real fixture findings.
+- `docs/` prose, sprint notes, the rules catalogue, the MLOps
+  walkthrough, and the LLM ops walkthrough.
 - `scripts/` PowerShell app registration and certificate rotation scripts (run by
   tenant admins, not invoked from cstack itself).
 - `infra/` deployment artifacts (TBD).
@@ -100,7 +110,21 @@ fixtures load-all                   live extract
               +-----------+----------------+
                           |
                           v
-                (Sprint 6 LLM narration)
+              +-----------+----------------+
+              |  llm-narrative generator  |
+              |  - cache lookup (content- |
+              |    addressed by rule_id + |
+              |    evidence + prompt + m) |
+              |  - render + provider call |
+              |  - validate + retry once  |
+              +-----------+----------------+
+                          |
+                          v
+              +-----------+----------------+
+              |  narrative_cache (DuckDB) |
+              |  -> GET /findings/{id}/   |
+              |     narrative -> web UI   |
+              +----------------------------+
 ```
 
 Both code paths share the same downstream tables. The audit modules read an

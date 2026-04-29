@@ -9,6 +9,7 @@ Status: early development. Public APIs and repository structure are unstable.
 - [Architecture](docs/ARCHITECTURE.md)
 - [API reference](docs/API.md)
 - [MLOps walkthrough](docs/MLOPS.md)
+- [LLM ops walkthrough](docs/LLM_OPS.md)
 - [Rules catalogue](docs/RULES.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Sprint notes](docs/SPRINT_NOTES.md)
@@ -26,6 +27,9 @@ Status: early development. Public APIs and repository structure are unstable.
     [apps/signalguard-api/README.md](apps/signalguard-api/README.md)
   - web dashboard (7 screens, component tests, tablet responsive): 5b complete;
     see [apps/signalguard-web/README.md](apps/signalguard-web/README.md)
+  - LLM narrative layer (provider abstraction, content-addressed cache,
+    rubric-based eval harness, calibrated prompt v1): complete; see
+    [LLM_OPS.md](docs/LLM_OPS.md)
 
 ## Running locally
 
@@ -69,12 +73,34 @@ lifecycle.
 
 ```sh
 echo 'SIGNALGUARD_API_DEV_API_KEY=dev-secret' >> .env
+echo 'ANTHROPIC_API_KEY=sk-...' >> .env  # optional: enables LLM narratives
 uv run signalguard-api --port 8000
 # OpenAPI UI: http://localhost:8000/docs
 ```
 
 See [apps/signalguard-api/README.md](apps/signalguard-api/README.md) for the
 auth model and curl examples.
+
+### LLM providers supported
+
+The narrative layer talks to Anthropic, OpenAI, or a local Ollama
+server. Pick one via `CSTACK_LLM_PROVIDER` (default: `anthropic`):
+
+```sh
+# Anthropic (default)
+ANTHROPIC_API_KEY=sk-ant-... uv run cstack narrative list-providers
+
+# OpenAI
+OPENAI_API_KEY=sk-... CSTACK_LLM_PROVIDER=openai uv run cstack narrative list-providers
+
+# Local Ollama (no API key required)
+OLLAMA_BASE_URL=http://localhost:11434 \
+CSTACK_LLM_PROVIDER=ollama \
+  uv run cstack narrative list-providers
+```
+
+See [docs/LLM_OPS.md](docs/LLM_OPS.md) for the full pipeline,
+calibration results, and known limitations.
 
 ### Starting the web dashboard
 
