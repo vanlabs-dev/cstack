@@ -38,9 +38,6 @@ when prioritised.
 - [ ] Spend dashboard for LLM token usage. Replaces the
       `cstack narrative cache-stats` CLI with a UI surface and historical
       chart of dollars per tenant per day.
-- [ ] Containerisation. Docker Compose for local; deploy stack TBD. Re-enable
-      the Next.js `output: "standalone"` build (disabled today because pnpm
-      symlinks fail on Windows; works on Linux CI).
 - [ ] Phone breakpoints (<768px) in the dashboard. Tablet (>=768px) is wired;
       phone is functionally rendered but not visually audited.
 - [ ] Mutation flows in the dashboard for findings (snooze, mark resolved) and
@@ -57,6 +54,80 @@ when prioritised.
 - [ ] FastAPI scheduler for weekly automated retrains (Sprint 4 territory).
 - [ ] Notifications, Data & sync, and Integrations settings tabs in the
       dashboard. Currently placeholders awaiting backend.
+
+## CIPP-inspired patterns (CodeBlue internal tool roadmap)
+
+cstack is an internal MSP tool, not a CIPP competitor. CIPP is a mature
+reference codebase whose patterns can inform this one. Items are
+prioritised against CodeBlue's actual fleet shape (small handful of
+tenants today, scaling) rather than CIPP's broad SaaS audience.
+
+### High leverage
+
+- [ ] **Standards engine.** Promote each audit rule from a single
+      Report-mode evaluator to a tri-mode (`Report` / `Alert` /
+      `Remediate`) abstraction. Today every rule is Report-only
+      (findings persist). Alert-mode pushes findings into Teams or
+      ticketing on a schedule. Remediate-mode is V2 territory because
+      it requires Graph write scopes and explicit safeguards (read-only
+      posture today). The Report -> Alert step is the cheap win and
+      the right next move once Sprint 7 lands.
+- [ ] **Per-rule remediation playbooks** as structured PowerShell
+      snippets the dashboard exposes for one-click copy. Today the LLM
+      narrative includes remediation prose; formalising as a per-rule
+      structured field (alongside the existing `references` list) lets
+      the UI render them deterministically without a per-finding LLM
+      call.
+- [ ] **BPA-style scorecard.** Aggregate findings into a tenant-level
+      compliance score with category breakdowns. Builds on the existing
+      `findings_summary` endpoint; the new work is the presentation
+      layer and the scoring formula. Useful for CodeBlue's quarterly
+      client review meetings.
+
+### Tenant variables and templating
+
+- [ ] **System variables and per-tenant variables** for use in
+      narratives, alert templates, and remediation snippets. System:
+      `{TenantId}`, `{TenantDisplayName}`, `{Now}`. Per-tenant
+      user-defined: `{ContactEmail}`, `{TicketingSystemUrl}`,
+      `{EscalationPath}`. Land after Sprint 7 when the variable space
+      has real callers.
+
+### Multi-tenant action UI
+
+- [ ] **Bulk-tenant action surface.** Patterns from CIPP: select N
+      tenants, run an action across all of them, see per-tenant results
+      streaming in. Deferred until cstack scales beyond two or three
+      tenants on the CodeBlue fleet.
+
+### Compliance and retention
+
+- [ ] **Audit log retention policy.** Cstack already retains findings
+      indefinitely (DuckDB), unlike Microsoft's 30-day default for some
+      logs. Surface this as a feature in docs and add bounded retention
+      (90 / 180 / 365 day windows) configurable per tenant.
+- [ ] **PDF export for BPA scorecards.** Out of cstack's "internal
+      tool" scope today, but useful when CodeBlue wants to share a
+      cleaned-up scorecard with a client. wkhtmltopdf or weasyprint
+      from the FastAPI app.
+
+### Identity and access
+
+- [ ] **GDAP migration helpers.** Only relevant when cstack has a real
+      partner (GDAP) relationship. Defer until live tenants and a real
+      GDAP need.
+- [ ] **SAM / encrypted token storage.** Cstack stores cert thumbprints
+      in `tenants.json` plaintext. Encrypt at rest (Windows DPAPI for
+      single-host installs; KMS-style integration for fleet). Sprint 7
+      follow-up.
+
+### Authoring surface (V2 territory)
+
+- [ ] **Custom Standards definitions** authored in YAML or via UI
+      without touching code. CIPP supports user-defined standards; cstack's
+      15 rules are code-defined today. Significant work; defer until V2
+      because the eval harness and prompt-version machinery would need
+      to extend to user-defined rule families too.
 
 ## Long-term (V2 territory)
 
@@ -82,8 +153,6 @@ when prioritised.
 
 - [ ] Mobile (<768px) layouts. Whether to invest depends on whether MSP
       engineers actually triage on phones. Park until that's known.
-- [ ] MLflow file-backend deprecation. Migration to a SQLite backend is a
-      housekeeping item; the warning does not affect functionality.
 - [ ] Whether per-prompt customisation (one prompt template per rule_id family)
       lifts narrative quality over the single canonical template. Eval harness
       can answer this when there's tenant variety; punted for now.
