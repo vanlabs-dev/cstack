@@ -5,6 +5,38 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning is SemVer pre-release until V1, which is gated on live-tenant
 validation.
 
+## [Unreleased]
+
+### Sprint 3.5: Per-user anomaly tier + off-hours admin
+
+- **Per-user IsolationForest bundle** replaces the Sprint 3 pooled-only
+  model. One fitted pipeline per user with at least 30 sign-ins,
+  cold-start pooled fallback for the long tail, all packaged as a
+  single `model.joblib` registered under
+  `signalguard-anomaly-{tenant_id}` (no more `-pooled-` suffix).
+- **`AnomalyScore.model_tier`** field plus migration 11 surfaces
+  which tier (`per_user` / `cold_start_pooled` / `rule_only`) scored
+  each row.
+- **Off-hours-admin rule** in `cstack_ml_anomaly.rules` fires on
+  tier-0 admin sign-ins that the user's per-user time-only model
+  rates in their own training-distribution top decile (cold-start
+  admins fall back to a UTC 22:00-06:00 night band). Closes the
+  Sprint 3 admin-time miss.
+- **`anomaly train --skip-if-registered`** for fast Compose warm-ups
+  when a champion already exists.
+- **MLflow `artifact_location`** resolved at `configure_tracking`
+  time from explicit arg / `MLFLOW_ARTIFACT_ROOT` env / sqlite
+  sibling. Removes the `working_dir: /data` Compose hack; bootstrap
+  services keep cwd at `/app` regardless.
+- **Recalibration** against all 9 fixture (tenant x scenario)
+  combinations. Recall meets the 0.80 floor on all three tenants'
+  replay-attacks scenarios; precision sits at 0.18 to 0.24 (below
+  the 0.40 target). Layer attribution showed the per-user IF on
+  synthetic data adds little on top of the four hybrid rules; the
+  per-user infrastructure is plumbed for Sprint 7's real-data
+  calibration where it is expected to find more user-individual
+  patterns to discriminate against.
+
 ## [0.6.0-alpha.1] - 2026-04-30
 
 First tagged baseline. Six sprints of work plus a polish and
