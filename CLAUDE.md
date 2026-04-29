@@ -63,7 +63,18 @@ These rules apply to every file Claude (or any contributor) creates or edits.
 - `packages/ml-features/` feature engineering pipeline for sign-in events.
 - `packages/ml-mlops/` MLflow tracking, registry aliases, drift PSI, shadow scoring.
 - `packages/ml-anomaly/` per-tenant Isolation Forest training + SHAP scoring.
-- `docs/` prose, sprint notes, the rules catalogue, and the MLOps walkthrough.
+- `packages/llm-provider/` Protocol-based provider abstraction with
+  Anthropic, OpenAI, and Ollama adapters.
+- `packages/llm-narrative/` finding-to-narrative pipeline with
+  content-addressed prompt cache and budget tracking. The
+  `prompts/` directory inside this package is curated content;
+  treat with care during refactors and version prompt changes
+  (`finding_narrative_v1.md`, `_v2.md`, ...).
+- `packages/llm-eval/` rubric-based LLM-as-judge eval harness with
+  pointwise + pairwise scoring and a hand-curated golden set in
+  `data/golden_set.json`.
+- `docs/` prose, sprint notes, the rules catalogue, the MLOps and
+  LLM ops walkthroughs.
 
 Note: model artefacts and the local `mlruns/` directory are gitignored; never
 check them in.
