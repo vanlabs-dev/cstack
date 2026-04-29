@@ -36,8 +36,9 @@ factory.
 
 ## Status
 
-V0.6, fixture-driven. Six sprints complete. Live tenant integration is Sprint 7,
-paused pending tenant access. Today the codebase ships:
+V0.6.0-alpha.1 baseline (containerized stack, pre-live-tenant). Live tenant
+integration is Sprint 7, paused pending tenant access. Today the codebase
+ships:
 
 - 266 Python tests across 8 packages and 2 apps
 - 78 web tests across 28 files (Vitest + RTL, jsdom)
@@ -130,7 +131,29 @@ The full stack rationale lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Running locally
 
-Prerequisites: Python 3.12, Node 22 LTS, uv, pnpm.
+The fastest path is the Docker stack. Prerequisites: Docker Desktop (or any
+Docker Compose v2 runtime).
+
+```sh
+git clone <this repo>
+cd cstack
+docker compose -f infra/docker/compose.yaml up --build
+```
+
+First run takes 60 to 90 seconds (fixtures load, audit runs on all three
+tenants, anomaly model trains on tenant-a). Subsequent runs come up in
+seconds.
+
+Visit http://localhost:3000 and enter `dev-secret` when the API key gate
+prompts. See [infra/docker/README.md](infra/docker/README.md) for
+troubleshooting, the fixtures-only override, and how to enable the LLM
+narrative pass.
+
+### Running from source
+
+For local hacking on the Python or TypeScript code without rebuilding the
+container on every change. Prerequisites: Python 3.12, Node 22 LTS, uv,
+pnpm.
 
 ```sh
 uv sync

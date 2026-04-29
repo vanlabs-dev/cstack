@@ -80,7 +80,10 @@ Note: model artefacts and the local `mlruns/` directory are gitignored; never
 check them in.
 
 - `scripts/` PowerShell app registration and cert rotation scripts.
-- `infra/` deployment artifacts (TBD).
+- `infra/docker/` Docker Compose stack: per-app multi-stage Dockerfiles,
+  bootstrap services that seed fixtures + audit + anomaly model into a
+  named volume before the api/web pair start. See
+  `infra/docker/README.md` for the build/run/reset flow.
 
 ## Conventions
 
