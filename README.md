@@ -36,7 +36,8 @@ factory.
 
 ## Status
 
-V0.6.0-alpha.1 baseline (containerized stack, pre-live-tenant). Live tenant
+V0.6.0-alpha.1 baseline (containerized stack, pre-live-tenant). See
+[CHANGELOG.md](CHANGELOG.md) for the per-sprint summary. Live tenant
 integration is Sprint 7, paused pending tenant access. Today the codebase
 ships:
 
