@@ -44,9 +44,10 @@ runs as an independent service or library.
   `FEATURE_COLUMNS` contract.
 - `packages/ml-mlops/` MLflow tracking helpers, registry alias API
   (`@champion`/`@challenger`), drift PSI, and shadow-scoring framework.
-- `packages/ml-anomaly/` Per-tenant pooled IsolationForest training,
-  scoring with SHAP attributions, anomaly Finding generation, promotion
-  gating.
+- `packages/ml-anomaly/` Per-tenant anomaly bundle (per-user
+  IsolationForest + cold-start pooled IF + per-user time anchors for
+  the off-hours-admin rule), scoring with SHAP attributions, anomaly
+  Finding generation, promotion gating.
 - `packages/llm-provider/` Provider abstraction (Protocol) with adapters
   for Anthropic, OpenAI, and Ollama. Factory caches adapter instances
   per process; tests register fakes via `register_provider`.

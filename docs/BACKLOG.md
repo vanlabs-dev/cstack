@@ -12,24 +12,15 @@ when prioritised.
       LLM narratives against real Graph data. Replace stub ASN lookup with a
       real GeoIP database. Address synthetic-data assumptions baked into
       earlier sprints (CRLF tolerances, break-glass naming, 90-day stale
-      thresholds calibrated to fixture timing).
-- [ ] **Sprint 3.5: Per-user IF anomaly model.** Per-user models lift precision
-      against off-hours admin sign-ins that the pooled IF misses. Includes a
-      cold-start fallback to the pooled model for users below the sample
-      threshold; SQLite-backed MLflow registry; full three-tenant calibration
-      across all three scenarios (baseline, replay-attacks, noisy).
+      thresholds calibrated to fixture timing). Recalibrate the per-user
+      anomaly tier; Sprint 3.5 plumbed it but synthetic data did not exercise
+      its precision lift, so live data is the next step.
 - [ ] **Replace pwsh cert-store shell-out** with native cryptography lookup.
       `packages/graph-client/src/cstack_graph_client/credentials.py` currently
       shells to PowerShell to load the cert from the Windows CurrentUser store.
 - [ ] **Real ASN/GeoIP lookup**, replacing the IP-prefix stub in
       `packages/ml-features/src/cstack_ml_features/asn_stub.py`. Maxmind or
       ipinfo. Function signature stays the same.
-- [ ] **`anomaly train --skip-if-registered`** flag so the Compose warm-up
-      bootstrap exits fast when a champion is already registered.
-      Functionally `@champion` already points at the newest version on each
-      retrain, but the registry accumulates dead versions across restarts.
-      Land alongside Sprint 3.5 where `train_tenant` gets reorganised for
-      per-user models anyway.
 
 ## Mid-term (V1 polish, conditional on demand)
 
@@ -131,14 +122,21 @@ tenants today, scaling) rather than CIPP's broad SaaS audience.
 
 ## Long-term (V2 territory)
 
+- [ ] **Per-role pooled tier.** A third anomaly modelling tier between
+      tenant-pooled and per-user: pool sign-ins by role (Global Admin,
+      Helpdesk, Finance, etc.) when the per-user fits are too sparse but
+      the tenant-pooled model is too generic. Sprint 3.5 left the
+      architectural slot open but did not implement; revisit once
+      Sprint 7 surfaces the real-data shape that motivates it.
 - [ ] Cross-tenant anomaly models. Embedding-based shared signals across the
       MSP fleet, with per-tenant fine-tuning on top.
 - [ ] Semantic cache deduplication for the narrative cache. Two findings with
       byte-different but semantically identical evidence get separate cache
       entries today; embedding similarity collapses them.
-- [ ] LSTM autoencoder layer alongside the Isolation Forest. Sprint 3.5 will
-      reassess once we have live-tenant baselines; deferred unless IF cannot
-      be calibrated to the precision target.
+- [ ] LSTM autoencoder layer alongside the Isolation Forest. Sprint 3.5
+      reassessed and decided the per-user IF infrastructure was the right
+      next step instead; revisit only if Sprint 7 real-data calibration
+      shows the same precision ceiling that synthetic data exhibited.
 - [ ] Real-time scoring through a streaming bus. Today scoring is batch only.
 - [ ] Multi-language narratives. English-only today; the prompt template
       versioning supports localised variants.

@@ -34,8 +34,11 @@ scores, monitors, and rolls back inside cstack.
                |
                v
 +--------------+----------------+      mlflow tracking + registry
-| ml-anomaly.training           |----> signalguard-anomaly-pooled-<tenant>
-| Pipeline(StandardScaler, IF)  |      @challenger -> @champion via aliases
+| ml-anomaly.training           |----> signalguard-anomaly-<tenant>
+| PerUserBundle(                |      one model.joblib artefact per
+|  per-user IFs +               |      version, @challenger -> @champion
+|  cold-start pooled IF +       |      via aliases
+|  per-user time anchors)       |
 +--------------+----------------+
                |
         +------+------+
@@ -64,14 +67,16 @@ circular, nothing cross-coupled.
 
 ## Modelling approach
 
-V1 trains one pooled Isolation Forest per tenant on the last `lookback_days`
-of sign-ins. Per-user models would be more sensitive (a user who never
-roams looks anomalous when they suddenly travel even if the pattern is
-normal at the tenant level), but they introduce the cold-start problem
-for new users, multiply MLflow registry entries by hundreds, and require
-robust handling of users with too few samples to fit a dedicated tree
-ensemble. V1 punts that complexity to Sprint 3.5 (see "Known limitations"
-below) and proves the lifecycle on a single shared model first.
+V1 trained one pooled Isolation Forest per tenant on the last
+`lookback_days` of sign-ins. Sprint 3.5 replaced this with a tenant
+**bundle**: one fitted `Pipeline` per user with at least
+`min_samples` (default 30) sign-ins, plus one shared cold-start pooled
+pipeline that handles users below the threshold. The bundle is the
+unit of MLflow registration: one registered model per tenant
+(`signalguard-anomaly-{tenant_id}`), one `model.joblib` artefact per
+version. Per-user pipelines are *not* registered separately; that
+would multiply registry entries by N users with no operational
+benefit.
 
 Why Isolation Forest and not the alternatives:
 
@@ -132,17 +137,31 @@ signature stays the same.
 `cstack anomaly train --tenant <id>` does five things:
 
 1. Pulls the lookback window of sign-ins from `signins` table.
-2. For each user, builds a per-row `UserHistory` and extracts features.
-3. Fits the `Pipeline(StandardScaler, IsolationForest(n=200,
-random_state=42))` on the resulting DataFrame.
-4. Logs the run to MLflow with parameters, metrics, and the sklearn
-   model artifact.
-5. Registers the artifact under
-   `signalguard-anomaly-pooled-<tenant_id>` and assigns the
-   `@challenger` alias.
+2. Groups by `user_id`. For each user with at least `min_samples`
+   sign-ins (default 30) the trainer fits a dedicated
+   `Pipeline(StandardScaler, IsolationForest(n=200, random_state=42))`
+   plus a smaller time-only pipeline (4 features) used by the
+   off-hours-admin rule. Users below the threshold contribute their
+   sign-ins to a single shared **cold-start pooled** pipeline.
+3. Computes the user-specific time anomaly p90 from the time-only
+   pipeline's training-set scores so the off-hours-admin rule has a
+   stable per-user threshold at score time.
+4. Bundles the per-user pipelines, the cold-start pooled pipeline,
+   feature column order, time anchors, and training metadata into a
+   `PerUserBundle` and writes it via joblib.
+5. Logs the run to MLflow with parameters, metrics, and the bundle as
+   a single `model.joblib` artefact, then registers it under
+   `signalguard-anomaly-<tenant_id>` and assigns the `@challenger`
+   alias.
 
 `random_state=42` is the convention everywhere in the package. Tests
-assert reproducibility by re-fitting and comparing predictions.
+assert reproducibility by re-fitting and comparing scaler means /
+percentile thresholds across runs.
+
+`--skip-if-registered` short-circuits training when an `@champion`
+already points at a version of the tenant model. The Compose warm-up
+bootstrap uses this to avoid accumulating dead registry versions on
+restart.
 
 The MLflow tracking URI resolves in three steps. An explicit
 `tracking_uri=` argument always wins (tests inject deterministic per-test
@@ -218,73 +237,172 @@ Direction labels (`pushes_anomalous` vs `pushes_normal`) on each
 contribution mean consumers do not need to interpret SHAP signs against
 the IF score-direction convention.
 
+## Per-user modelling tier
+
+The bundle routes each row through one of three tiers at score time:
+
+- **`per_user`** when the row's `user_id` has a dedicated pipeline.
+  This is the default path on tenants where every user has enough
+  sign-ins to train against. It catches user-individual patterns the
+  pooled model could not isolate (a user who never roams looks
+  anomalous when they suddenly travel, even when some other user in
+  the tenant travels frequently).
+- **`cold_start_pooled`** when the user is below the `min_samples`
+  threshold. The shared pooled pipeline is fitted on the union of
+  all cold-start users' sign-ins; new users default to this rather
+  than dropping straight to a rule-only path.
+- **`rule_only`** when the user has neither a per-user model nor a
+  cold-start pooled fallback (rare; happens when training found no
+  cold-start users at all and a never-seen user shows up at score
+  time). Rule booster floors still apply.
+
+The `model_tier` field is persisted on every `AnomalyScore` row and
+visible in the alerts CLI, the API responses, and the dashboard's
+SHAP detail card.
+
+### Off-hours-admin rule (Sprint 3.5)
+
+The Sprint 3 calibration documented an off-hours admin sign-in as the
+single attack pattern the booster missed. The Sprint 3.5 rule fires
+when (a) the user holds one of the four tier-0 admin role template
+ids (Global Admin, Privileged Role Admin, Privileged Authentication
+Admin, Security Admin), AND (b) either the user has a per-user
+time-only model and the row's negated time-only score is at or above
+the user's training-distribution p90, OR the user is on the
+cold-start path and the UTC hour falls in the 22:00-06:00 night band.
+
+The rule's score floor is 0.85 and it combines via `max` with the
+four hybrid rules and the IF score so a stronger signal is never
+downgraded. Decile 9 (p90) was chosen empirically: tighter thresholds
+miss the injected attack on tenants whose admin user has variable
+hours; looser thresholds inflate false positives on routine off-hours
+admin work.
+
 ## Calibration results
 
 Full pipeline ran from a clean DuckDB and `mlruns/` against all three
-fixture tenants and all three scenarios on 2026-04-29.
+fixture tenants and all three scenarios on 2026-04-30 with the
+Sprint 3.5 architecture (per-user IF + cold-start pooled + 4 hybrid
+rules + off-hours-admin rule).
 
 | tenant   | scenario       | rows | flagged | ge 0.7 | GT  | TP  | precision | recall | F1    | FPR   |
 | -------- | -------------- | ---- | ------- | ------ | --- | --- | --------- | ------ | ----- | ----- |
-| tenant-a | baseline       | 3321 | 157     | 62     | 0   | 0   | n/a       | n/a    | n/a   | 0.019 |
-| tenant-a | replay-attacks | 3489 | 171     | 84     | 27  | 25  | 0.298     | 0.926  | 0.450 | 0.017 |
-| tenant-a | noisy          | 3718 | 275     | 96     | 27  | 25  | 0.260     | 0.926  | 0.407 | 0.019 |
-| tenant-b | baseline       | 2909 | 122     | 44     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
-| tenant-b | replay-attacks | 2876 | 157     | 80     | 27  | 22  | 0.275     | 0.815  | 0.411 | 0.020 |
-| tenant-b | noisy          | 2958 | 169     | 82     | 27  | 23  | 0.280     | 0.852  | 0.422 | 0.020 |
-| tenant-c | baseline       | 4459 | 201     | 68     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
-| tenant-c | replay-attacks | 4461 | 249     | 88     | 27  | 24  | 0.273     | 0.889  | 0.417 | 0.014 |
-| tenant-c | noisy          | 4522 | 295     | 95     | 27  | 23  | 0.242     | 0.852  | 0.377 | 0.016 |
+| tenant-a | baseline       | 3321 | 191     | 71     | 0   | 0   | n/a       | n/a    | n/a   | 0.021 |
+| tenant-a | replay-attacks | 3489 | 227     | 110    | 27  | 23  | 0.209     | 0.852  | 0.336 | 0.025 |
+| tenant-a | noisy          | 3718 | 231     | 117    | 27  | 24  | 0.205     | 0.889  | 0.333 | 0.025 |
+| tenant-b | baseline       | 2909 | 168     | 64     | 0   | 0   | n/a       | n/a    | n/a   | 0.022 |
+| tenant-b | replay-attacks | 2876 | 191     | 98     | 27  | 23  | 0.235     | 0.852  | 0.368 | 0.026 |
+| tenant-b | noisy          | 2958 | 201     | 102    | 27  | 23  | 0.225     | 0.852  | 0.357 | 0.027 |
+| tenant-c | baseline       | 4459 | 261     | 89     | 0   | 0   | n/a       | n/a    | n/a   | 0.020 |
+| tenant-c | replay-attacks | 4461 | 273     | 110    | 27  | 23  | 0.209     | 0.852  | 0.336 | 0.020 |
+| tenant-c | noisy          | 4522 | 273     | 111    | 27  | 20  | 0.180     | 0.741  | 0.290 | 0.020 |
 
-Recall sits between 0.815 and 0.926 on attacks across all tenants.
-Precision is 0.24-0.30 because the pooled IF still surfaces baseline
-outliers (legitimate travel, mobile-carrier ASN swaps) above the 0.7
-threshold. The missed events are the off-hours admin sign-in (no
-unambiguous feature signal at the tenant level) and the first sign-in
-of an attack chain that on its own looks like a normal sign-in.
+### Layer attribution (tenant-a x replay-attacks)
 
-The first scoring run with the IF alone produced TP = 0 across all
-attacks. Three structural fixes restored recall:
+The same scoring run with different layer combinations enabled. On
+tenant-a every user is above the 30-signin threshold so the
+cold-start pooled tier is dormant; the table shows the four
+meaningful steps.
+
+| layer combination                 | flagged_high | TP | FP | precision | recall | F1    | FPR   |
+| --------------------------------- | ------------ | -- | -- | --------- | ------ | ----- | ----- |
+| per-user IF only (no rules)       | 35           | 2  | 33 | 0.057     | 0.074  | 0.065 | 0.010 |
+| per-user + cold-start (no rules)  | 35           | 2  | 33 | 0.057     | 0.074  | 0.065 | 0.010 |
+| per-user + pooled + hybrid rules  | 98           | 22 | 76 | 0.224     | 0.815  | 0.352 | 0.022 |
+| full (+ off-hours-admin)          | 110          | 23 | 87 | 0.209     | 0.852  | 0.336 | 0.025 |
+
+The four hybrid rules carry the workload, exactly as in Sprint 3
+(impossible-travel, new country + new ASN, failure + new ASN, MFA
+bypass + legacy auth). The off-hours-admin rule adds the missing
+recall point at the cost of ~1.5 precision points; the per-user IF
+alone catches almost nothing on synthetic data because the rules
+already cover the unambiguous attack patterns and the per-user IF is
+too sensitive on each user's small training distribution.
+
+### Tier distribution
+
+Across all 9 fixture scenarios scoring runs route 100% of rows
+through `per_user`. Every fixture user has at least 30 sign-ins, so
+the cold-start pooled tier and the rule-only path are both dormant
+on this fixture. Sprint 7 with real tenant data is expected to
+exercise both: live tenants typically have a long tail of users with
+low sign-in volumes plus visitors / contractors who never reach the
+threshold.
+
+### Lift attribution narrative
+
+- **Per-user IF alone** does almost nothing for recall on synthetic
+  data. The pooled IF was the same. Tree-based anomaly detectors
+  struggle when train and test distributions overlap, which they do
+  by construction in our synthesizer.
+- **Hybrid rules** lift recall from 0.07 to 0.82. They encode
+  unambiguous attack patterns the IF cannot learn from baseline data
+  alone.
+- **Off-hours-admin rule** adds the 0.85 plateau by closing the
+  Sprint 3 admin-time miss. It costs precision because the rule
+  fires on legitimate-but-unusual admin sign-ins too; in production
+  this is the kind of finding that wants triage rather than auto-
+  alert.
+- **Per-user infrastructure** (the bundle, the cold-start fallback,
+  the time anchor) is plumbed end to end and exercised by tests.
+  Sprint 7's real-data calibration is what will turn the
+  infrastructure into precision lift.
+
+The first Sprint 3 scoring run with the IF alone produced TP = 0
+across all attacks. Three structural fixes restored recall:
 
 1. A row-alignment bug between `_build_score_features` and
    `score_batch` was applying IF predictions to the wrong rows.
 2. A `travel_speed_kmh` interaction feature lets the IF isolate
    physically-impossible velocity directly.
-3. A small rule-based booster (`_rule_score_boosts`) raises the
-   normalised score to a hard floor for four unambiguous attack
-   patterns (impossible travel, new country + new ASN, failure +
-   new ASN, MFA bypass + legacy auth).
+3. A small rule-based booster (`_rule_score_boosts`, now in
+   `cstack_ml_anomaly.rules`) raises the normalised score to a hard
+   floor for four unambiguous attack patterns.
 
-`docs/SPRINT_NOTES.md` under "Sprint 3 anomaly calibration" carries
-the full investigation; the booster + interaction feature pattern is
-a deliberately small layer on top of the IF and does not replace it.
+Sprint 3.5 carried these forward and added the per-user-anchored
+off-hours-admin rule. `docs/SPRINT_NOTES.md` carries both sprint
+narratives end to end.
 
 ## Known limitations
 
-- Pooled-only model. Per-user models, autoencoder fallback, and
-  weekly automated retrain are Sprint 3.5 work.
-- Off-hours admin sign-ins are not caught by the booster. Per-user
-  hour distributions in Sprint 3.5 should fix this.
-- ASN lookup is stubbed via IP prefix matching. Real GeoIP integration
-  is Sprint 7.
+- Synthetic per-user behaviours fit the synthesizer's patterns rather
+  than discovering user-individual patterns the model would catch on
+  live data. The per-user IF tier is plumbed end to end but its
+  precision/recall lift is bound by the fixture's noise model;
+  Sprint 7 real-tenant calibration is where the per-user model
+  gets to prove itself.
+- Precision sits below the Sprint 3.5 0.40 target on synthetic data
+  (range 0.18-0.24 across the three tenants on attacks). The hybrid
+  rules drive recall above the 0.80 floor; the IF (pooled or
+  per-user) cannot lift precision further when train and test
+  distributions overlap by construction.
+- `tenant-c noisy` recall (0.741) slips below the 0.80 floor that
+  the strict replay-attacks scenarios meet. Noise injection broadens
+  user time distributions which dilutes the off-hours-admin per-user
+  anchor; replay-attacks (the strict criterion) still passes.
+- ASN lookup is stubbed via IP prefix matching. Real GeoIP
+  integration is Sprint 7.
 - Scoring is batch only. Real-time scoring is V2.
-- No autoencoder yet. Sprint 3.5 will reassess once we have live
-  tenant baselines; if needed, the autoencoder package will plug into
-  the same `ml-features.pipeline` contract.
-- MLflow file-backend deprecation warning surfaces in tests that still
-  use `file://` URIs. Production paths default to SQLite as of Sprint
-  6.6; tests stay on file:// for per-test isolation simplicity.
+- No autoencoder yet. Sprint 3.5 reassessed and decided the IF
+  precision ceiling on synthetic data did not justify the autoencoder
+  build; revisit if Sprint 7 real-data calibration shows the same
+  ceiling on live tenants.
+- MLflow file-backend deprecation warning surfaces in tests that
+  still use `file://` URIs. Production paths default to SQLite as of
+  Sprint 6.6 with `MLFLOW_ARTIFACT_ROOT` pinned by Sprint 3.5; tests
+  stay on file:// for per-test isolation simplicity.
 
 ## Roadmap
 
-- **Sprint 3.5** (next): per-user IF + cold-start fallback, hybrid
-  rules + IF detector for unambiguous attack patterns, full
-  three-tenant calibration including the `noisy` scenario, SQLite
-  MLflow backend.
 - **Sprint 4**: FastAPI backend exposing audit and anomaly findings
   with weekly retrain cron.
 - **Sprint 6**: LLM narrator consumes the SHAP top-3 plus rule
   references and generates investigator-ready summaries.
-- **Sprint 7**: live tenant validation, real ASN lookup, SHAP runtime
-  budget tuning against tenant-scale traffic.
-- **V2**: cross-tenant embeddings, real-time scoring through a
-  streaming bus.
+- **Sprint 7**: live tenant validation, real ASN lookup, real per-user
+  baselines (the per-user IF tier is plumbed but expected to need
+  recalibration once live data shows up), SHAP runtime budget tuning
+  against tenant-scale traffic.
+- **Future**: per-role pooled tier (a third tier between per-user
+  and tenant-pooled, useful when many users hold the same role and
+  the pooled model would be too generic but per-user is too sparse).
+  Cross-tenant embeddings. Real-time scoring through a streaming bus.
