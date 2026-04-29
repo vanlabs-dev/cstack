@@ -17,6 +17,8 @@ PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 @dataclass(frozen=True)
 class PromptTemplate:
+    """One loaded prompt: metadata from frontmatter plus the body text."""
+
     id: str
     version: str
     description: str
@@ -29,11 +31,11 @@ class PromptTemplate:
 
 
 class PromptNotFoundError(LookupError):
-    pass
+    """Raised by ``load_prompt`` when no markdown file matches id_version."""
 
 
 class PromptInputMissingError(KeyError):
-    pass
+    """Raised by ``render_prompt`` when params don't cover declared inputs."""
 
 
 def _parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -63,6 +65,7 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
 
 @lru_cache(maxsize=64)
 def load_prompt(prompt_id: str, version: str) -> PromptTemplate:
+    """Read one prompt template from disk by id and version. LRU-cached."""
     path = PROMPTS_DIR / f"{prompt_id}_{version}.md"
     if not path.exists():
         raise PromptNotFoundError(f"prompt not found: {path}")
@@ -92,6 +95,7 @@ def load_prompt(prompt_id: str, version: str) -> PromptTemplate:
 
 
 def list_prompt_versions(prompt_id: str) -> list[str]:
+    """Return every version string available on disk for ``prompt_id``."""
     if not PROMPTS_DIR.exists():
         return []
     versions: list[str] = []

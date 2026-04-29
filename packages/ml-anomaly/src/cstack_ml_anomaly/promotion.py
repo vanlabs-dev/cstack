@@ -33,6 +33,13 @@ from cstack_ml_anomaly.training import pooled_model_name
 
 
 class PromotionDecision(BaseModel):
+    """Result of running the promotion gate.
+
+    ``comparison`` is the shadow scoring comparison used to make the
+    decision; it's None when the gate refused early (no champion, too few
+    rows, no challenger).
+    """
+
     model_config = ConfigDict(frozen=True)
 
     promote: bool

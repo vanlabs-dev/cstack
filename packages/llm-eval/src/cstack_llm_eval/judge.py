@@ -27,6 +27,12 @@ from cstack_llm_eval.rubric import (
 
 
 class PairwiseResult(BaseModel):
+    """Outcome of a position-swap-mitigated pairwise comparison.
+
+    ``position_swap_consistent`` is False when the judge picked different
+    winners in the original and swapped runs; the result then reports tie.
+    """
+
     model_config = ConfigDict(frozen=True)
 
     winner: Literal["a", "b", "tie"]
@@ -42,6 +48,14 @@ class JudgeError(RuntimeError):
 
 
 class LlmJudge:
+    """LLM-as-judge entry point with pointwise and pairwise scoring.
+
+    The judge model defaults to claude-sonnet-4-6 because the standard
+    generator model is claude-opus-4-7; using different families for
+    generator and judge mitigates the self-preference bias documented in
+    the LLM-as-judge literature.
+    """
+
     def __init__(
         self,
         provider: LlmProvider,

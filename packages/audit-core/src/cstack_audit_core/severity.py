@@ -13,6 +13,13 @@ _RANK: dict[str, int] = {
 
 
 class Severity(StrEnum):
+    """Finding severity ladder, ordered Info < Low < Medium < High < Critical.
+
+    StrEnum so JSON serialisation uses the string value directly. Comparison
+    operators delegate to a fixed rank table so members compare by intent, not
+    by definition order.
+    """
+
     INFO = "INFO"
     LOW = "LOW"
     MEDIUM = "MEDIUM"

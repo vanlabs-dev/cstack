@@ -49,6 +49,14 @@ _CREEP_THRESHOLD = 5
 
 
 def analyse_exclusions(context: AuditContext) -> list[Finding]:
+    """Run every exclusion-hygiene check across every policy in the context.
+
+    Emits findings for stale (90+ days inactive) excluded users, orphaned
+    exclusions on disabled accounts, admin-MFA-bypass exclusions, exclusion
+    creep (more than five excluded principals), and undocumented exclusions
+    whose policy display name carries no break-glass keyword.
+    """
+
     findings: list[Finding] = []
     for policy in context.policies:
         if not _has_exclusions(policy):

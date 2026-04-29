@@ -42,6 +42,7 @@ MIN_SIGNINS_FOR_TRAINING = 100
 
 
 def pooled_model_name(tenant_id: str) -> str:
+    """Stable MLflow registered-model name for a tenant's pooled IF model."""
     return f"signalguard-anomaly-pooled-{tenant_id}"
 
 

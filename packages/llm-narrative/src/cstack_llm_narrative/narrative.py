@@ -33,12 +33,26 @@ _FREE_PRICE: _ModelPrice = {"input": 0.0, "output": 0.0}
 
 
 def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    """Per-call USD estimate via MODEL_PRICING. Unknown models cost zero.
+
+    Used by NarrativeBudget to gate calls before a request leaves the
+    process. Drift against the real Anthropic bill is acceptable; this is a
+    guard rail, not an audited figure.
+    """
+
     rate = MODEL_PRICING.get(model, _FREE_PRICE)
     return rate["input"] * input_tokens + rate["output"] * output_tokens
 
 
 @dataclass
 class Narrative:
+    """A generated or cache-hit narrative ready to render.
+
+    ``cached=True`` means this row came from narrative_cache without a
+    fresh provider call; the input/output token counts then reflect the
+    original generation, not a re-render.
+    """
+
     cache_key: str
     rule_id: str
     prompt_version: str

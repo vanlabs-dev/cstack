@@ -31,6 +31,13 @@ REFERENCE_PROMPT_VERSION = "reference"
 
 
 class EvalRun(BaseModel):
+    """Persisted record of one full eval pass over the golden set.
+
+    Pointwise runs report aggregate quality across the rubric; pairwise runs
+    report a single ``mean_score`` derived from winrate and a synthetic
+    per-criterion-means dict carrying the winrate and inconsistency rate.
+    """
+
     model_config = ConfigDict(frozen=True)
 
     eval_id: str

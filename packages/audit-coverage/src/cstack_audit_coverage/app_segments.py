@@ -23,6 +23,13 @@ LEGACY_AUTH_CLIENT_APP_TYPES: frozenset[str] = frozenset({"other", "exchangeActi
 
 
 class AppSegment(StrEnum):
+    """Coarse app buckets the coverage matrix evaluates against.
+
+    Each segment maps to a set of well-known app IDs (or to "any" for
+    ALL_APPS and LEGACY_AUTH). The matrix walks every (UserSegment x
+    AppSegment) cell and records the strongest applicable policy.
+    """
+
     ALL_APPS = "all_apps"
     M365_CORE = "m365_core"
     ADMIN_PORTALS = "admin_portals"

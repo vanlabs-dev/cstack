@@ -6,6 +6,7 @@ from cstack_schemas import DirectoryRole, Group, RoleAssignment, User
 
 
 def upsert_users(conn: duckdb.DuckDBPyConnection, tenant_id: str, users: list[User]) -> int:
+    """Insert-or-replace tenant users. Returns the number of rows persisted."""
     if not users:
         return 0
     now = datetime.now(UTC)
@@ -38,6 +39,7 @@ def upsert_users(conn: duckdb.DuckDBPyConnection, tenant_id: str, users: list[Us
 
 
 def upsert_groups(conn: duckdb.DuckDBPyConnection, tenant_id: str, groups: list[Group]) -> int:
+    """Insert-or-replace tenant security/M365 groups. Returns rows persisted."""
     if not groups:
         return 0
     now = datetime.now(UTC)
@@ -71,6 +73,7 @@ def upsert_directory_roles(
     tenant_id: str,
     roles: list[DirectoryRole],
 ) -> int:
+    """Insert-or-replace activated directory roles. Returns rows persisted."""
     if not roles:
         return 0
     now = datetime.now(UTC)
@@ -104,6 +107,7 @@ def upsert_role_assignments(
     tenant_id: str,
     assignments: list[RoleAssignment],
 ) -> int:
+    """Insert-or-replace role assignment rows. Returns rows persisted."""
     if not assignments:
         return 0
     now = datetime.now(UTC)

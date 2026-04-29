@@ -206,6 +206,7 @@ def ground_truth_for(name: str, scenario: str) -> list[dict[str, Any]]:
 
 
 def clear_all_fixtures(conn: duckdb.DuckDBPyConnection) -> None:
+    """Remove every fixture tenant from the DB. Useful for clean-slate tests."""
     for fixture in list_fixtures():
         clear_fixture(fixture.name, conn)
 

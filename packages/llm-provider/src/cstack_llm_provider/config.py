@@ -64,4 +64,10 @@ class LlmProviderSettings(BaseSettings):
 
 @lru_cache
 def get_settings() -> LlmProviderSettings:
+    """Process-wide cached LlmProviderSettings instance.
+
+    Cached so .env parsing and pydantic-settings construction happens once;
+    tests that need a fresh load can call ``get_settings.cache_clear()``.
+    """
+
     return LlmProviderSettings()

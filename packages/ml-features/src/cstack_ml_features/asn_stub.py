@@ -22,6 +22,12 @@ _PREFIX_TO_ASN: dict[str, str] = {
 
 
 def lookup_asn(ip_address: str | None) -> str | None:
+    """Resolve an IPv4 address to a synthetic ASN using a static prefix table.
+
+    Returns None when no IP is provided. Falls back to a stable hash-derived
+    AS number so each unique IP maps to one ASN consistently across calls.
+    """
+
     if not ip_address:
         return None
     parts = ip_address.split(".")

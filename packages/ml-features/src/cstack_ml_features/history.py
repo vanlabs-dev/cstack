@@ -39,6 +39,7 @@ _EMPTY = UserHistory(
 
 
 def empty_history() -> UserHistory:
+    """Return the shared empty UserHistory used for cold-start users."""
     return _EMPTY
 
 

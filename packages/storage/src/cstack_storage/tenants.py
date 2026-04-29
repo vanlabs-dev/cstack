@@ -28,6 +28,7 @@ def register_tenant(conn: duckdb.DuckDBPyConnection, tenant: TenantConfig) -> No
 
 
 def list_tenants_db(conn: duckdb.DuckDBPyConnection) -> list[TenantConfig]:
+    """All tenant rows ordered by display_name. Excludes API key material."""
     rows = conn.execute(
         """
         SELECT tenant_id, display_name, client_id, cert_thumbprint, cert_subject,
@@ -51,6 +52,7 @@ def list_tenants_db(conn: duckdb.DuckDBPyConnection) -> list[TenantConfig]:
 
 
 def get_tenant_db(conn: duckdb.DuckDBPyConnection, tenant_id: str) -> TenantConfig | None:
+    """One tenant by id, or None if not registered. Excludes API key material."""
     row = conn.execute(
         """
         SELECT tenant_id, display_name, client_id, cert_thumbprint, cert_subject,

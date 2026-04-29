@@ -85,6 +85,7 @@ def latest_findings(
 def findings_by_rule(
     conn: duckdb.DuckDBPyConnection, tenant_id: str, rule_id: str
 ) -> list[Finding]:
+    """Return all findings for one rule on one tenant, severity-desc ordered."""
     return latest_findings(conn, tenant_id, rule_id=rule_id)
 
 

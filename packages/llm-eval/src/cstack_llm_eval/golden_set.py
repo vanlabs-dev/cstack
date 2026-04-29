@@ -14,12 +14,19 @@ GOLDEN_SET_PATH = DATA_DIR / "golden_set.json"
 
 @dataclass(frozen=True)
 class GoldenExample:
+    """One hand-curated finding plus its gold-standard narrative.
+
+    The reference narrative is the human ceiling the eval harness compares
+    LLM-generated narratives against in pairwise mode.
+    """
+
     finding: Finding
     reference_narrative: str
     scenario_notes: str
 
 
 def load_golden_set(path: Path | None = None) -> list[GoldenExample]:
+    """Read the JSON golden set into dataclasses. Defaults to the bundled file."""
     target = path if path is not None else GOLDEN_SET_PATH
     if not target.exists():
         raise FileNotFoundError(

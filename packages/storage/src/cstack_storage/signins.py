@@ -97,6 +97,7 @@ def get_signins(
 
 
 def count_signins_by_user(conn: duckdb.DuckDBPyConnection, tenant_id: str) -> dict[str, int]:
+    """Map of ``user_id -> sign-in count`` for one tenant."""
     rows = conn.execute(
         "SELECT user_id, COUNT(*) FROM signins WHERE tenant_id = ? GROUP BY user_id",
         [tenant_id],

@@ -32,6 +32,13 @@ class ProtectionLevel(IntEnum):
 
 
 class CoverageCell(BaseModel):
+    """One (user-segment x app-segment) cell of the coverage matrix.
+
+    ``applicable_policy_ids`` is the subset of CA policies whose conditions
+    overlap the cell; ``protection_level`` is the strongest grant control
+    surfaced from those policies.
+    """
+
     model_config = ConfigDict(frozen=True)
 
     user_segment: UserSegment
@@ -42,6 +49,8 @@ class CoverageCell(BaseModel):
 
 
 class CoverageMatrix(BaseModel):
+    """Computed-at-a-point-in-time grid of CoverageCell rows for one tenant."""
+
     tenant_id: str
     cells: list[CoverageCell]
     computed_at: datetime

@@ -47,6 +47,7 @@ def get_scores(
     min_score: float | None = None,
     since: datetime | None = None,
 ) -> list[AnomalyScore]:
+    """Filtered read of anomaly_scores. Each filter is an AND clause."""
     sql_parts = [
         """
         SELECT tenant_id, signin_id, user_id, model_name, model_version,
@@ -78,6 +79,7 @@ def latest_anomalies(
     n: int = 50,
     model_name: str | None = None,
 ) -> list[AnomalyScore]:
+    """Top N most recent rows where ``is_anomaly`` is true. Default 50."""
     sql_parts = [
         """
         SELECT tenant_id, signin_id, user_id, model_name, model_version,

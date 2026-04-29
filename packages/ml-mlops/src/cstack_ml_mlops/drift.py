@@ -64,4 +64,5 @@ def compute_feature_drift(
 def flag_drifting_features(
     drift_scores: dict[str, float], threshold: float = DRIFT_SIGNIFICANT
 ) -> list[str]:
+    """Return feature names whose PSI meets or exceeds the drift threshold."""
     return [name for name, psi in drift_scores.items() if psi >= threshold]

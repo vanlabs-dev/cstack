@@ -73,6 +73,8 @@ class NarrativeValidationError(RuntimeError):
 
 @dataclass
 class BatchResult:
+    """Counts and spend reported back from ``generate_batch``."""
+
     cache_hits: int = 0
     generated: int = 0
     skipped_budget: int = 0
@@ -81,6 +83,14 @@ class BatchResult:
 
 
 class NarrativeGenerator:
+    """Finding-to-narrative pipeline with cache, budget, and validation.
+
+    Constructor takes a provider, a DuckDB connection, an optional budget,
+    and the default model name. ``generate`` is the single-finding entry
+    point; ``generate_batch`` runs many findings concurrently with a
+    semaphore to bound provider request rate.
+    """
+
     def __init__(
         self,
         provider: LlmProvider,

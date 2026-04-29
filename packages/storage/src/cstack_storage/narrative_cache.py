@@ -19,6 +19,13 @@ import duckdb
 
 @dataclass(frozen=True)
 class CachedNarrative:
+    """A row from the narrative_cache table.
+
+    ``cache_key`` is the SHA-256 of ``(rule_id, canonicalised_evidence,
+    prompt_version, model)``; identical findings across tenants share one
+    entry. ``last_used_at`` and ``use_count`` drive LRU eviction.
+    """
+
     cache_key: str
     rule_id: str
     evidence_hash: str
@@ -36,6 +43,8 @@ class CachedNarrative:
 
 @dataclass(frozen=True)
 class CacheStats:
+    """Aggregate counts from the narrative cache for the cache-stats CLI."""
+
     total_entries: int
     distinct_rules: int
     total_cached_output_tokens: int
@@ -55,6 +64,7 @@ def _canonical_evidence(evidence: dict[str, Any]) -> str:
 
 
 def hash_evidence(evidence: dict[str, Any]) -> str:
+    """SHA-256 hex digest of an evidence dict via canonical JSON ordering."""
     return hashlib.sha256(_canonical_evidence(evidence).encode("utf-8")).hexdigest()
 
 
@@ -179,6 +189,7 @@ def evict_old(conn: duckdb.DuckDBPyConnection, days: int = 90) -> int:
 
 
 def cache_stats(conn: duckdb.DuckDBPyConnection) -> CacheStats:
+    """Aggregate counters for the narrative cache (no per-entry breakdown)."""
     row = conn.execute(
         """
         SELECT

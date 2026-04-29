@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RubricCriterion(BaseModel):
+    """A single dimension of narrative quality with its scoring window."""
+
     model_config = ConfigDict(frozen=True)
 
     name: str
@@ -16,6 +18,12 @@ class RubricCriterion(BaseModel):
 
 
 class Rubric(BaseModel):
+    """A weighted collection of criteria with stable id and description.
+
+    The id is the cache key shape eval persistence uses; bump it when criteria
+    or weights change so historical scores don't get compared against new ones.
+    """
+
     model_config = ConfigDict(frozen=True)
 
     id: str
@@ -23,6 +31,7 @@ class Rubric(BaseModel):
     criteria: list[RubricCriterion]
 
     def criterion(self, name: str) -> RubricCriterion:
+        """Look up one criterion by name. Raises KeyError when missing."""
         for c in self.criteria:
             if c.name == name:
                 return c
@@ -30,6 +39,8 @@ class Rubric(BaseModel):
 
 
 class CriterionScore(BaseModel):
+    """One judge's score and justification for one criterion."""
+
     model_config = ConfigDict(frozen=True)
 
     name: str
@@ -38,6 +49,8 @@ class CriterionScore(BaseModel):
 
 
 class RubricScore(BaseModel):
+    """Aggregate score across an entire rubric for one narrative."""
+
     model_config = ConfigDict(frozen=True)
 
     criteria_scores: dict[str, CriterionScore]
@@ -45,6 +58,7 @@ class RubricScore(BaseModel):
     judge_model: str
 
     def per_criterion_means(self) -> dict[str, float]:
+        """Return the bare per-criterion floats, dropping justifications."""
         return {name: s.score for name, s in self.criteria_scores.items()}
 
 

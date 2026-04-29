@@ -39,6 +39,12 @@ TIER_0_ROLE_TEMPLATE_IDS: frozenset[str] = frozenset(
 
 
 class UserSegment(StrEnum):
+    """Coarse user buckets the coverage matrix evaluates against.
+
+    Resolution from raw directory data lives in this module's helpers; the
+    matrix consumes the resolved sets only.
+    """
+
     ALL_USERS = "all_users"
     ADMINS_ANY = "admins_any"
     GUESTS = "guests"

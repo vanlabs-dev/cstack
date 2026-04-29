@@ -26,6 +26,12 @@ class RuleMetadata(BaseModel):
 
 @dataclass(frozen=True)
 class Rule:
+    """One CA audit rule: metadata + a pure evaluator function.
+
+    Rules live in `packages/audit-rules/src/cstack_audit_rules/rules/`;
+    each module instantiates a `Rule` and calls `register_rule` at import.
+    """
+
     metadata: RuleMetadata
     evaluator: RuleEvaluator
 
@@ -35,6 +41,7 @@ RULE_REGISTRY: dict[str, Rule] = {}
 
 
 def register_rule(rule: Rule) -> None:
+    """Add a rule to the module-level registry. Raises if id is duplicated."""
     if rule.metadata.id in RULE_REGISTRY:
         raise ValueError(f"rule already registered: {rule.metadata.id}")
     RULE_REGISTRY[rule.metadata.id] = rule
