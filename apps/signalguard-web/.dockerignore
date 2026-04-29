@@ -1,0 +1,25 @@
+# Build-time exclusions for the web image. Keep the build context small.
+
+node_modules
+.next
+.turbo
+coverage
+
+.env
+.env.local
+.env.production
+
+.vscode
+.idea
+.DS_Store
+
+# Tests are not part of the production build artefact.
+src/**/__tests__/
+
+# These come from the repo root via the Dockerfile's COPY commands; do
+# not let them sneak in via apps/signalguard-web context paths.
+infra/
+
+# README is fine to include, but the design source pack is gitignored
+# anyway and should never reach the image.
+.design/
