@@ -1,0 +1,135 @@
+name: cstack
+
+# cstack signalguard local stack. The bootstrap services run sequentially
+# on first up (fixtures -> audit -> anomaly-bootstrap) before the api
+# starts; on subsequent ups they re-run quickly because most steps are
+# idempotent. The cstack-data named volume is the integration boundary
+# between the api process and the CLI bootstrap services.
+#
+# Usage:
+#   docker compose -f infra/docker/compose.yaml build
+#   docker compose -f infra/docker/compose.yaml up
+#   docker compose -f infra/docker/compose.yaml down -v   # clean slate
+
+# Common config block reused by every CLI bootstrap service. YAML anchors
+# keep the per-service definitions tight while sharing image, env, and
+# volume mounts.
+x-cli-defaults: &cli-defaults
+  image: cstack-api:dev
+  # CLI subcommands write under /data via CSTACK_* settings; the api's
+  # SIGNALGUARD_API_DB_PATH points at the same DuckDB file because both
+  # processes share the same volume. tenants.json lives next to the
+  # DuckDB file so a docker compose down -v wipes both together.
+  #
+  # working_dir: /data is required because MLflow with SQLite tracking
+  # still writes model artifacts to a filesystem path that defaults to
+  # ``./mlruns/<run_id>/artifacts`` relative to cwd. The api process
+  # stays at /app for module imports; only the CLI bootstraps need the
+  # writable cwd.
+  working_dir: /data
+  environment:
+    CSTACK_DATA_DIR: /data
+    CSTACK_DB_PATH: /data/cstack.duckdb
+    CSTACK_TENANTS_FILE: /data/tenants.json
+    SIGNALGUARD_API_DB_PATH: /data/cstack.duckdb
+    SIGNALGUARD_API_TENANTS_FILE: /data/tenants.json
+    MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
+  volumes:
+    - cstack-data:/data
+  restart: "no"
+
+services:
+  fixtures:
+    <<: *cli-defaults
+    container_name: cstack-fixtures
+    command:
+      - python
+      - -m
+      - cstack_cli.main
+      - fixtures
+      - load-all
+
+  audit:
+    <<: *cli-defaults
+    container_name: cstack-audit
+    # All three fixture tenants are audited so the dashboard tenant
+    # selector has data on every option, not just tenant-b.
+    command:
+      - sh
+      - -c
+      - |
+        python -m cstack_cli.main audit all --tenant tenant-a --no-narratives && \
+        python -m cstack_cli.main audit all --tenant tenant-b --no-narratives && \
+        python -m cstack_cli.main audit all --tenant tenant-c --no-narratives
+    depends_on:
+      fixtures:
+        condition: service_completed_successfully
+
+  anomaly-bootstrap:
+    <<: *cli-defaults
+    container_name: cstack-anomaly-bootstrap
+    # Replay-attacks scenario seeds enough flagged sign-ins for the
+    # anomaly feed and drill-down screens to render meaningfully.
+    command:
+      - sh
+      - -c
+      - |
+        python -m cstack_cli.main signins extract --tenant tenant-a --scenario replay-attacks && \
+        python -m cstack_cli.main anomaly train --tenant tenant-a && \
+        python -m cstack_cli.main anomaly promote --tenant tenant-a --force && \
+        python -m cstack_cli.main anomaly score --tenant tenant-a
+    depends_on:
+      audit:
+        condition: service_completed_successfully
+
+  api:
+    image: cstack-api:dev
+    container_name: cstack-api
+    ports:
+      - "8000:8000"
+    environment:
+      SIGNALGUARD_API_DB_PATH: /data/cstack.duckdb
+      SIGNALGUARD_API_TENANTS_FILE: /data/tenants.json
+      SIGNALGUARD_API_DEV_API_KEY: ${SIGNALGUARD_API_DEV_API_KEY:-dev-secret}
+      SIGNALGUARD_API_CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
+      MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
+      # LLM provider keys are passthrough. CSTACK_LLM_NARRATIVE_ENABLED
+      # defaults off so the stack does not spend money on every audit run.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CSTACK_LLM_NARRATIVE_ENABLED: ${CSTACK_LLM_NARRATIVE_ENABLED:-false}
+    volumes:
+      - cstack-data:/data
+    depends_on:
+      anomaly-bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import urllib.request, sys
+          urllib.request.urlopen('http://localhost:8000/healthz').read()
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  web:
+    image: cstack-web:dev
+    container_name: cstack-web
+    ports:
+      - "3000:3000"
+    environment:
+      # Browser-side fetches go to the host port mapping, not the docker
+      # network DNS name. Server components run inside the container and
+      # need the in-network hostname.
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  cstack-data:
+    name: cstack-data

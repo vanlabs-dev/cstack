@@ -1,0 +1,14 @@
+# Override that skips the anomaly bootstrap. Useful when you only want
+# the audit findings to render and want to save the ~30s the IF train
+# step takes. Usage:
+#
+#   docker compose \
+#     -f infra/docker/compose.yaml \
+#     -f infra/docker/compose.fixtures-only.yaml \
+#     up
+
+services:
+  anomaly-bootstrap:
+    # No-op replacement that exits 0 immediately so api's depends_on
+    # condition still resolves.
+    command: ["sh", "-c", "echo 'skipping anomaly bootstrap'"]
