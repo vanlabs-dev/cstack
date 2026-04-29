@@ -1,9 +1,11 @@
 # Rules catalogue
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 15 best-practice CA rules ship in `packages/audit-rules`. Each rule is a
 pure function that takes an `AuditContext` and returns zero or more
 findings. Add a new rule by following the recipe in
-[ARCHITECTURE.md](ARCHITECTURE.md#adding-a-new-rule).
+[ARCHITECTURE.md](./ARCHITECTURE.md#adding-a-new-rule).
 
 | id                                    | severity | description                                                                          |
 | ------------------------------------- | -------- | ------------------------------------------------------------------------------------ |

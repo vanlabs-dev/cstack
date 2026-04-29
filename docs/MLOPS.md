@@ -1,5 +1,7 @@
 # MLOps walkthrough: SignalGuard sign-in anomaly detection
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Overview
 
 cstack SignalGuard ships two halves: a deterministic CA audit engine

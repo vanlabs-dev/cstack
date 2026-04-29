@@ -1,5 +1,7 @@
 # Architecture
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Overview
 
 cstack is a polyglot monorepo for building Microsoft 365 operations tooling. Tools share

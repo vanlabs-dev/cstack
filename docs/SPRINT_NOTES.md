@@ -1,5 +1,7 @@
 # Sprint notes
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Sprint 1 fixture smoke (2026-04-27)
 
 End-to-end run from a clean working tree. No live tenant touched.

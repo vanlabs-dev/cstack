@@ -1,6 +1,8 @@
 # Cstack design system
 
-Component patterns, layout primitives, and screen blueprints. Companion to `DESIGN_TOKENS.md`. This document tells the build phase what to make, with what density, and at what level of polish.
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
+Component patterns, layout primitives, and screen blueprints. Companion to [DESIGN_TOKENS.md](./DESIGN_TOKENS.md). This document tells the build phase what to make, with what density, and at what level of polish.
 
 The design source artefacts live in `.design/` (gitignored, working material). This document is the committed reference.
 

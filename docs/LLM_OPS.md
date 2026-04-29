@@ -1,5 +1,7 @@
 # LLM ops walkthrough: SignalGuard finding narratives
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Overview
 
 cstack SignalGuard ships a deterministic CA audit (Sprint 2) and a

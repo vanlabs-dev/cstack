@@ -1,5 +1,7 @@
 # signalguard-api
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Overview
 
 The API is a thin HTTP layer over the cstack data and audit packages. Routers

@@ -1,5 +1,7 @@
 # Contributing
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 ## Prerequisites
 
 - Python 3.12 (uv downloads the interpreter on first sync)

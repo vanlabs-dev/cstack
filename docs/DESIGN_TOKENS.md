@@ -1,5 +1,7 @@
 # Cstack design tokens
 
+> See [docs/INDEX.md](./INDEX.md) for the full documentation map.
+
 Light-first. Warm neutrals. Engineer-grade density. Single source of truth for visual decisions across cstack.
 
 Reference points: Linear, Stripe, Attio.
