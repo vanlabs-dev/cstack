@@ -58,46 +58,47 @@
     }
   ],
   "anomaly_calibration": {
-    "model_version": "signalguard-anomaly-pooled-00000000-cccc-3333-3333-333333333333:v1",
-    "pipeline": "StandardScaler -> IsolationForest(n=200, random_state=42) + rule-based score booster",
+    "model_version": "signalguard-anomaly-00000000-cccc-3333-3333-333333333333:v1",
+    "pipeline": "per-user IsolationForest(n=200, random_state=42) + cold-start pooled IF + 4 hybrid rules + off-hours-admin rule",
     "contamination": 0.05,
+    "min_samples_per_user": 30,
     "feature_count": 20,
     "scenarios": {
       "baseline": {
         "rows": 4459,
-        "flagged": 201,
-        "flagged_high": 68,
+        "flagged": 261,
+        "flagged_high": 89,
         "gt": 0,
         "tp": 0,
         "precision": null,
         "recall": null,
         "f1": null,
-        "false_positive_rate": 0.015
+        "false_positive_rate": 0.020
       },
       "replay-attacks": {
         "rows": 4461,
-        "flagged": 249,
-        "flagged_high": 88,
+        "flagged": 273,
+        "flagged_high": 110,
         "gt": 27,
-        "tp": 24,
-        "precision": 0.273,
-        "recall": 0.889,
-        "f1": 0.417,
-        "false_positive_rate": 0.014
+        "tp": 23,
+        "precision": 0.209,
+        "recall": 0.852,
+        "f1": 0.336,
+        "false_positive_rate": 0.020
       },
       "noisy": {
         "rows": 4522,
-        "flagged": 295,
-        "flagged_high": 95,
+        "flagged": 273,
+        "flagged_high": 111,
         "gt": 27,
-        "tp": 23,
-        "precision": 0.242,
-        "recall": 0.852,
-        "f1": 0.377,
-        "false_positive_rate": 0.016
+        "tp": 20,
+        "precision": 0.180,
+        "recall": 0.741,
+        "f1": 0.290,
+        "false_positive_rate": 0.020
       }
     },
-    "calibrated_at": "2026-04-29",
-    "notes": "highest sign-in volume; off-hours admin event still missed in noisy because the user is a tier-0 admin with broader work-hour distribution from the noise injection."
+    "calibrated_at": "2026-04-30",
+    "notes": "Sprint 3.5 per-user architecture. Recall on replay-attacks meets the 0.80 floor (0.852); the noisy scenario slips to 0.741 because the noise injection broadens user time-distributions, which makes the off-hours-admin rule's per-user p90 anchor less discriminating. Precision below the 0.40 target across the board (rules drive recall but trip on rare-but-legitimate events). Sprint 7 with real tenant baselines will recalibrate this scenario."
   }
 }
