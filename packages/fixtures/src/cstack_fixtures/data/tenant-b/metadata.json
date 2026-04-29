@@ -9,22 +9,24 @@
     "no-risk-policies"
   ],
   "expected_findings": {
-    "total": 29,
+    "total": 31,
     "by_category": {
-      "coverage": 3,
+      "coverage": 5,
       "rule": 14,
       "exclusion": 12
     },
     "by_severity": {
-      "critical": 1,
-      "high": 6,
+      "critical": 2,
+      "high": 7,
       "medium": 15,
       "low": 6,
       "info": 1
     },
     "by_rule_id": {
+      "coverage.admins_any-on-legacy_auth": 1,
       "coverage.all_users-on-legacy_auth": 1,
       "coverage.guests-on-legacy_auth": 1,
+      "coverage.privileged_roles-on-legacy_auth": 1,
       "coverage.service_accounts-on-legacy_auth": 1,
       "exclusion.creep": 1,
       "exclusion.orphan-user": 1,

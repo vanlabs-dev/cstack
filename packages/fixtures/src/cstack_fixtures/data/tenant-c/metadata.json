@@ -9,22 +9,24 @@
     "workload-identity"
   ],
   "expected_findings": {
-    "total": 10,
+    "total": 12,
     "by_category": {
-      "coverage": 2,
+      "coverage": 4,
       "rule": 5,
       "exclusion": 3
     },
     "by_severity": {
-      "critical": 0,
-      "high": 4,
+      "critical": 1,
+      "high": 5,
       "medium": 3,
       "low": 3,
       "info": 0
     },
     "by_rule_id": {
+      "coverage.admins_any-on-legacy_auth": 1,
       "coverage.all_users-on-legacy_auth": 1,
       "coverage.guests-on-legacy_auth": 1,
+      "coverage.privileged_roles-on-legacy_auth": 1,
       "exclusion.undocumented": 3,
       "rule.block-legacy-auth": 1,
       "rule.device-compliance-sensitive-apps": 1,

@@ -1,5 +1,5 @@
 [
-  {"id": "role-c-globaladmin", "displayName": "Global Administrator", "description": "Highest-privilege admin role.", "roleTemplateId": "62e90394-69f5-4237-9190-012177145e10"},
+  {"id": "role-c-globaladmin", "displayName": "Global Administrator", "description": "Highest-privilege admin role.", "roleTemplateId": "62e90394-69f5-4237-9190-012177145e10", "members": ["user-tenant-c-0016"]},
   {"id": "role-c-privrole", "displayName": "Privileged Role Administrator", "description": "Manages role assignments and policies.", "roleTemplateId": "e8611ab8-c189-46e8-94e1-60213ab1f814"},
   {"id": "role-c-globalreader", "displayName": "Global Reader", "description": "Read-only across the directory.", "roleTemplateId": "f2ef992c-3afb-46b9-b7cf-a126ee74c451"},
   {"id": "role-c-condaccess", "displayName": "Conditional Access Administrator", "description": "Manages CA policies.", "roleTemplateId": "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9"},
