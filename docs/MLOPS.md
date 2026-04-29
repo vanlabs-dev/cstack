@@ -144,11 +144,15 @@ random_state=42))` on the resulting DataFrame.
 `random_state=42` is the convention everywhere in the package. Tests
 assert reproducibility by re-fitting and comparing predictions.
 
-The MLflow tracking URI defaults to a local `./mlruns/` directory using
-`Path.as_uri()` so Windows drive paths produce the `file:///` scheme
-MLflow's registry requires. The tracking server is intentionally local
-in V1; pointing at a remote server is a one-line override on
-`configure_tracking`.
+The MLflow tracking URI resolves in three steps. An explicit
+`tracking_uri=` argument always wins (tests inject deterministic per-test
+paths via this). Otherwise the `MLFLOW_TRACKING_URI` env var is used
+(containers and CI set this). Otherwise the helper falls back to
+`sqlite:///./mlruns/mlflow.sqlite`. SQLite is the production default
+because it is multi-process safe and behaves correctly under the Compose
+bind mounts that Sprint 6.6 introduced; the older `file://./mlruns`
+scheme remains available by passing it explicitly and is what the
+test suite uses for per-test isolation.
 
 ## Promotion gating
 
@@ -266,9 +270,9 @@ a deliberately small layer on top of the IF and does not replace it.
 - No autoencoder yet. Sprint 3.5 will reassess once we have live
   tenant baselines; if needed, the autoencoder package will plug into
   the same `ml-features.pipeline` contract.
-- MLflow file-backend deprecation warning (MLflow 2.18+). Migration to
-  a SQLite backend is a Sprint 3.5 housekeeping item; the warning does
-  not affect functionality.
+- MLflow file-backend deprecation warning surfaces in tests that still
+  use `file://` URIs. Production paths default to SQLite as of Sprint
+  6.6; tests stay on file:// for per-test isolation simplicity.
 
 ## Roadmap
 
