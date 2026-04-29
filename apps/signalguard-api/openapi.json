@@ -358,6 +358,24 @@
             },
             "title": "Categories",
             "type": "array"
+          },
+          "generate_narratives": {
+            "default": true,
+            "description": "When true, run the LLM narrator over written findings.",
+            "title": "Generate Narratives",
+            "type": "boolean"
+          },
+          "narrative_budget_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional per-run budget cap; falls back to env CSTACK_LLM_BUDGET_USD.",
+            "title": "Narrative Budget Usd"
           }
         },
         "title": "AuditRunRequest",
@@ -379,6 +397,16 @@
           "findings_written": {
             "title": "Findings Written",
             "type": "integer"
+          },
+          "narrative_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NarrativeBatchSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "run_id": {
             "title": "Run Id",
@@ -846,6 +874,83 @@
         "title": "ModelVersionEntry",
         "type": "object"
       },
+      "NarrativeBatchSummary": {
+        "properties": {
+          "cache_hits": {
+            "title": "Cache Hits",
+            "type": "integer"
+          },
+          "dollars_spent": {
+            "title": "Dollars Spent",
+            "type": "number"
+          },
+          "errored": {
+            "title": "Errored",
+            "type": "integer"
+          },
+          "generated": {
+            "title": "Generated",
+            "type": "integer"
+          },
+          "skipped_budget": {
+            "title": "Skipped Budget",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cache_hits",
+          "generated",
+          "skipped_budget",
+          "errored",
+          "dollars_spent"
+        ],
+        "title": "NarrativeBatchSummary",
+        "type": "object"
+      },
+      "NarrativeResponse": {
+        "properties": {
+          "cached": {
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "markdown": {
+            "title": "Markdown",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "markdown",
+          "model",
+          "provider",
+          "generated_at",
+          "cached",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "NarrativeResponse",
+        "type": "object"
+      },
       "Paginated_AnomalyScore_": {
         "properties": {
           "has_more": {
@@ -968,6 +1073,28 @@
         ],
         "title": "ProtectionLevel",
         "type": "integer"
+      },
+      "RegenerateRequest": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "prompt_version": {
+            "default": "v1",
+            "title": "Prompt Version",
+            "type": "string"
+          }
+        },
+        "title": "RegenerateRequest",
+        "type": "object"
       },
       "Severity": {
         "enum": [
@@ -2545,6 +2672,119 @@
         ]
       }
     },
+    "/tenants/{tenant_id}/findings/{finding_id}/narrative": {
+      "get": {
+        "operationId": "get_narrative_tenants__tenant_id__findings__finding_id__narrative_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NarrativeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read or generate a finding narrative",
+        "tags": [
+          "narratives"
+        ]
+      }
+    },
+    "/tenants/{tenant_id}/findings/{finding_id}/narrative/regenerate": {
+      "post": {
+        "description": "Bypasses the cache and replaces any existing entry on success. Restricted to dev callers because it spends real money on every invocation.",
+        "operationId": "regenerate_narrative_tenants__tenant_id__findings__finding_id__narrative_regenerate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "finding_id",
+            "required": true,
+            "schema": {
+              "title": "Finding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NarrativeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Force-regenerate a narrative (dev key only)",
+        "tags": [
+          "narratives"
+        ]
+      }
+    },
     "/tenants/{tenant_id}/models": {
       "get": {
         "description": "Reads the MLflow registry for models matching the tenant's pooled-model naming convention. Returns an empty list when no models are registered.",
@@ -2818,6 +3058,10 @@
     {
       "description": "MLflow model registry view.",
       "name": "models"
+    },
+    {
+      "description": "LLM-generated finding narratives.",
+      "name": "narratives"
     }
   ]
 }

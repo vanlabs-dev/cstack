@@ -106,6 +106,14 @@ export type AuditRunRequest = {
    * Subset of audit categories to execute. Empty list rejected.
    */
   categories?: Array<'coverage' | 'rules' | 'exclusions'>;
+  /**
+   * When true, run the LLM narrator over written findings.
+   */
+  generate_narratives?: boolean;
+  /**
+   * Optional per-run budget cap; falls back to env CSTACK_LLM_BUDGET_USD.
+   */
+  narrative_budget_usd?: number | null;
 };
 
 export type AuditRunResponse = {
@@ -114,6 +122,7 @@ export type AuditRunResponse = {
   };
   duration_seconds: number;
   findings_written: number;
+  narrative_summary?: NarrativeBatchSummary | null;
   run_id: string;
 };
 
@@ -234,6 +243,24 @@ export type ModelVersionEntry = {
   version: string;
 };
 
+export type NarrativeBatchSummary = {
+  cache_hits: number;
+  dollars_spent: number;
+  errored: number;
+  generated: number;
+  skipped_budget: number;
+};
+
+export type NarrativeResponse = {
+  cached: boolean;
+  generated_at: string;
+  input_tokens: number;
+  markdown: string;
+  model: string;
+  output_tokens: number;
+  provider: string;
+};
+
 export type PaginatedAnomalyScore = {
   has_more: boolean;
   items: Array<AnomalyScore>;
@@ -271,6 +298,11 @@ export type PaginatedSignIn = {
  * Strongest control any applicable policy applies. Higher is stronger.
  */
 export type ProtectionLevel = 0 | 1 | 2 | 3 | 4;
+
+export type RegenerateRequest = {
+  model?: string | null;
+  prompt_version?: string;
+};
 
 export type Severity = 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -912,6 +944,66 @@ export type GetFindingTenantsTenantIdFindingsFindingIdGetResponses = {
 
 export type GetFindingTenantsTenantIdFindingsFindingIdGetResponse =
   GetFindingTenantsTenantIdFindingsFindingIdGetResponses[keyof GetFindingTenantsTenantIdFindingsFindingIdGetResponses];
+
+export type GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData = {
+  body?: never;
+  path: {
+    finding_id: string;
+    tenant_id: string;
+  };
+  query?: never;
+  url: '/tenants/{tenant_id}/findings/{finding_id}/narrative';
+};
+
+export type GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetError =
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetErrors[keyof GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetErrors];
+
+export type GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: NarrativeResponse;
+};
+
+export type GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponse =
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponses[keyof GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponses];
+
+export type RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData = {
+  body: RegenerateRequest;
+  path: {
+    finding_id: string;
+    tenant_id: string;
+  };
+  query?: never;
+  url: '/tenants/{tenant_id}/findings/{finding_id}/narrative/regenerate';
+};
+
+export type RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostError =
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostErrors[keyof RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostErrors];
+
+export type RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: NarrativeResponse;
+};
+
+export type RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponse =
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponses[keyof RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponses];
 
 export type ListModelsTenantsTenantIdModelsGetData = {
   body?: never;

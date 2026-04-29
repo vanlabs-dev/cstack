@@ -18,6 +18,8 @@ dependencies = [
     "cstack-ml-features",
     "cstack-ml-mlops",
     "cstack-ml-anomaly",
+    "cstack-llm-provider",
+    "cstack-llm-narrative",
 ]
 
 [project.scripts]

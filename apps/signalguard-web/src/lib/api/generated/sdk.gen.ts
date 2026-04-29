@@ -49,6 +49,12 @@ import type {
   GetFindingTenantsTenantIdFindingsFindingIdGetData,
   GetFindingTenantsTenantIdFindingsFindingIdGetResponse,
   GetFindingTenantsTenantIdFindingsFindingIdGetError,
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData,
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponse,
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetError,
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData,
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponse,
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostError,
   ListModelsTenantsTenantIdModelsGetData,
   ListModelsTenantsTenantIdModelsGetResponse,
   ListModelsTenantsTenantIdModelsGetError,
@@ -379,6 +385,50 @@ export const getFindingTenantsTenantIdFindingsFindingIdGet = <ThrowOnError exten
   >({
     url: '/tenants/{tenant_id}/findings/{finding_id}',
     ...options,
+  });
+};
+
+/**
+ * Read or generate a finding narrative
+ */
+export const getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData, ThrowOnError>,
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetResponse,
+    GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetError,
+    ThrowOnError
+  >({
+    url: '/tenants/{tenant_id}/findings/{finding_id}/narrative',
+    ...options,
+  });
+};
+
+/**
+ * Force-regenerate a narrative (dev key only)
+ * Bypasses the cache and replaces any existing entry on success. Restricted to dev callers because it spends real money on every invocation.
+ */
+export const regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData,
+    ThrowOnError
+  >,
+) => {
+  return (options.client ?? _heyApiClient).post<
+    RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostResponse,
+    RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostError,
+    ThrowOnError
+  >({
+    url: '/tenants/{tenant_id}/findings/{finding_id}/narrative/regenerate',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    },
   });
 };
 

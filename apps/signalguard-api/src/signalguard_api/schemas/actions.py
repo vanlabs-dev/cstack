@@ -22,6 +22,22 @@ class AuditRunRequest(BaseModel):
         default_factory=_default_audit_categories,
         description="Subset of audit categories to execute. Empty list rejected.",
     )
+    generate_narratives: bool = Field(
+        default=True,
+        description="When true, run the LLM narrator over written findings.",
+    )
+    narrative_budget_usd: float | None = Field(
+        default=None,
+        description="Optional per-run budget cap; falls back to env CSTACK_LLM_BUDGET_USD.",
+    )
+
+
+class NarrativeBatchSummary(BaseModel):
+    cache_hits: int
+    generated: int
+    skipped_budget: int
+    errored: int
+    dollars_spent: float
 
 
 class AuditRunResponse(BaseModel):
@@ -29,6 +45,7 @@ class AuditRunResponse(BaseModel):
     by_category: dict[str, int]
     duration_seconds: float
     run_id: str
+    narrative_summary: NarrativeBatchSummary | None = None
 
 
 class AuditDryRunResponse(BaseModel):

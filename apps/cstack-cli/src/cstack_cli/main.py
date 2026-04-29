@@ -468,14 +468,30 @@ def audit_exclusions_cmd(ctx: click.Context, tenant_identifier: str) -> None:
 
 @audit.command("all")
 @click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--no-narratives", is_flag=True, default=False, help="Skip the LLM narrative pass.")
+@click.option(
+    "--narrative-budget",
+    "narrative_budget",
+    type=float,
+    default=None,
+    help="Override the per-run budget cap in USD.",
+)
 @click.pass_context
-def audit_all_cmd(ctx: click.Context, tenant_identifier: str) -> None:
+def audit_all_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    no_narratives: bool,
+    narrative_budget: float | None,
+) -> None:
     from cstack_cli.audit_runner import (
+        format_narrative_summary,
         format_summary,
         load_context,
+        narrative_config_from_env,
         persist,
         run_coverage,
         run_exclusions,
+        run_narrative_pass,
         run_rules,
         severity_breakdown,
     )
@@ -492,6 +508,14 @@ def audit_all_cmd(ctx: click.Context, tenant_identifier: str) -> None:
         persist(conn, coverage)
         persist(conn, rules)
         persist(conn, exclusions)
+
+        narrative_config = narrative_config_from_env(
+            override_enabled=False if no_narratives else None,
+            override_budget=narrative_budget,
+        )
+        all_findings = coverage + rules + exclusions
+        narrative_result = run_narrative_pass(conn, all_findings, narrative_config)
+
     name = f"{target.display_name} (fixture)" if target.is_fixture else target.display_name
     summary = format_summary(
         name,
@@ -502,6 +526,7 @@ def audit_all_cmd(ctx: click.Context, tenant_identifier: str) -> None:
         },
     )
     click.echo(summary)
+    click.echo(format_narrative_summary(narrative_result))
 
 
 @audit.command("findings")
@@ -819,6 +844,147 @@ def anomaly_promote_cmd(ctx: click.Context, tenant_identifier: str, force: bool)
 def anomaly_mlflow_ui_cmd() -> None:
     """Print the command to launch the MLflow UI on the local file backend."""
     click.echo("mlflow ui --backend-store-uri file://./mlruns")
+
+
+# --- narrative subgroup --------------------------------------------------
+
+
+@cli.group()
+def narrative() -> None:
+    """Generate, manage, and inspect LLM narratives for findings."""
+
+
+@narrative.command("generate")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--rule-id", "rule_id_filter", default=None, help="Restrict to one rule id.")
+@click.option("--force", is_flag=True, default=False, help="Bypass the cache.")
+@click.option("--prompt-version", default="v1", show_default=True)
+@click.option(
+    "--budget",
+    "budget_usd",
+    type=float,
+    default=None,
+    help="Override per-run budget in USD.",
+)
+@click.pass_context
+def narrative_generate_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    rule_id_filter: str | None,
+    force: bool,
+    prompt_version: str,
+    budget_usd: float | None,
+) -> None:
+    from cstack_audit_core import latest_findings
+
+    from cstack_cli.narrative_runner import (
+        format_narrative_summary,
+        run_narrative_pass_for_findings,
+    )
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        rows = latest_findings(
+            conn,
+            tenant_id=target.tenant_id,
+            rule_id=rule_id_filter,
+        )
+        if not rows:
+            click.echo(f"{target.display_name}: no findings match the filter")
+            return
+        result = run_narrative_pass_for_findings(
+            conn,
+            rows,
+            prompt_version=prompt_version,
+            budget_usd=budget_usd,
+            force=force,
+        )
+    click.echo(format_narrative_summary(result))
+
+
+@narrative.command("regenerate")
+@click.option("--tenant", "tenant_identifier", required=True)
+@click.option("--finding-id", "finding_id", required=True)
+@click.option("--prompt-version", default="v1", show_default=True)
+@click.option("--model", default=None, help="Override the default model.")
+@click.pass_context
+def narrative_regenerate_cmd(
+    ctx: click.Context,
+    tenant_identifier: str,
+    finding_id: str,
+    prompt_version: str,
+    model: str | None,
+) -> None:
+    from cstack_audit_core import latest_findings
+
+    from cstack_cli.narrative_runner import regenerate_for_finding
+
+    settings = _settings(ctx)
+    target = _resolve_tenant(ctx, tenant_identifier)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        rows = latest_findings(conn, tenant_id=target.tenant_id)
+        match = next((f for f in rows if f.id == finding_id), None)
+        if match is None:
+            raise click.ClickException(
+                f"finding '{finding_id}' not found for tenant '{target.display_name}'"
+            )
+        narrative_obj = regenerate_for_finding(
+            conn, match, prompt_version=prompt_version, model=model
+        )
+    click.echo(
+        f"regenerated: {narrative_obj.cache_key} via {narrative_obj.provider}/"
+        f"{narrative_obj.model} ({narrative_obj.input_tokens} in / "
+        f"{narrative_obj.output_tokens} out)"
+    )
+
+
+@narrative.command("list-providers")
+def narrative_list_providers_cmd() -> None:
+    """Probe each provider for reachability and supported models."""
+    import asyncio as _asyncio
+
+    from cstack_cli.narrative_runner import probe_providers
+
+    rows = _asyncio.run(probe_providers())
+    name_w = max(8, *(len(r.name) for r in rows))
+    click.echo(f"{'provider'.ljust(name_w)}  status  detail")
+    click.echo("-" * 60)
+    for row in rows:
+        status_icon = "ok" if row.reachable else "down"
+        click.echo(f"{row.name.ljust(name_w)}  {status_icon:<6}  {row.detail}")
+
+
+@narrative.command("cache-stats")
+@click.pass_context
+def narrative_cache_stats_cmd(ctx: click.Context) -> None:
+    from cstack_storage import cache_stats
+
+    settings = _settings(ctx)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        stats = cache_stats(conn)
+    click.echo(f"entries:           {stats.total_entries}")
+    click.echo(f"distinct rules:    {stats.distinct_rules}")
+    click.echo(f"total uses:        {stats.total_use_count}")
+    click.echo(f"output tokens:     {stats.total_cached_output_tokens}")
+    click.echo(f"oldest:            {stats.oldest_entry}")
+    click.echo(f"newest:            {stats.newest_entry}")
+
+
+@narrative.command("cache-evict")
+@click.option("--days", type=int, default=90, show_default=True)
+@click.pass_context
+def narrative_cache_evict_cmd(ctx: click.Context, days: int) -> None:
+    from cstack_storage import evict_old
+
+    settings = _settings(ctx)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        deleted = evict_old(conn, days=days)
+    click.echo(f"evicted {deleted} cache entries older than {days} days")
 
 
 if __name__ == "__main__":

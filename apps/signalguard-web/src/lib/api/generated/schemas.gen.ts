@@ -327,6 +327,24 @@ export const AuditRunRequestSchema = {
       title: 'Categories',
       type: 'array',
     },
+    generate_narratives: {
+      default: true,
+      description: 'When true, run the LLM narrator over written findings.',
+      title: 'Generate Narratives',
+      type: 'boolean',
+    },
+    narrative_budget_usd: {
+      anyOf: [
+        {
+          type: 'number',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      description: 'Optional per-run budget cap; falls back to env CSTACK_LLM_BUDGET_USD.',
+      title: 'Narrative Budget Usd',
+    },
   },
   title: 'AuditRunRequest',
   type: 'object',
@@ -348,6 +366,16 @@ export const AuditRunResponseSchema = {
     findings_written: {
       title: 'Findings Written',
       type: 'integer',
+    },
+    narrative_summary: {
+      anyOf: [
+        {
+          $ref: '#/components/schemas/NarrativeBatchSummary',
+        },
+        {
+          type: 'null',
+        },
+      ],
     },
     run_id: {
       title: 'Run Id',
@@ -806,6 +834,79 @@ export const ModelVersionEntrySchema = {
   type: 'object',
 } as const;
 
+export const NarrativeBatchSummarySchema = {
+  properties: {
+    cache_hits: {
+      title: 'Cache Hits',
+      type: 'integer',
+    },
+    dollars_spent: {
+      title: 'Dollars Spent',
+      type: 'number',
+    },
+    errored: {
+      title: 'Errored',
+      type: 'integer',
+    },
+    generated: {
+      title: 'Generated',
+      type: 'integer',
+    },
+    skipped_budget: {
+      title: 'Skipped Budget',
+      type: 'integer',
+    },
+  },
+  required: ['cache_hits', 'generated', 'skipped_budget', 'errored', 'dollars_spent'],
+  title: 'NarrativeBatchSummary',
+  type: 'object',
+} as const;
+
+export const NarrativeResponseSchema = {
+  properties: {
+    cached: {
+      title: 'Cached',
+      type: 'boolean',
+    },
+    generated_at: {
+      format: 'date-time',
+      title: 'Generated At',
+      type: 'string',
+    },
+    input_tokens: {
+      title: 'Input Tokens',
+      type: 'integer',
+    },
+    markdown: {
+      title: 'Markdown',
+      type: 'string',
+    },
+    model: {
+      title: 'Model',
+      type: 'string',
+    },
+    output_tokens: {
+      title: 'Output Tokens',
+      type: 'integer',
+    },
+    provider: {
+      title: 'Provider',
+      type: 'string',
+    },
+  },
+  required: [
+    'markdown',
+    'model',
+    'provider',
+    'generated_at',
+    'cached',
+    'input_tokens',
+    'output_tokens',
+  ],
+  title: 'NarrativeResponse',
+  type: 'object',
+} as const;
+
 export const Paginated_AnomalyScore_Schema = {
   properties: {
     has_more: {
@@ -907,6 +1008,29 @@ export const ProtectionLevelSchema = {
   enum: [0, 1, 2, 3, 4],
   title: 'ProtectionLevel',
   type: 'integer',
+} as const;
+
+export const RegenerateRequestSchema = {
+  properties: {
+    model: {
+      anyOf: [
+        {
+          type: 'string',
+        },
+        {
+          type: 'null',
+        },
+      ],
+      title: 'Model',
+    },
+    prompt_version: {
+      default: 'v1',
+      title: 'Prompt Version',
+      type: 'string',
+    },
+  },
+  title: 'RegenerateRequest',
+  type: 'object',
 } as const;
 
 export const SeveritySchema = {

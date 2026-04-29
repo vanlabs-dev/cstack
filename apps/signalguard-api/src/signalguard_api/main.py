@@ -33,6 +33,7 @@ from signalguard_api.routers import (
     findings,
     health,
     models,
+    narratives,
     signins,
     tenants,
     whoami,
@@ -47,6 +48,7 @@ OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "signins", "description": "Sign-in stats and per-user history."},
     {"name": "audit", "description": "Trigger audit runs and dry runs."},
     {"name": "models", "description": "MLflow model registry view."},
+    {"name": "narratives", "description": "LLM-generated finding narratives."},
 ]
 
 
@@ -96,4 +98,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(audit.router)
     app.include_router(anomaly_actions.router)
     app.include_router(models.router)
+    app.include_router(narratives.router)
     return app

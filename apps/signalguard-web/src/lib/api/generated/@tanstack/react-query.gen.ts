@@ -18,6 +18,8 @@ import {
   listFindingsTenantsTenantIdFindingsGet,
   findingsSummaryTenantsTenantIdFindingsSummaryGet,
   getFindingTenantsTenantIdFindingsFindingIdGet,
+  getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet,
+  regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost,
   listModelsTenantsTenantIdModelsGet,
   listVersionsTenantsTenantIdModelsModelNameVersionsGet,
   getStatsTenantsTenantIdSigninsStatsGet,
@@ -42,6 +44,8 @@ import type {
   ListFindingsTenantsTenantIdFindingsGetData,
   FindingsSummaryTenantsTenantIdFindingsSummaryGetData,
   GetFindingTenantsTenantIdFindingsFindingIdGetData,
+  GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData,
+  RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData,
   ListModelsTenantsTenantIdModelsGetData,
   ListVersionsTenantsTenantIdModelsModelNameVersionsGetData,
   GetStatsTenantsTenantIdSigninsStatsGetData,
@@ -408,6 +412,54 @@ export const getFindingTenantsTenantIdFindingsFindingIdGetOptions = (
       return data;
     },
     queryKey: getFindingTenantsTenantIdFindingsFindingIdGetQueryKey(options),
+  });
+};
+
+export const getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetQueryKey = (
+  options: Options<GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData>,
+) => createQueryKey('getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet', options);
+
+export const getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetOptions = (
+  options: Options<GetNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getNarrativeTenantsTenantIdFindingsFindingIdNarrativeGetQueryKey(options),
+  });
+};
+
+export const regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostQueryKey = (
+  options: Options<RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData>,
+) =>
+  createQueryKey(
+    'regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost',
+    options,
+  );
+
+export const regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostOptions = (
+  options: Options<RegenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostData>,
+) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } =
+        await regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePost({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        });
+      return data;
+    },
+    queryKey:
+      regenerateNarrativeTenantsTenantIdFindingsFindingIdNarrativeRegeneratePostQueryKey(options),
   });
 };
 
