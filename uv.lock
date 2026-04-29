@@ -26,6 +26,7 @@ members = [
     "cstack-cli",
     "cstack-fixtures",
     "cstack-graph-client",
+    "cstack-llm-eval",
     "cstack-llm-narrative",
     "cstack-llm-provider",
     "cstack-ml-anomaly",
@@ -760,6 +761,7 @@ dependencies = [
     { name = "cstack-audit-rules" },
     { name = "cstack-fixtures" },
     { name = "cstack-graph-client" },
+    { name = "cstack-llm-eval" },
     { name = "cstack-llm-narrative" },
     { name = "cstack-llm-provider" },
     { name = "cstack-ml-anomaly" },
@@ -780,6 +782,7 @@ requires-dist = [
     { name = "cstack-audit-rules", editable = "packages/audit-rules" },
     { name = "cstack-fixtures", editable = "packages/fixtures" },
     { name = "cstack-graph-client", editable = "packages/graph-client" },
+    { name = "cstack-llm-eval", editable = "packages/llm-eval" },
     { name = "cstack-llm-narrative", editable = "packages/llm-narrative" },
     { name = "cstack-llm-provider", editable = "packages/llm-provider" },
     { name = "cstack-ml-anomaly", editable = "packages/ml-anomaly" },
@@ -823,6 +826,29 @@ requires-dist = [
     { name = "cryptography", specifier = ">=43" },
     { name = "cstack-schemas", editable = "packages/schemas" },
     { name = "msgraph-sdk", specifier = ">=1.10" },
+]
+
+[[package]]
+name = "cstack-llm-eval"
+version = "0.0.1"
+source = { editable = "packages/llm-eval" }
+dependencies = [
+    { name = "cstack-audit-core" },
+    { name = "cstack-llm-narrative" },
+    { name = "cstack-llm-provider" },
+    { name = "cstack-storage" },
+    { name = "duckdb" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cstack-audit-core", editable = "packages/audit-core" },
+    { name = "cstack-llm-narrative", editable = "packages/llm-narrative" },
+    { name = "cstack-llm-provider", editable = "packages/llm-provider" },
+    { name = "cstack-storage", editable = "packages/storage" },
+    { name = "duckdb", specifier = ">=1.1" },
+    { name = "pydantic", specifier = ">=2.9" },
 ]
 
 [[package]]

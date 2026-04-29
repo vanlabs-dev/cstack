@@ -25,6 +25,7 @@ cstack-ml-mlops = { workspace = true }
 cstack-ml-anomaly = { workspace = true }
 cstack-llm-provider = { workspace = true }
 cstack-llm-narrative = { workspace = true }
+cstack-llm-eval = { workspace = true }
 signalguard-api = { workspace = true }
 
 [dependency-groups]
@@ -88,6 +89,7 @@ mypy_path = [
     "packages/ml-anomaly/src",
     "packages/llm-provider/src",
     "packages/llm-narrative/src",
+    "packages/llm-eval/src",
     "apps/cstack-cli/src",
     "apps/signalguard-api/src",
 ]

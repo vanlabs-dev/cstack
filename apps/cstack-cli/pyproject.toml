@@ -20,6 +20,7 @@ dependencies = [
     "cstack-ml-anomaly",
     "cstack-llm-provider",
     "cstack-llm-narrative",
+    "cstack-llm-eval",
 ]
 
 [project.scripts]

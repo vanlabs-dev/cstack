@@ -987,5 +987,151 @@ def narrative_cache_evict_cmd(ctx: click.Context, days: int) -> None:
     click.echo(f"evicted {deleted} cache entries older than {days} days")
 
 
+@narrative.command("eval")
+@click.option("--prompt-version", default="v1", show_default=True)
+@click.option("--model", default=None, help="Override the default model.")
+@click.option("--judge-model", default="claude-sonnet-4-6", show_default=True)
+@click.option("--budget", type=float, default=10.0, show_default=True)
+@click.pass_context
+def narrative_eval_cmd(
+    ctx: click.Context,
+    prompt_version: str,
+    model: str | None,
+    judge_model: str,
+    budget: float,
+) -> None:
+    """Run pointwise eval against the golden set and print the score table."""
+    import asyncio as _asyncio
+
+    from cstack_llm_eval import (
+        NARRATIVE_QUALITY_RUBRIC,
+        LlmJudge,
+        load_golden_set,
+        make_default_generator,
+        run_pointwise_eval,
+    )
+    from cstack_llm_provider import get_provider
+    from cstack_llm_provider import get_settings as get_llm_settings
+
+    settings = _settings(ctx)
+    llm_settings = get_llm_settings()
+    chosen_model = model or llm_settings.cstack_llm_default_model
+    examples = load_golden_set()
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        generator = make_default_generator(
+            provider=get_provider(llm_settings.cstack_llm_provider),
+            conn=conn,
+            budget_dollars=budget,
+            default_model=chosen_model,
+        )
+        judge = LlmJudge(
+            provider=get_provider(llm_settings.cstack_llm_provider),
+            model=judge_model,
+        )
+        result = _asyncio.run(
+            run_pointwise_eval(
+                prompt_version=prompt_version,
+                model=chosen_model,
+                golden_set=examples,
+                generator=generator,
+                judge=judge,
+                conn=conn,
+                rubric=NARRATIVE_QUALITY_RUBRIC,
+            )
+        )
+    click.echo(
+        f"eval {result.eval_id[:8]}: prompt={result.prompt_version} model={result.model} "
+        f"n={result.examples_evaluated} mean={result.mean_score:.2f}"
+    )
+    name_w = max(len("criterion"), *(len(k) for k in result.per_criterion_means))
+    click.echo(f"{'criterion'.ljust(name_w)}  mean")
+    click.echo("-" * 40)
+    for name, score in sorted(result.per_criterion_means.items()):
+        click.echo(f"{name.ljust(name_w)}  {score:.3f}")
+
+
+@narrative.command("eval-compare")
+@click.option("--version-a", required=True)
+@click.option("--version-b", required=True)
+@click.option("--model", default=None)
+@click.option("--judge-model", default="claude-sonnet-4-6", show_default=True)
+@click.option("--budget", type=float, default=10.0, show_default=True)
+@click.pass_context
+def narrative_eval_compare_cmd(
+    ctx: click.Context,
+    version_a: str,
+    version_b: str,
+    model: str | None,
+    judge_model: str,
+    budget: float,
+) -> None:
+    """Pairwise compare two prompt versions across the golden set."""
+    import asyncio as _asyncio
+
+    from cstack_llm_eval import (
+        LlmJudge,
+        compare_prompts,
+        load_golden_set,
+        make_default_generator,
+    )
+    from cstack_llm_provider import get_provider
+    from cstack_llm_provider import get_settings as get_llm_settings
+
+    settings = _settings(ctx)
+    llm_settings = get_llm_settings()
+    chosen_model = model or llm_settings.cstack_llm_default_model
+    examples = load_golden_set()
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        generator = make_default_generator(
+            provider=get_provider(llm_settings.cstack_llm_provider),
+            conn=conn,
+            budget_dollars=budget,
+            default_model=chosen_model,
+        )
+        judge = LlmJudge(
+            provider=get_provider(llm_settings.cstack_llm_provider),
+            model=judge_model,
+        )
+        result = _asyncio.run(
+            compare_prompts(
+                version_a=version_a,
+                version_b=version_b,
+                model=chosen_model,
+                golden_set=examples,
+                generator=generator,
+                judge=judge,
+            )
+        )
+    click.echo(
+        f"compare {version_a} vs {version_b}: a_wins={result.a_wins} "
+        f"b_wins={result.b_wins} ties={result.ties} winrate_b={result.winrate_b:.3f} "
+        f"inconsistent={result.inconsistent_swaps}"
+    )
+
+
+@narrative.command("eval-history")
+@click.pass_context
+def narrative_eval_history_cmd(ctx: click.Context) -> None:
+    """Show the most recent eval per prompt version."""
+    from cstack_llm_eval import latest_runs_per_prompt_version
+
+    settings = _settings(ctx)
+    with connection_scope(settings.db_path) as conn:
+        run_migrations(conn)
+        rows = latest_runs_per_prompt_version(conn)
+    if not rows:
+        click.echo("(no eval runs recorded)")
+        return
+    click.echo(f"{'prompt'.ljust(15)}  {'mean'.ljust(7)}  model               completed_at")
+    click.echo("-" * 80)
+    for row in rows:
+        click.echo(
+            f"{row['prompt_version'].ljust(15)}  {row['mean_score']:>7.2f}  "
+            f"{row['model'].ljust(20)} {row['completed_at']}"
+        )
+
+
 if __name__ == "__main__":
     cli()

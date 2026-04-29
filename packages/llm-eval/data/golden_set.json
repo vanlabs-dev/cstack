@@ -1,0 +1,677 @@
+[
+  {
+    "finding": {
+      "id": "6e8114a8dc2dd38497778ab7513bb250",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "rule.workload-identity-policies",
+      "category": "rule",
+      "severity": "MEDIUM",
+      "title": "Workload identity CA policies missing",
+      "summary": "No enabled CA policy targets workload identities.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-aaaa-1111-1111-111111111111",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with conditions.clientApplications listing the service principals that should be scoped, and a locations condition pinning egress IPs.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/workload-identity"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nThe audit looked for at least one enabled conditional access policy targeting workload identities (service principals and managed identities) and found zero. Workload identities can authenticate independently of human users and need their own policy surface.\n\n## What it means\nService principal abuse is a common post-compromise persistence path. Without a workload identity policy you cannot block risky tokens, require approved IPs, or freeze a compromised principal at the CA layer.\n\n## Remediation\n1. Open the Entra portal and create a CA policy with `users.includeUsers = [\"WorkloadIdentities\"]`.\n2. Set conditions to require named locations, or enforce sign-in risk via Identity Protection.\n3. Set grant controls to block when conditions are not met.\n4. Soak the policy in report-only for 7 days before enabling.\n\n## Caveats\nTenants without Workload Identities Premium licensing cannot use sign-in risk on service principals; in that case fall back to named-location restrictions.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "cf10e656a3e52228f4598bca40a691f8",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "rule.persistent-browser-unmanaged",
+      "category": "rule",
+      "severity": "LOW",
+      "title": "Persistent browser session control not configured",
+      "summary": "No enabled CA policy configures persistentBrowser session control.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-aaaa-1111-1111-111111111111",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Set sessionControls.persistentBrowser.mode to never on a CA policy targeting browser clients for BYOD or guest segments.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-conditional-access-session-lifetime#persistent-browser-session"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nNo enabled CA policy configures `persistentBrowser` session control. The default Entra behaviour is to allow persistent browser sessions on unmanaged devices, which extends token lifetime beyond what most threat models tolerate.\n\n## What it means\nPersistent sessions on unmanaged devices mean that a stolen browser cookie remains usable across reboots. Combined with no device compliance, this is a quiet credential persistence vector.\n\n## Remediation\n1. Open the Entra portal, create a CA policy targeting all users on all cloud apps.\n2. Add a device-state filter excluding compliant or hybrid-joined devices.\n3. Under session controls, set `persistentBrowser = never` and a sign-in frequency of 8 hours.\n4. Roll out report-only first, then enable after a one-week pilot.\n\n## Caveats\nFrontline workers on shared kiosks may need a different policy with longer sign-in frequency; scope this control to information workers first.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "fb950eb33370462c862e0049548b1976",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "exclusion.undocumented",
+      "category": "exclusion",
+      "severity": "LOW",
+      "title": "Undocumented exclusion",
+      "summary": "Policy 'Block legacy authentication' has exclusions but no keyword in displayName signalling intent.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-a-block-legacy-auth",
+          "display_name": "Block legacy authentication"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-a-block-legacy-auth",
+        "display_name": "Block legacy authentication",
+        "expected_keywords": [
+          "exclude",
+          "exception",
+          "break-glass",
+          "breakglass",
+          "service account",
+          "svc",
+          "bypass"
+        ]
+      },
+      "remediation_hint": "Rename the policy or add a description that includes one of 'exclude', 'exception', 'break-glass', 'service account', or 'bypass' so reviewers can grasp intent at a glance.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Block legacy authentication` carries one or more exclusions, but the policy display name has no keyword (exclude, exception, break-glass, service account) signalling that the exclusions are intentional. The audit treats undocumented exclusions as a configuration smell.\n\n## What it means\nUndocumented exclusions accumulate over time as one-off troubleshooting workarounds. Without a naming convention, no operator can tell which exclusions are deliberate versus forgotten.\n\n## Remediation\n1. Review the excluded users and groups for this policy in the Entra portal.\n2. Decide which exclusions are still required (break-glass, vendor service accounts).\n3. Rename the policy to embed intent, for example `Block legacy auth (excludes break-glass)`.\n4. Remove any exclusion that no longer has a documented owner.\n\n## Caveats\nRenaming a CA policy does not affect runtime behaviour; the change is purely documentary, but downstream alerting that filters by policy name needs an update.\n",
+    "scenario_notes": "tenant-a undocumented exclusion"
+  },
+  {
+    "finding": {
+      "id": "d85fe14ec433ef692e56fb091c0c8d1e",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "exclusion.undocumented",
+      "category": "exclusion",
+      "severity": "LOW",
+      "title": "Undocumented exclusion",
+      "summary": "Policy 'Require MFA for all users' has exclusions but no keyword in displayName signalling intent.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-a-mfa-all-users",
+          "display_name": "Require MFA for all users"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-a-mfa-all-users",
+        "display_name": "Require MFA for all users",
+        "expected_keywords": [
+          "exclude",
+          "exception",
+          "break-glass",
+          "breakglass",
+          "service account",
+          "svc",
+          "bypass"
+        ]
+      },
+      "remediation_hint": "Rename the policy or add a description that includes one of 'exclude', 'exception', 'break-glass', 'service account', or 'bypass' so reviewers can grasp intent at a glance.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Require MFA for all users` has exclusions configured but the display name does not signal intent. The audit expects names like `Require MFA (excludes break-glass)` so an operator can read intent without opening the policy.\n\n## What it means\nOn a high-blast-radius policy like all-users MFA, an undocumented exclusion is a privilege-escalation risk: anyone in the excluded group bypasses MFA tenant-wide.\n\n## Remediation\n1. List the excluded principals via `Get-MgIdentityConditionalAccessPolicy -ConditionalAccessPolicyId <id>`.\n2. Reconcile each exclusion against the break-glass and service-account inventory.\n3. Remove or move out-of-scope exclusions to a dedicated documented policy.\n4. Rename the policy to embed the intent of the remaining exclusions.\n\n## Caveats\nSome MDM enrollment flows require a temporary MFA exception; if that is the case, document the exclusion in the change log alongside the policy rename.\n",
+    "scenario_notes": "tenant-a undocumented exclusion"
+  },
+  {
+    "finding": {
+      "id": "b1b6922656c284538e66f8508895cbf6",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "exclusion.undocumented",
+      "category": "exclusion",
+      "severity": "LOW",
+      "title": "Undocumented exclusion",
+      "summary": "Policy 'Require MFA for privileged admins' has exclusions but no keyword in displayName signalling intent.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-a-admin-mfa",
+          "display_name": "Require MFA for privileged admins"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-a-admin-mfa",
+        "display_name": "Require MFA for privileged admins",
+        "expected_keywords": [
+          "exclude",
+          "exception",
+          "break-glass",
+          "breakglass",
+          "service account",
+          "svc",
+          "bypass"
+        ]
+      },
+      "remediation_hint": "Rename the policy or add a description that includes one of 'exclude', 'exception', 'break-glass', 'service account', or 'bypass' so reviewers can grasp intent at a glance.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Require MFA for privileged admins` has exclusions but no keyword in the display name marking them as intentional. Privileged-role policies attract scrutiny because excluding any admin defeats the policy's purpose.\n\n## What it means\nA silent exclusion on the admin MFA policy is the most common path attackers take after compromising a global administrator: add yourself to the exclusion group and the policy stops applying.\n\n## Remediation\n1. Audit the excluded users via `Get-MgIdentityConditionalAccessPolicy`.\n2. Confirm each exclusion maps to a designated break-glass account.\n3. Convert ad-hoc user-level exclusions into a single named break-glass group.\n4. Rename the policy `Require MFA for admins (excludes break-glass)` to make intent visible.\n\n## Caveats\nTwo break-glass accounts is the Microsoft-recommended minimum; if no break-glass group exists, fix that first before tightening this exclusion.\n",
+    "scenario_notes": "tenant-a undocumented exclusion"
+  },
+  {
+    "finding": {
+      "id": "153145404824aa2b6c38491b916dd00e",
+      "tenant_id": "00000000-aaaa-1111-1111-111111111111",
+      "rule_id": "exclusion.undocumented",
+      "category": "exclusion",
+      "severity": "LOW",
+      "title": "Undocumented exclusion",
+      "summary": "Policy 'Sensitive apps require compliant device' has exclusions but no keyword in displayName signalling intent.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-a-sensitive-app-compliant-device",
+          "display_name": "Sensitive apps require compliant device"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-a-sensitive-app-compliant-device",
+        "display_name": "Sensitive apps require compliant device",
+        "expected_keywords": [
+          "exclude",
+          "exception",
+          "break-glass",
+          "breakglass",
+          "service account",
+          "svc",
+          "bypass"
+        ]
+      },
+      "remediation_hint": "Rename the policy or add a description that includes one of 'exclude', 'exception', 'break-glass', 'service account', or 'bypass' so reviewers can grasp intent at a glance.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:56.370378",
+      "first_seen_at": "2026-04-29T13:51:56.370378"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Sensitive apps require compliant device` has exclusions and a display name that does not flag intent. Compliant-device policies often gain exclusions for unmanaged service accounts or contractor laptops, but those exclusions need to be visible.\n\n## What it means\nCompliant-device controls are the strongest defence against token theft on sensitive apps. An undocumented exclusion silently widens the attack surface for those exact apps.\n\n## Remediation\n1. Enumerate excluded users and groups for this policy.\n2. Cross-reference each exclusion with the device inventory: are these accounts genuinely incapable of being compliant?\n3. Where compliance is impossible, switch to a hybrid-join requirement instead of a blanket exclusion.\n4. Rename the policy `Sensitive apps compliant device (excludes <reason>)`.\n\n## Caveats\nA subset of macOS or BYOD scenarios genuinely cannot enrol in Intune; document those cases inline in the policy description rather than removing them.\n",
+    "scenario_notes": "tenant-a undocumented exclusion"
+  },
+  {
+    "finding": {
+      "id": "faf0ef636661c19fd4c9ff982c2afc99",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "rule.mfa-admins",
+      "category": "rule",
+      "severity": "CRITICAL",
+      "title": "Require MFA for privileged admin roles",
+      "summary": "No enabled CA policy targets privileged role members with MFA.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-bbbb-2222-2222-222222222222",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy that includes the privileged role template ids and requires MFA (preferably AND compliantDevice).",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-conditional-access-policy-admin-mfa",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nThe audit searched for an enabled CA policy whose `users.includeRoles` covers privileged directory roles (Global Administrator, Privileged Role Administrator, Security Administrator, others) and required MFA. Zero qualifying policies exist on this tenant.\n\n## What it means\nAdmin accounts without MFA are the highest-priority gap in any tenant. A successful credential phish against any global admin grants tenant-wide control with no second factor in the way.\n\n## Remediation\n1. Create a CA policy targeting the directory-role list under `users.includeRoles`.\n2. Set conditions to apply to all cloud apps and all client-app types.\n3. Set grant controls to require MFA via `mfa` or `authenticationStrengths`.\n4. Exclude exactly two break-glass accounts and document them in the policy display name.\n5. Enable the policy after a 24-hour report-only soak.\n\n## Caveats\nIf the tenant has not established break-glass accounts, set those up first; enabling admin MFA without break-glass accounts can lock out the tenant during MFA outages.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "5686cee0c82db79750a8ecba6ce8ac31",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "rule.block-legacy-auth",
+      "category": "rule",
+      "severity": "HIGH",
+      "title": "Block legacy authentication",
+      "summary": "No enabled CA policy blocks legacy authentication.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-bbbb-2222-2222-222222222222",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "policies_targeting_legacy_auth": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with clientAppTypes [other, exchangeActiveSync] and grantControls.builtInControls = [block].",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-conditional-access-policy-block-legacy",
+        "https://www.cisa.gov/scuba",
+        "https://www.cisecurity.org/benchmark/microsoft_365"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nThe audit looked for at least one enabled CA policy whose `clientAppTypes` includes legacy buckets (other, exchangeActiveSync) with grant control set to block. Zero policies match.\n\n## What it means\nLegacy authentication endpoints (POP, IMAP, SMTP basic auth, EWS) bypass MFA entirely. Password spray and credential stuffing against legacy auth is the single most common entry vector observed in compromised tenants.\n\n## Remediation\n1. Open the Entra portal, create a CA policy targeting all users.\n2. Set `clientAppTypes` to `[\"other\", \"exchangeActiveSync\"]`.\n3. Set grant controls to block.\n4. Run the policy in report-only for 48 hours to identify any remaining legacy auth callers.\n5. Enable the policy and alert on the report-only audit logs for residual usage.\n\n## Caveats\nA handful of older line-of-business applications may still rely on legacy auth; migrate or carve out a narrowly-scoped exclusion before enabling.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "9f8658cda1230a9cb32d03df1b4bc772",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "rule.risk-based-user",
+      "category": "rule",
+      "severity": "HIGH",
+      "title": "User risk policy missing",
+      "summary": "No enabled CA policy uses userRiskLevels.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-bbbb-2222-2222-222222222222",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with userRiskLevels including high and grantControls.builtInControls including passwordChange.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/howto-identity-protection-configure-risk-policies"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nNo enabled CA policy uses `userRiskLevels` as a condition. User-risk policies are the Identity Protection signal for accounts that have been seen in known leaks or anomalous sign-in patterns over the medium term.\n\n## What it means\nWithout a user-risk policy, a user with a confirmed leaked credential continues to authenticate normally until an admin notices in the Identity Protection dashboard. The window between compromise detection and forced action is hours to days instead of seconds.\n\n## Remediation\n1. Create a CA policy targeting all users on all cloud apps.\n2. Set conditions: `userRiskLevels = [\"high\"]`.\n3. Grant controls: require password change + MFA.\n4. Enable the policy after a one-week report-only soak.\n5. Repeat for medium risk with a softer control like require MFA only.\n\n## Caveats\nIdentity Protection requires Entra ID P2 licensing; tenants on P1 cannot use this rule and should plan a license upgrade or substitute with sign-in risk and named-location controls.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "db2b1c4cc26133c93894449999c3e3d9",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "rule.breakglass-configured",
+      "category": "rule",
+      "severity": "HIGH",
+      "title": "Break-glass account exclusions not configured",
+      "summary": "No CA policy excludes a recognisable break-glass group.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-bbbb-2222-2222-222222222222",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "breakglass_groups_found": 0
+      },
+      "remediation_hint": "Create a break-glass group containing two emergency accounts and exclude it from any CA policy that could otherwise lock you out.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/roles/security-emergency-access"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nThe audit walks every CA policy looking for an exclusion group whose display name contains a break-glass marker (break-glass, breakglass, emergency, glass-break). Zero such groups are excluded from any policy in this tenant.\n\n## What it means\nBreak-glass accounts are the documented escape hatch for MFA outages and admin lockouts. Without them, a Microsoft Authenticator outage or a misconfigured CA policy can leave the tenant with no path back in.\n\n## Remediation\n1. Create two cloud-only Global Administrator accounts with long random passwords, kept in a vault.\n2. Create a security group named `Break-Glass Admins` and add both accounts.\n3. Add this group to the `users.excludeGroups` array on every privileged CA policy.\n4. Configure alerting on any sign-in by these accounts.\n\n## Caveats\nBreak-glass accounts must be cloud-only (not federated, not synced from on-prem); otherwise the Active Directory dependency reintroduces the very lockout you are guarding against.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "ef76344ce95d30e662da822c4b2436e1",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "coverage.all_users-on-legacy_auth",
+      "category": "coverage",
+      "severity": "HIGH",
+      "title": "all_users unprotected on legacy_auth",
+      "summary": "No enabled CA policy enforces a grant control for all_users accessing legacy_auth.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-bbbb-2222-2222-222222222222",
+          "display_name": "00000000-bbbb-2222-2222-222222222222"
+        }
+      ],
+      "evidence": {
+        "user_segment": "all_users",
+        "app_segment": "legacy_auth",
+        "protection_level": "NONE",
+        "applicable_policy_ids": [],
+        "segment_member_count": 80
+      },
+      "remediation_hint": "Add an enabled CA policy that blocks clientAppTypes 'other' and 'exchangeActiveSync' for the affected user segment.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-policy-common",
+        "https://www.cisa.gov/scuba",
+        "https://www.cisecurity.org/benchmark/microsoft_365"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nThe coverage matrix evaluates every (user-segment, app-segment) cell. The cell `all_users x legacy_auth` shows zero applicable policies and zero grant control. All 80 users in this tenant are reachable through legacy authentication.\n\n## What it means\nThis is the operational counterpart of the `block-legacy-auth` rule: the rule says no policy exists; the matrix confirms that the absence affects every single user. There is no segmentation softening the exposure.\n\n## Remediation\n1. Stand up the block-legacy-auth policy described in finding rule.block-legacy-auth.\n2. Audit Exchange mailboxes for clients still using basic auth via the message trace report.\n3. Disable legacy auth at the mailbox level using `Set-CASMailbox -ImapEnabled $false -PopEnabled $false`.\n4. Re-run the audit and confirm the coverage cell flips to `BLOCKED`.\n\n## Caveats\nLegacy SMTP relays and printer mailboxes occasionally need IMAP or POP; identify these via Exchange log analysis before flipping the policy or risk a sudden mail backlog.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "29e4c765863d52a38afa2c7b979e471e",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "exclusion.orphan-user",
+      "category": "exclusion",
+      "severity": "HIGH",
+      "title": "Orphan exclusion: account disabled",
+      "summary": "Disabled user 'Cameron King' is still excluded from policy ca-b-mfa-mostly.",
+      "affected_objects": [
+        {
+          "type": "user",
+          "id": "user-tenant-b-0043",
+          "display_name": "Cameron King"
+        },
+        {
+          "type": "policy",
+          "id": "ca-b-mfa-mostly",
+          "display_name": "ca-b-mfa-mostly"
+        }
+      ],
+      "evidence": {
+        "user_id": "user-tenant-b-0043",
+        "policy_id": "ca-b-mfa-mostly",
+        "excluded_via": "direct",
+        "account_enabled": false
+      },
+      "remediation_hint": "Remove the disabled user from the policy's exclusion list.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nUser `Cameron King` is excluded from policy `ca-b-mfa-mostly` but the user's `accountEnabled` flag is false. The exclusion is preserved in the policy even though the account is disabled.\n\n## What it means\nOrphan exclusions are a hardening risk: if the disabled account is later re-enabled (deliberately or via an automation bug), the exclusion silently restores the bypass without any review step.\n\n## Remediation\n1. Confirm the disabled state via `Get-MgUser -UserId user-tenant-b-0043`.\n2. Remove the exclusion from policy `ca-b-mfa-mostly` using `Update-MgIdentityConditionalAccessPolicy`.\n3. If the account will be deleted, schedule the deletion under standard joiner-mover-leaver process.\n4. Audit other CA policies for the same user and clean up any matching exclusions.\n\n## Caveats\nSome tenants intentionally keep disabled accounts as licensed shells for shared mailboxes; in that case, replace the user-level exclusion with a group exclusion driven by mailbox type.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "fa21de403a71afbe5211711c13124db2",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "exclusion.stale-user",
+      "category": "exclusion",
+      "severity": "MEDIUM",
+      "title": "Stale user exclusion",
+      "summary": "User 'Riley Clark' is excluded from policy ca-b-mfa-mostly but has not signed in for 90+ days.",
+      "affected_objects": [
+        {
+          "type": "user",
+          "id": "user-tenant-b-0002",
+          "display_name": "Riley Clark"
+        },
+        {
+          "type": "policy",
+          "id": "ca-b-mfa-mostly",
+          "display_name": "ca-b-mfa-mostly"
+        }
+      ],
+      "evidence": {
+        "user_id": "user-tenant-b-0002",
+        "policy_id": "ca-b-mfa-mostly",
+        "excluded_via": "direct",
+        "via_object_id": null,
+        "last_sign_in": "2025-12-02T00:00:00+00:00",
+        "days_since_sign_in": 148,
+        "stale_days_threshold": 90
+      },
+      "remediation_hint": "If the user is no longer required, remove them from the exclusion list and disable the account. Otherwise document the exception in the policy description.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nUser `Riley Clark` is excluded from policy `ca-b-mfa-mostly` but has not signed in for 148 days, well past the 90-day threshold. Stale exclusions usually indicate either an inactive account or a forgotten one-off.\n\n## What it means\nA stale excluded account is a latent risk: any future credential reset, automation re-enable, or password leak from the user's other services can revive the account into the excluded state. The longer the silence, the higher the chance the exclusion is no longer relevant.\n\n## Remediation\n1. Confirm last sign-in via `Get-MgUser -UserId user-tenant-b-0002 -Property signInActivity`.\n2. If the user has left, follow the offboarding playbook to disable and remove from groups.\n3. If the user is on extended leave, leave the account intact but remove the CA exclusion.\n4. Re-run `cstack audit exclusions` to verify the finding clears.\n\n## Caveats\nSales-rep accounts that go dormant during long deals can trip this rule; check with the team owner before treating the exclusion as forgotten.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "0de357314a851238adfcb42292bfb008",
+      "tenant_id": "00000000-bbbb-2222-2222-222222222222",
+      "rule_id": "rule.disabled-policies-old",
+      "category": "rule",
+      "severity": "INFO",
+      "title": "Disabled policy aging in tenant",
+      "summary": "Disabled policy 'Disabled: legacy mobile pilot 2024' has been dormant for 180+ days.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-b-disabled-legacy-2024",
+          "display_name": "Disabled: legacy mobile pilot 2024"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-b-disabled-legacy-2024",
+        "modified_date_time": "2024-12-16T05:00:00",
+        "stale_days_threshold": 180
+      },
+      "remediation_hint": "Delete disabled policies you no longer plan to enable, or document why they are kept dormant in the policy description.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/policy-management"
+      ],
+      "detected_at": "2026-04-29T13:51:59.763473",
+      "first_seen_at": "2026-04-29T13:51:59.763473"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Disabled: legacy mobile pilot 2024` has been in disabled state since December 2024. The 180-day threshold is the audit's signal that disabled policies should either be re-enabled or removed.\n\n## What it means\nLong-disabled policies are clutter, not a security issue, but they degrade the signal-to-noise ratio of the policy set. Operators reviewing CA policies during incidents waste time parsing dead configuration.\n\n## Remediation\n1. Open the Entra portal and review the policy contents.\n2. If the pilot is permanently abandoned, delete the policy.\n3. If the pilot will resume, document the resume date in the description and add a calendar reminder.\n4. Consider exporting the policy JSON before deletion in case the configuration is useful later.\n\n## Caveats\nSome tenants keep disabled policies as documented templates for recurring projects; in that case, rename to `Template: ...` so the audit recognises the intent.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "1d75a9ca3e090c9a0d21107272c0765b",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "coverage.all_users-on-legacy_auth",
+      "category": "coverage",
+      "severity": "HIGH",
+      "title": "all_users unprotected on legacy_auth",
+      "summary": "No enabled CA policy enforces a grant control for all_users accessing legacy_auth.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-cccc-3333-3333-333333333333",
+          "display_name": "00000000-cccc-3333-3333-333333333333"
+        }
+      ],
+      "evidence": {
+        "user_segment": "all_users",
+        "app_segment": "legacy_auth",
+        "protection_level": "NONE",
+        "applicable_policy_ids": [],
+        "segment_member_count": 75
+      },
+      "remediation_hint": "Add an enabled CA policy that blocks clientAppTypes 'other' and 'exchangeActiveSync' for the affected user segment.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-policy-common",
+        "https://www.cisa.gov/scuba",
+        "https://www.cisecurity.org/benchmark/microsoft_365"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nThe coverage matrix shows the cell `all_users x legacy_auth` has protection level NONE on this tenant. Seventy-five users are reachable via legacy authentication endpoints with no applicable CA policy enforcing block.\n\n## What it means\nThis duplicates the block-legacy-auth rule finding from a coverage angle: it confirms no segmentation softens the gap. Legacy auth bypasses MFA, so the entire user population is exposed to credential stuffing on legacy endpoints.\n\n## Remediation\n1. Create the block-legacy-auth policy described in the corresponding rule finding.\n2. Disable legacy protocols at the mailbox level via `Set-CASMailbox`.\n3. Audit non-mailbox legacy paths (SharePoint app passwords, Skype client) and disable.\n4. Verify the coverage cell flips to BLOCKED in the next audit run.\n\n## Caveats\nTenant-c hosts more legacy on-prem connectors than tenant-b; expect to find a couple of printer mailboxes that need an explicit narrow exclusion before enabling the global block.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "bdc9dff741b93ad05f0e84f505dc4767",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "rule.block-legacy-auth",
+      "category": "rule",
+      "severity": "HIGH",
+      "title": "Block legacy authentication",
+      "summary": "No enabled CA policy blocks legacy authentication.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-cccc-3333-3333-333333333333",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "policies_targeting_legacy_auth": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with clientAppTypes [other, exchangeActiveSync] and grantControls.builtInControls = [block].",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-conditional-access-policy-block-legacy",
+        "https://www.cisa.gov/scuba",
+        "https://www.cisecurity.org/benchmark/microsoft_365"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nThe same audit logic that fired on tenant-b shows zero qualifying policies on tenant-c. No enabled CA policy targets `clientAppTypes = [other, exchangeActiveSync]` with a block grant control.\n\n## What it means\nLegacy authentication is a stable, well-known attack surface. On tenant-c specifically, the absence of a block policy combined with active third-party SaaS connectors increases the exposure window.\n\n## Remediation\n1. Create a CA policy targeting all users.\n2. Set `clientAppTypes` to `[\"other\", \"exchangeActiveSync\"]`.\n3. Set grant controls to block.\n4. Soak in report-only for 72 hours to catch any third-party connectors using basic auth.\n5. Enable, then alert on residual report-only matches.\n\n## Caveats\nOlder third-party automation tools occasionally embed basic-auth credentials; expect a small migration backlog before the policy can be enabled tenant-wide.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "1076d876364a2a95df12a1dcce6fedec",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "rule.risk-based-signin",
+      "category": "rule",
+      "severity": "HIGH",
+      "title": "Sign-in risk policy missing",
+      "summary": "No enabled CA policy uses signInRiskLevels.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-cccc-3333-3333-333333333333",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with conditions.signInRiskLevels including medium and high, requiring MFA or blocking access.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/identity-protection/howto-identity-protection-configure-risk-policies"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nNo enabled CA policy uses `signInRiskLevels` as a condition. Sign-in risk is the per-event Identity Protection signal that flags impossible-travel, anonymous-IP, and atypical-pattern logins.\n\n## What it means\nWithout a sign-in risk policy, Entra Identity Protection observes the suspicious sign-in but takes no action. An operator must manually review the report and decide whether to invalidate sessions.\n\n## Remediation\n1. Create a CA policy targeting all users on all cloud apps.\n2. Set conditions: `signInRiskLevels = [\"high\"]`.\n3. Grant controls: require MFA, or block when MFA cannot be performed.\n4. Enable after a 7-day report-only soak.\n5. Add a softer policy at medium risk that requires MFA-only.\n\n## Caveats\nFrequent travellers and split-tunnel VPN users can trip medium-risk frequently; tune the medium-risk policy thresholds before turning on a hard control.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "967ab7768e166996fbf63b5bf6cfc320",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "rule.guest-restrictions",
+      "category": "rule",
+      "severity": "MEDIUM",
+      "title": "Guest user restrictions missing",
+      "summary": "No enabled CA policy targets guest or external users.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-cccc-3333-3333-333333333333",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy with includeGuestsOrExternalUsers or an explicit guest group, restricting locations or requiring MFA.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-policy-guest"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nThe audit searched for at least one enabled CA policy whose `users.includeUsers` covers `GuestsOrExternalUsers`. Zero qualifying policies exist on this tenant.\n\n## What it means\nGuest accounts are a common path for cross-tenant data exfiltration: a compromised partner tenant can pivot through B2B guest accounts to read shared resources. Without a guest-specific policy, guests inherit the tenant default.\n\n## Remediation\n1. Create a CA policy targeting `GuestsOrExternalUsers`.\n2. Require MFA via `authenticationStrengths.id = <phishing-resistant>` if the partner tenant supports it, otherwise standard MFA.\n3. Optionally restrict to compliant-device or named-location for high-trust resources.\n4. Enable after the standard report-only soak.\n\n## Caveats\nPartner tenants that do not support cross-tenant MFA claims will see broken sign-ins under phishing-resistant strengths; verify trust settings with `Get-MgPolicyCrossTenantAccessPolicyConfigurationDefault`.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "329f531682c70f265c51d5f81b190591",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "rule.device-compliance-sensitive-apps",
+      "category": "rule",
+      "severity": "MEDIUM",
+      "title": "Sensitive apps require compliant device",
+      "summary": "No enabled CA policy enforces compliantDevice on sensitive apps.",
+      "affected_objects": [
+        {
+          "type": "tenant",
+          "id": "00000000-cccc-3333-3333-333333333333",
+          "display_name": "tenant"
+        }
+      ],
+      "evidence": {
+        "qualifying_policies": 0
+      },
+      "remediation_hint": "Add an enabled CA policy targeting the sensitive app ids with grantControls.builtInControls including compliantDevice.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/howto-conditional-access-policy-compliant-device"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nNo enabled CA policy enforces `compliantDevice` or hybrid-join on sensitive applications. The audit treats finance, HR, and admin portals as the canonical sensitive set.\n\n## What it means\nSensitive-app data accessed from unmanaged devices is the highest-leverage exfiltration target. Token theft on a personal laptop with sensitive-app access produces audit logs that look identical to legitimate sign-ins.\n\n## Remediation\n1. Identify the sensitive-app set in your tenant (Finance, HR, the admin portal at minimum).\n2. Create a CA policy targeting all users on those app IDs.\n3. Grant controls: require compliant device or hybrid-joined device.\n4. Soak in report-only and confirm zero unmanaged-device sign-ins to those apps.\n5. Enable and add detection for the policy's report-only matches.\n\n## Caveats\nField staff using BYOD tablets occasionally need finance-app access; carve out a tightly-scoped MAM (Mobile App Management) policy as an alternative compliance path.\n",
+    "scenario_notes": ""
+  },
+  {
+    "finding": {
+      "id": "3c695e5e44d6816acdd2318e650accd6",
+      "tenant_id": "00000000-cccc-3333-3333-333333333333",
+      "rule_id": "exclusion.undocumented",
+      "category": "exclusion",
+      "severity": "LOW",
+      "title": "Undocumented exclusion",
+      "summary": "Policy 'Allow access only from approved countries' has exclusions but no keyword in displayName signalling intent.",
+      "affected_objects": [
+        {
+          "type": "policy",
+          "id": "ca-c-country-include",
+          "display_name": "Allow access only from approved countries"
+        }
+      ],
+      "evidence": {
+        "policy_id": "ca-c-country-include",
+        "display_name": "Allow access only from approved countries",
+        "expected_keywords": [
+          "exclude",
+          "exception",
+          "break-glass",
+          "breakglass",
+          "service account",
+          "svc",
+          "bypass"
+        ]
+      },
+      "remediation_hint": "Rename the policy or add a description that includes one of 'exclude', 'exception', 'break-glass', 'service account', or 'bypass' so reviewers can grasp intent at a glance.",
+      "references": [
+        "https://learn.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups",
+        "https://www.cisa.gov/scuba"
+      ],
+      "detected_at": "2026-04-29T13:52:03.237199",
+      "first_seen_at": "2026-04-29T13:52:03.237199"
+    },
+    "reference_narrative": "## Why this fired\nPolicy `Allow access only from approved countries` has exclusions configured, and the policy display name does not contain a keyword like exclude, exception, break-glass, or service account that signals exclusion intent.\n\n## What it means\nCountry-restriction policies frequently grow exclusions for travelling executives or sales-team contractors. Without a naming convention, those exclusions accumulate silently and erode the geo-fence.\n\n## Remediation\n1. Enumerate excluded users and groups for the policy.\n2. Validate each exclusion against the current travel and contractor lists.\n3. Move legitimate exclusions into a named group such as `Approved Travel Exceptions`.\n4. Rename the policy `Approved-country access (excludes travel exceptions)`.\n\n## Caveats\nCountry-based controls intersect awkwardly with VPN and mobile-carrier IP allocations; before flagging an exclusion as stale, verify whether the user routinely roams onto a foreign carrier IP.\n",
+    "scenario_notes": ""
+  }
+]
