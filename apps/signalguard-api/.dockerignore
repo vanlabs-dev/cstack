@@ -1,0 +1,38 @@
+# Build-time exclusions for the API image. The Dockerfile copies from the
+# repo root, so these patterns mirror the top-level .gitignore plus
+# anything that the build does not need.
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+.coverage.*
+
+# Local data and tracking artefacts. The container writes its own.
+data/
+mlruns/
+
+# Secrets and local-dev configuration.
+.env
+.env.local
+
+# Tests are not needed at runtime; only the source for the API + CLI.
+tests/
+
+# Compose and infra configuration; never go inside an image layer.
+infra/
+
+# Web app, design assets, screenshots, docs are not part of the API image.
+apps/signalguard-web/
+.design/
+docs/images/
+
+# Editor/OS noise.
+.DS_Store
+.idea/
+.vscode/
