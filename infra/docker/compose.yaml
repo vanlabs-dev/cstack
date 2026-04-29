@@ -21,12 +21,9 @@ x-cli-defaults: &cli-defaults
   # processes share the same volume. tenants.json lives next to the
   # DuckDB file so a docker compose down -v wipes both together.
   #
-  # working_dir: /data is required because MLflow with SQLite tracking
-  # still writes model artifacts to a filesystem path that defaults to
-  # ``./mlruns/<run_id>/artifacts`` relative to cwd. The api process
-  # stays at /app for module imports; only the CLI bootstraps need the
-  # writable cwd.
-  working_dir: /data
+  # MLFLOW_ARTIFACT_ROOT pins the experiment artifact directory so
+  # MLflow does not default to ``./mlruns/<run>/artifacts`` relative to
+  # cwd; this is what removed the prior ``working_dir: /data`` hack.
   environment:
     CSTACK_DATA_DIR: /data
     CSTACK_DB_PATH: /data/cstack.duckdb
@@ -34,6 +31,7 @@ x-cli-defaults: &cli-defaults
     SIGNALGUARD_API_DB_PATH: /data/cstack.duckdb
     SIGNALGUARD_API_TENANTS_FILE: /data/tenants.json
     MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
+    MLFLOW_ARTIFACT_ROOT: file:///data/mlruns/artifacts
   volumes:
     - cstack-data:/data
   restart: "no"
@@ -93,6 +91,7 @@ services:
       SIGNALGUARD_API_DEV_API_KEY: ${SIGNALGUARD_API_DEV_API_KEY:-dev-secret}
       SIGNALGUARD_API_CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
       MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
+      MLFLOW_ARTIFACT_ROOT: file:///data/mlruns/artifacts
       # LLM provider keys are passthrough. CSTACK_LLM_NARRATIVE_ENABLED
       # defaults off so the stack does not spend money on every audit run.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
