@@ -6,6 +6,8 @@ from cstack_storage.anomaly_scores import (
 from cstack_storage.ca_policies import get_policies, upsert_ca_policies
 from cstack_storage.connection import connection_scope, get_connection
 from cstack_storage.directory import (
+    get_directory_roles,
+    get_role_assignments,
     upsert_directory_roles,
     upsert_groups,
     upsert_role_assignments,
@@ -47,8 +49,10 @@ __all__ = [
     "evict_old",
     "get_cached_narrative",
     "get_connection",
+    "get_directory_roles",
     "get_named_locations",
     "get_policies",
+    "get_role_assignments",
     "get_scores",
     "get_signins",
     "get_tenant_db",

@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 import shap
 from cstack_audit_core import AnomalyScore, ModelTier, ShapDirection, ShapFeatureContribution
+from cstack_audit_coverage import TIER_0_ROLE_TEMPLATE_IDS
 from cstack_ml_features import (
     FEATURE_COLUMNS,
     build_history_from_signins,
@@ -39,7 +40,7 @@ from cstack_ml_mlops import (
     get_alias_version,
 )
 from cstack_schemas import SignIn
-from cstack_storage import get_signins
+from cstack_storage import get_directory_roles, get_role_assignments, get_signins
 
 from cstack_ml_anomaly.per_user import PerUserBundle
 from cstack_ml_anomaly.rules import rule_score_boosts
@@ -187,6 +188,28 @@ def _shap_for_anomalous_rows(
     return shap_lookup
 
 
+def _compute_privileged_user_ids(conn: duckdb.DuckDBPyConnection, tenant_id: str) -> frozenset[str]:
+    """Pull tier-0 admin user ids from the directory tables for ``tenant_id``.
+
+    Returns the union of principals listed under any tier-0 role assignment
+    or directly in a directory role's ``members`` array. Empty when the
+    tenant has no tier-0 admins recorded.
+    """
+    roles = get_directory_roles(conn, tenant_id)
+    assignments = get_role_assignments(conn, tenant_id)
+    user_ids: set[str] = set()
+    for role in roles:
+        if role.role_template_id in TIER_0_ROLE_TEMPLATE_IDS:
+            user_ids.update(role.members)
+    for assignment in assignments:
+        if (
+            assignment.role_definition_id in TIER_0_ROLE_TEMPLATE_IDS
+            and assignment.principal_id is not None
+        ):
+            user_ids.add(assignment.principal_id)
+    return frozenset(user_ids)
+
+
 def score_batch(
     signins: list[SignIn],
     tenant_id: str,
@@ -194,13 +217,16 @@ def score_batch(
     background_signins: list[SignIn] | None = None,
     tracking_uri: str | None = None,
     enable_rules: bool = True,
+    enable_off_hours_admin: bool = True,
 ) -> list[AnomalyScore]:
     """Score a batch of sign-ins. Loads the bundle, routes per user, then
     layers the rule booster on top.
 
     ``enable_rules=False`` returns the raw model score without the booster
     floor. Used by the layer-attribution sweep in Phase 4 to measure
-    each tier's contribution independently.
+    each tier's contribution independently. ``enable_off_hours_admin``
+    further toggles the per-user admin rule independently of the four
+    Sprint 3 hybrid rules; defaults to on.
     """
     if not signins:
         return []
@@ -216,7 +242,18 @@ def score_batch(
     )
     feature_df, user_ids = _build_score_features(signins)
     raw_scores, tiers, predictions = _bundle_score_rows(bundle, feature_df, user_ids)
-    rule_boosts = rule_score_boosts(feature_df) if enable_rules else [0.0] * len(feature_df)
+    if enable_rules:
+        privileged_ids = (
+            _compute_privileged_user_ids(conn, tenant_id) if enable_off_hours_admin else frozenset()
+        )
+        rule_boosts = rule_score_boosts(
+            feature_df,
+            user_ids=user_ids,
+            bundle=bundle,
+            privileged_user_ids=privileged_ids,
+        )
+    else:
+        rule_boosts = [0.0] * len(feature_df)
 
     sorted_signins: list[SignIn] = []
     by_user: dict[str, list[SignIn]] = {}

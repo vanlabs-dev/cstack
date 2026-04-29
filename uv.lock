@@ -909,6 +909,7 @@ version = "0.0.1"
 source = { editable = "packages/ml-anomaly" }
 dependencies = [
     { name = "cstack-audit-core" },
+    { name = "cstack-audit-coverage" },
     { name = "cstack-ml-features" },
     { name = "cstack-ml-mlops" },
     { name = "cstack-schemas" },
@@ -924,6 +925,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "cstack-audit-core", editable = "packages/audit-core" },
+    { name = "cstack-audit-coverage", editable = "packages/audit-coverage" },
     { name = "cstack-ml-features", editable = "packages/ml-features" },
     { name = "cstack-ml-mlops", editable = "packages/ml-mlops" },
     { name = "cstack-schemas", editable = "packages/schemas" },

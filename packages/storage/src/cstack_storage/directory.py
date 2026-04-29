@@ -102,6 +102,24 @@ def upsert_directory_roles(
     return len(rows)
 
 
+def get_directory_roles(conn: duckdb.DuckDBPyConnection, tenant_id: str) -> list[DirectoryRole]:
+    """Fetch every activated role for ``tenant_id`` as DirectoryRole models."""
+    rows = conn.execute(
+        "SELECT raw FROM directory_roles WHERE tenant_id = ?",
+        [tenant_id],
+    ).fetchall()
+    return [DirectoryRole.model_validate_json(row[0]) for row in rows]
+
+
+def get_role_assignments(conn: duckdb.DuckDBPyConnection, tenant_id: str) -> list[RoleAssignment]:
+    """Fetch every role assignment for ``tenant_id`` as RoleAssignment models."""
+    rows = conn.execute(
+        "SELECT raw FROM role_assignments WHERE tenant_id = ?",
+        [tenant_id],
+    ).fetchall()
+    return [RoleAssignment.model_validate_json(row[0]) for row in rows]
+
+
 def upsert_role_assignments(
     conn: duckdb.DuckDBPyConnection,
     tenant_id: str,

@@ -13,6 +13,7 @@ dependencies = [
     "cstack-schemas",
     "cstack-storage",
     "cstack-audit-core",
+    "cstack-audit-coverage",
     "cstack-ml-features",
     "cstack-ml-mlops",
 ]
