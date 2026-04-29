@@ -23,11 +23,13 @@ cstack-audit-exclusions = { workspace = true }
 cstack-ml-features = { workspace = true }
 cstack-ml-mlops = { workspace = true }
 cstack-ml-anomaly = { workspace = true }
+cstack-llm-provider = { workspace = true }
 signalguard-api = { workspace = true }
 
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-asyncio>=0.24",
     "pytest-cov>=5",
     "ruff>=0.8",
     "mypy>=1.13",
@@ -83,6 +85,7 @@ mypy_path = [
     "packages/ml-features/src",
     "packages/ml-mlops/src",
     "packages/ml-anomaly/src",
+    "packages/llm-provider/src",
     "apps/cstack-cli/src",
     "apps/signalguard-api/src",
 ]
@@ -95,6 +98,7 @@ warn_required_dynamic_aliases = true
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 testpaths = ["apps", "packages"]
+asyncio_mode = "strict"
 
 [[tool.mypy.overrides]]
 module = [
@@ -115,6 +119,8 @@ module = [
     "joblib.*",
     "pandas",
     "pandas.*",
+    "tiktoken",
+    "tiktoken.*",
 ]
 ignore_missing_imports = true
 disable_error_code = ["attr-defined"]
