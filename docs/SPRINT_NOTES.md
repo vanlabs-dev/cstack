@@ -285,3 +285,80 @@ the audit/score action endpoints are reachable through the dashboard.
 Sprint 6 (LLM narratives) is the highest-leverage next step: every
 finding-expansion "Why this fired" section is currently the raw
 `summary` string; an LLM rewrite would lift triage UX significantly.
+
+## Sprint 6 LLM narrative calibration (2026-04-29)
+
+Sprint 6 ships the provider abstraction (`llm-provider`), the
+finding-to-narrative pipeline (`llm-narrative`), the rubric-based eval
+harness (`llm-eval`), and a 20-finding hand-curated golden set sourced
+from real tenant-a/b/c audit findings. The calibration loop ran end to
+end against the live Anthropic API.
+
+### Models used
+
+- Generator: `claude-opus-4-7` (default, content production)
+- Judge: `claude-sonnet-4-6` (different model from generator to mitigate
+  self-preference bias)
+- Probe: `claude-haiku-4-5` (cheap connectivity check)
+
+### Pointwise rubric scores
+
+Five-criterion rubric scoring, weighted aggregate normalised to 0-100.
+
+| prompt | accuracy | actionability | concision | format_compliance | tone | mean |
+| ------ | -------- | ------------- | --------- | ----------------- | ---- | ---- |
+| v1     | 5.00     | 5.00          | 4.00      | 5.00              | 5.00 | 95.45 |
+| v2     | 4.95     | 5.00          | 4.85      | 5.00              | 5.00 | 98.98 |
+
+Pointwise alone, v2 scored higher because the harder concision floor
+(180 words vs v1's 250) lifted the only sub-perfect criterion.
+
+### Pairwise comparisons
+
+| comparison           | a wins | b wins | ties | inconsistent_swaps | winrate(b) |
+| -------------------- | ------ | ------ | ---- | ------------------ | ---------- |
+| reference vs v1      | 0      | 20     | 0    | 0                  | 1.000      |
+| v1 vs v2             | 14     | 0      | 6    | 6                  | 0.150      |
+
+The reference-vs-v1 pairwise is decisive: the LLM-generated v1 narrative
+beats every hand-written reference in the golden set, with no
+position-swap inconsistency. The v1-vs-v2 pairwise is the more
+interesting outcome: v2's pointwise advantage on concision did not
+survive direct comparison. The judge consistently picked v1 (or
+declared inconsistent ties) because v2's compression cost remediation
+detail. The 6 inconsistent swaps (judge flipped its winner when
+positions swapped) are the bias-mitigation paying off: those would
+have been false signals in a single-pass pairwise.
+
+### Decision
+
+- v1 stays default. v2 is shipped in `prompts/finding_narrative_v2.md`
+  as a documented attempt that did not improve perceived quality.
+- Lesson for future iterations: pointwise rubrics are useful as a smoke
+  test but should not drive prompt-version decisions on their own.
+  Pairwise judging surfaces the tradeoffs that pointwise hides.
+
+### Smoke test
+
+End-to-end `cstack audit all --tenant tenant-b` after calibration:
+
+- First pass: 16 generated, 13 cached, 0 errored, $0.89 spent
+- Second pass (immediately after): 0 generated, 29 cached, $0.00 spent
+
+The 13 cache hits on the first pass come from findings that were also in
+the eval golden set; the second pass demonstrates 100% cache hit rate
+once a tenant has been seen.
+
+### Spend
+
+Total Anthropic API spend on this sprint (calibration + smoke tests +
+v2 attempt):
+
+- Opus 4.7 generations: ~$1.88 (24,598 input + 20,100 output tokens
+  cached; cost driver is output tokens at $75/M)
+- Sonnet 4.6 judge calls: ~$1.50 (estimated; 20 pointwise + 40 pairwise
+  per comparison run, with cached candidates)
+- First production smoke run: $0.89 (16 fresh generations on tenant-b
+  not previously narrated)
+- Total: ~$4.30 against the $20 hard cap.
+
