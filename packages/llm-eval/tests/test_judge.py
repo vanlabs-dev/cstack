@@ -104,7 +104,7 @@ async def test_score_pairwise_consistent_winner(finding: Finding) -> None:
 
 @pytest.mark.asyncio
 async def test_score_pairwise_inconsistent_returns_tie(finding: Finding) -> None:
-    # First pass picks a; swapped pass also picks a — meaning the judge
+    # First pass picks a; swapped pass also picks a, meaning the judge
     # preferred whichever narrative was in position A, regardless of content.
     # That's position bias; the result should be reported as tie.
     provider = _ScriptedProvider([_pairwise_response("a"), _pairwise_response("a")])

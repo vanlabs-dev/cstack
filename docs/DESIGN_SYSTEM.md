@@ -121,7 +121,7 @@ Tight inline group. 22px tall buttons with 9px padding. Background is `surface-s
 
 ### Avatar
 
-22-32px circle, deterministic colour from a small palette (purples, olives, slates, teals, ambers — never bright). Initials in white at 42% of the avatar size, weight 600.
+22-32px circle, deterministic colour from a small palette (purples, olives, slates, teals, ambers; never bright). Initials in white at 42% of the avatar size, weight 600.
 
 ## Page header pattern
 

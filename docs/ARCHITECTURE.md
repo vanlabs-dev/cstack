@@ -14,12 +14,14 @@ runs as an independent service or library.
   signins, and anomaly subcommands.
 - `apps/signalguard-api/` FastAPI HTTP surface over the same packages the CLI
   consumes. Read endpoints (tenants, findings, anomaly scores, coverage,
-  sign-ins, models) plus two action endpoints (audit run, anomaly score).
+  sign-ins, models, narratives) plus action endpoints (audit run, anomaly
+  score, narrative regenerate).
 - `apps/signalguard-web/` Next.js 15 dashboard that consumes the API via a
-  typed client generated from `apps/signalguard-api/openapi.json`. Three
-  core screens in 5a (home, findings list with inline expansion, sign-in
-  anomaly drill-down); five more screens land in 5b. Design tokens live in
-  `docs/DESIGN_TOKENS.md`; component patterns in `docs/DESIGN_SYSTEM.md`.
+  typed client generated from `apps/signalguard-api/openapi.json`. Seven
+  shipped screens (home, signalguard overview, coverage matrix, findings,
+  anomalies feed, anomaly drill-down, settings tabs); tablet responsive
+  at 768px. Design tokens live in `docs/DESIGN_TOKENS.md`; component
+  patterns in `docs/DESIGN_SYSTEM.md`.
 - `packages/schemas/` Pydantic v2 models for tenants, conditional access policies,
   named locations, and directory objects.
 - `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
@@ -63,9 +65,10 @@ runs as an independent service or library.
 
 ## Runtime stack
 
-Python 3.12 via uv workspace on the audit, ingest, and storage side. Node 22 LTS via
-pnpm workspace reserved for future API and frontend work. Both lockfiles are committed.
-DuckDB persists tenant data to a single file (`data/cstack.duckdb` by default).
+Python 3.12 via uv workspace on the audit, ingest, ML, and LLM side. Node 22
+LTS via pnpm workspace for the FastAPI typed client and the Next.js dashboard.
+Both lockfiles are committed. DuckDB persists tenant data to a single file
+(`data/cstack.duckdb` by default).
 
 ## Data flow
 
@@ -197,7 +200,7 @@ The dashboard ships seven screens after Sprint 5b:
 - `/dashboard/settings/*` general, audit-rules, anomaly-tuning, api-keys (plus three V2 placeholders)
 
 Every screen is fully wired against the live API; component tests cover
-both the 5a and 5b surfaces (74 tests across 27 files).
+all surfaces (78 tests across 28 files as of Sprint 6).
 
 ## Adding a new rule
 
