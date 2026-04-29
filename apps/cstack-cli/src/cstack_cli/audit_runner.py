@@ -22,12 +22,7 @@ from cstack_llm_narrative import BatchResult, NarrativeBudget, NarrativeGenerato
 from cstack_llm_provider import get_provider
 from cstack_llm_provider import get_settings as get_llm_settings
 from cstack_schemas import TenantConfig
-from cstack_storage import (
-    connection_scope,
-    list_tenants_db,
-    register_tenant,
-    run_migrations,
-)
+from cstack_storage import register_tenant, run_migrations
 
 
 def open_audit_db(db_path: Path) -> duckdb.DuckDBPyConnection:
@@ -35,32 +30,6 @@ def open_audit_db(db_path: Path) -> duckdb.DuckDBPyConnection:
     conn = duckdb.connect(str(db_path))
     run_migrations(conn)
     return conn
-
-
-def resolve_tenant_for_audit(
-    db_path: Path,
-    tenants_file: Path,
-    identifier: str,
-    file_loader: object,
-) -> TenantConfig:
-    """Look up a tenant from tenants.json or the DB tenants table.
-
-    Lazy import of the file loader is done by callers (passing in
-    ``cstack_cli.tenants.load_tenants``) so this module stays free of
-    cross-imports back into the CLI package.
-    """
-    from cstack_cli.tenants import find_tenant, load_tenants
-
-    file_tenants = load_tenants(tenants_file)
-    found = find_tenant(file_tenants, identifier)
-    if found is not None:
-        return found
-    with connection_scope(db_path) as conn:
-        run_migrations(conn)
-        for tenant in list_tenants_db(conn):
-            if tenant.tenant_id == identifier or tenant.display_name == identifier:
-                return tenant
-    raise LookupError(f"no tenant matching '{identifier}'")
 
 
 def load_context(conn: duckdb.DuckDBPyConnection, tenant: TenantConfig) -> AuditContext:

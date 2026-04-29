@@ -125,12 +125,12 @@ async def probe_providers() -> list[ProviderProbe]:
     out: list[ProviderProbe] = []
 
     if settings.anthropic_api_key:
-        out.append(await _probe_anthropic(settings.anthropic_api_key))
+        out.append(await _probe_anthropic())
     else:
         out.append(ProviderProbe("anthropic", False, "ANTHROPIC_API_KEY not set"))
 
     if settings.openai_api_key:
-        out.append(await _probe_openai(settings.openai_api_key))
+        out.append(await _probe_openai())
     else:
         out.append(ProviderProbe("openai", False, "OPENAI_API_KEY not set"))
 
@@ -138,7 +138,7 @@ async def probe_providers() -> list[ProviderProbe]:
     return out
 
 
-async def _probe_anthropic(api_key: str) -> ProviderProbe:
+async def _probe_anthropic() -> ProviderProbe:
     try:
         provider = get_provider("anthropic")
         await provider.complete(
@@ -154,7 +154,7 @@ async def _probe_anthropic(api_key: str) -> ProviderProbe:
         return ProviderProbe("anthropic", False, str(exc))
 
 
-async def _probe_openai(api_key: str) -> ProviderProbe:
+async def _probe_openai() -> ProviderProbe:
     try:
         provider = get_provider("openai")
         await provider.complete(

@@ -382,10 +382,6 @@ def audit() -> None:
     """Run signalguard CA audit modules and inspect their findings."""
 
 
-def _is_fixture_tenant(tenant: TenantConfig, settings: Settings) -> bool:
-    return tenant.is_fixture
-
-
 def _ensure_fixture_loaded(tenant: TenantConfig, conn: object) -> None:
     """Re-hydrate a fixture tenant before running an audit so the analyser
     sees fresh data even after the user cleared the DB by hand."""
