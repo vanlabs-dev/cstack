@@ -223,6 +223,61 @@ MIGRATIONS: tuple[Migration, ...] = (
             ON anomaly_scores(tenant_id, is_anomaly);
         """,
     ),
+    Migration(
+        version=9,
+        name="narrative_cache",
+        sql="""
+        CREATE TABLE IF NOT EXISTS narrative_cache (
+            cache_key VARCHAR PRIMARY KEY,
+            rule_id VARCHAR NOT NULL,
+            evidence_hash VARCHAR NOT NULL,
+            prompt_version VARCHAR NOT NULL,
+            provider VARCHAR NOT NULL,
+            model VARCHAR NOT NULL,
+            narrative_markdown VARCHAR NOT NULL,
+            input_tokens INTEGER NOT NULL,
+            output_tokens INTEGER NOT NULL,
+            latency_ms INTEGER NOT NULL,
+            generated_at TIMESTAMP NOT NULL,
+            last_used_at TIMESTAMP NOT NULL,
+            use_count INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE INDEX IF NOT EXISTS idx_narrative_rule
+            ON narrative_cache(rule_id);
+        CREATE INDEX IF NOT EXISTS idx_narrative_last_used
+            ON narrative_cache(last_used_at);
+        """,
+    ),
+    Migration(
+        version=10,
+        name="eval_runs",
+        sql="""
+        CREATE TABLE IF NOT EXISTS eval_runs (
+            eval_id VARCHAR PRIMARY KEY,
+            prompt_version VARCHAR NOT NULL,
+            model VARCHAR NOT NULL,
+            provider VARCHAR NOT NULL,
+            started_at TIMESTAMP NOT NULL,
+            completed_at TIMESTAMP,
+            examples_evaluated INTEGER NOT NULL DEFAULT 0,
+            mean_score DOUBLE,
+            per_criterion_scores JSON,
+            run_metadata JSON
+        );
+        CREATE INDEX IF NOT EXISTS idx_eval_runs_prompt
+            ON eval_runs(prompt_version);
+        CREATE TABLE IF NOT EXISTS eval_scores (
+            eval_id VARCHAR NOT NULL,
+            finding_id VARCHAR NOT NULL,
+            criterion_name VARCHAR NOT NULL,
+            score DOUBLE NOT NULL,
+            justification VARCHAR NOT NULL,
+            PRIMARY KEY (eval_id, finding_id, criterion_name)
+        );
+        CREATE INDEX IF NOT EXISTS idx_eval_scores_eval
+            ON eval_scores(eval_id);
+        """,
+    ),
 )
 
 
