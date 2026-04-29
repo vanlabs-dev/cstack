@@ -24,6 +24,12 @@ when prioritised.
 - [ ] **Real ASN/GeoIP lookup**, replacing the IP-prefix stub in
       `packages/ml-features/src/cstack_ml_features/asn_stub.py`. Maxmind or
       ipinfo. Function signature stays the same.
+- [ ] **`anomaly train --skip-if-registered`** flag so the Compose warm-up
+      bootstrap exits fast when a champion is already registered.
+      Functionally `@champion` already points at the newest version on each
+      retrain, but the registry accumulates dead versions across restarts.
+      Land alongside Sprint 3.5 where `train_tenant` gets reorganised for
+      per-user models anyway.
 
 ## Mid-term (V1 polish, conditional on demand)
 

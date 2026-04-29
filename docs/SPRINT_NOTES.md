@@ -394,3 +394,28 @@ actions, not Claude Code actions. Claude Code prepares CHANGELOG.md
 and README status updates, then surfaces the manual steps in the
 final report.
 
+### Compose bootstrap idempotency
+
+Tested two passes with `down` (data preserved) between them:
+
+| service           | first up | warm up | repeat behaviour                      |
+| ----------------- | -------- | ------- | ------------------------------------- |
+| fixtures          | OK       | OK      | INSERT OR REPLACE; row counts stable  |
+| audit             | OK       | OK      | dedupe via Finding.compute_id; 0 new  |
+| anomaly-bootstrap | OK       | OK      | retrains v3/v4/v5 on each restart     |
+| api               | healthy  | healthy | startup ~5s                           |
+| web               | started  | started | startup ~3s                           |
+
+Warm-up wall time was 1m 51s, dominated by the anomaly bootstrap
+running the SHAP explainer loop (~29s) and re-registering the model
+even though the existing champion is still serviceable. Functionally
+this is correct: `@champion` always points at the newest version, and
+re-scoring against fresh data produces the expected `new_findings=0`
+because anomaly findings are content-hashed too. But the registry
+accumulates dead versions across restarts, which is noise.
+
+Adding a `--skip-if-registered` flag to `cstack anomaly train` would
+let the bootstrap exit fast on warm starts; tracked as a near-term
+BACKLOG item so it can land alongside Sprint 3.5's per-user IF work
+where the same code path gets reorganised.
+
