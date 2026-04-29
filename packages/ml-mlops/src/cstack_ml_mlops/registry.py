@@ -26,16 +26,18 @@ def register_model(run_id: str, artifact_path: str, name: str) -> Any:
     requires a logged_model entry under the run.
     """
     client = MlflowClient()
-    if not client.get_registered_model(name) if False else True:
-        # Idempotent: if the registered model already exists, this raises;
-        # we swallow that and reuse the existing entry.
-        try:
-            client.create_registered_model(name)
-        except mlflow.exceptions.RestException:
-            pass
-        except mlflow.exceptions.MlflowException as exc:
-            if "RESOURCE_ALREADY_EXISTS" not in str(exc):
-                raise
+    # Idempotent: if the registered model already exists this raises; we
+    # swallow that and reuse the existing entry. The backend may emit
+    # either an ``MlflowException`` ("already exists") or ``RestException``
+    # ("RESOURCE_ALREADY_EXISTS") depending on tracking store flavour.
+    try:
+        client.create_registered_model(name)
+    except mlflow.exceptions.RestException:
+        pass
+    except mlflow.exceptions.MlflowException as exc:
+        msg = str(exc).lower()
+        if "already exists" not in msg and "resource_already_exists" not in msg:
+            raise
     run = client.get_run(run_id)
     source = f"{run.info.artifact_uri}/{artifact_path}"
     return client.create_model_version(name=name, source=source, run_id=run_id)
