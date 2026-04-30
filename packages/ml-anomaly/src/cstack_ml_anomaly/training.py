@@ -1,21 +1,32 @@
-"""Per-tenant Isolation Forest trainer with per-user + cold-start fallback.
+"""Per-tenant Isolation Forest trainer with two-topology routing.
 
-Sprint 3.5 replaced the V1 pooled-only model with a tenant bundle that
-holds one fitted ``Pipeline`` per user with enough sign-ins, plus a
-shared cold-start pooled pipeline for users below the threshold. The
-bundle is logged to MLflow as a single ``model.joblib`` artefact under
-``signalguard-anomaly-{tenant_id}`` and aliased ``@challenger``.
+Sprint 3 trained a single pooled model per tenant; Sprint 3.5 added a
+per-user topology with a cold-start pooled fallback. Sprint 3.5b
+discovered the per-user topology regressed precision on synthetic
+fixtures (the synthesizer's deterministic profiles lack real per-user
+behavioural variance) and gated it behind ``CSTACK_ML_TRAINING_TOPOLOGY``,
+defaulting to ``pooled``. The infrastructure stays in place for Sprint 7
+real-data activation.
 
-Per-user models catch user-specific patterns the pooled model could
-not: a user who never roams looks anomalous when they suddenly travel,
-but the pooled model treated that as normal-rare because some other
-user in the tenant travels frequently. The cold-start pooled fallback
-keeps new and low-volume users from dropping to a rule-only path.
+Both topologies emit a ``PerUserBundle`` artefact with the same shape
+so scoring code is topology-agnostic. In ``pooled`` mode
+``per_user_models`` is empty and ``cold_start_pooled`` carries the
+single tenant-wide IF; every signin routes through cold-start at score
+time. In ``per_user`` mode users with ``>= min_samples`` sign-ins get
+dedicated pipelines and a smaller per-user time-only model used by the
+off-hours-admin rule; users below the threshold contribute to a
+narrower cold-start pool.
+
+The bundle is logged to MLflow as a single ``model.joblib`` artefact
+under ``signalguard-anomaly-{tenant_id}`` and aliased ``@challenger``.
+The MLflow run carries a ``topology`` tag so eval history records
+which topology produced each version.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import tempfile
 import time
 from collections import defaultdict
@@ -54,12 +65,35 @@ LOG = logging.getLogger(__name__)
 DEFAULT_RANDOM_STATE = 42
 MIN_SIGNINS_FOR_TRAINING = 100
 
+DEFAULT_TOPOLOGY = "pooled"
+VALID_TOPOLOGIES = frozenset({"pooled", "per_user"})
+
 TIME_FEATURE_COLUMNS: tuple[str, ...] = (
     "day_of_week",
     "hour_of_day_cos",
     "hour_of_day_sin",
     "is_business_hours_local",
 )
+
+
+def resolve_topology(override: str | None = None) -> str:
+    """Resolve the active training topology.
+
+    Priority: explicit ``override`` argument, then ``CSTACK_ML_TRAINING_TOPOLOGY``
+    env var, then ``pooled``. Validates the value is in
+    ``VALID_TOPOLOGIES`` and raises ``ValueError`` otherwise so a typo
+    fails fast instead of silently selecting a topology no one expected.
+    """
+    raw = override if override is not None else os.environ.get("CSTACK_ML_TRAINING_TOPOLOGY")
+    if not raw:
+        return DEFAULT_TOPOLOGY
+    value = raw.lower().strip()
+    if value not in VALID_TOPOLOGIES:
+        raise ValueError(
+            f"Invalid CSTACK_ML_TRAINING_TOPOLOGY: {raw!r}; "
+            f"expected one of {sorted(VALID_TOPOLOGIES)}"
+        )
+    return value
 
 
 def tenant_model_name(tenant_id: str) -> str:
@@ -94,6 +128,7 @@ class TrainingResult(BaseModel):
     min_samples_threshold: int
     training_duration_seconds: float
     skipped_existing: bool = False
+    topology: str = DEFAULT_TOPOLOGY
 
 
 def _features_for_user_signins(
@@ -143,14 +178,74 @@ def _fit_pipeline(
     return pipeline
 
 
-def train_per_user_bundle(
+def train_pooled_topology(
     tenant_id: str,
     signins: list[SignIn],
     contamination: float = 0.05,
     random_state: int = DEFAULT_RANDOM_STATE,
     min_samples: int | None = None,
 ) -> PerUserBundle:
-    """Fit per-user IFs + cold-start pooled and return the bundle.
+    """Sprint 3 pooled topology: one IF on all tenant signins.
+
+    Returns a ``PerUserBundle`` with ``per_user_models = {}`` and the
+    single fitted pipeline assigned to ``cold_start_pooled``. Every
+    signin routes through cold-start at score time, which is the
+    Sprint 3 behaviour exactly. ``min_samples`` is accepted for
+    signature parity with ``train_per_user_topology`` but does not
+    influence the fit; it is recorded on the bundle for telemetry.
+    """
+    if len(signins) < MIN_SIGNINS_FOR_TRAINING:
+        raise ValueError(
+            f"need at least {MIN_SIGNINS_FOR_TRAINING} sign-ins to train; got {len(signins)}"
+        )
+    threshold = min_samples if min_samples is not None else min_samples_default()
+
+    user_signins: dict[str, list[SignIn]] = defaultdict(list)
+    for signin in signins:
+        user_signins[signin.user_id].append(signin)
+
+    items: list[Any] = []
+    for _user_id, rows in user_signins.items():
+        sorted_signins = sorted(rows, key=lambda s: s.created_date_time)
+        for signin in sorted_signins:
+            history = build_history_from_signins(sorted_signins, as_of=signin.created_date_time)
+            items.append((signin, history))
+    feature_df = extract_features_batch(items)
+    pooled_pipeline = _fit_pipeline(feature_df, FEATURE_COLUMNS, contamination, random_state)
+
+    bundle = PerUserBundle(
+        tenant_id=tenant_id,
+        per_user_models={},
+        cold_start_pooled=pooled_pipeline,
+        feature_columns=tuple(FEATURE_COLUMNS),
+        trained_at=datetime.now(UTC),
+        n_users_per_user=0,
+        n_users_cold_start=len(user_signins),
+        total_signins_used=feature_df.shape[0],
+        min_samples_threshold=threshold,
+        time_pipelines={},
+        time_score_p90={},
+    )
+    LOG.info(
+        "trained pooled bundle",
+        extra={
+            "tenant_id": tenant_id,
+            "n_users": len(user_signins),
+            "total_signins": bundle.total_signins_used,
+            "contamination": contamination,
+        },
+    )
+    return bundle
+
+
+def train_per_user_topology(
+    tenant_id: str,
+    signins: list[SignIn],
+    contamination: float = 0.05,
+    random_state: int = DEFAULT_RANDOM_STATE,
+    min_samples: int | None = None,
+) -> PerUserBundle:
+    """Sprint 3.5 per-user topology: one IF per user above threshold.
 
     Users with ``>= min_samples`` get a dedicated 20-feature pipeline and
     a 4-feature time-only pipeline (used by the off-hours-admin rule).
@@ -232,14 +327,21 @@ def train_tenant(
     min_samples: int | None = None,
     skip_if_registered: bool = False,
     tracking_uri: str | None = None,
+    topology: str | None = None,
 ) -> TrainingResult:
-    """Pull the lookback window, train the per-user bundle, register it.
+    """Pull the lookback window, train the bundle, register it.
+
+    ``topology`` selects between ``train_pooled_topology`` (Sprint 3
+    default) and ``train_per_user_topology`` (Sprint 3.5 opt-in).
+    Resolution order: explicit argument, ``CSTACK_ML_TRAINING_TOPOLOGY``
+    env var, then ``pooled``.
 
     ``skip_if_registered`` short-circuits when an ``@champion`` already
     points at a version of the tenant model. The Compose bootstrap uses
     this to avoid accumulating dead registry versions on warm restarts.
     """
     configure_tracking(uri=tracking_uri)
+    active_topology = resolve_topology(topology)
 
     model_name = tenant_model_name(tenant_id)
     if skip_if_registered:
@@ -251,6 +353,7 @@ def train_tenant(
                     "tenant_id": tenant_id,
                     "model_name": model_name,
                     "version": str(existing.version),
+                    "topology": active_topology,
                 },
             )
             return TrainingResult(
@@ -268,24 +371,40 @@ def train_tenant(
                 else min_samples_default(),
                 training_duration_seconds=0.0,
                 skipped_existing=True,
+                topology=active_topology,
             )
 
     since = datetime.now(UTC) - timedelta(days=lookback_days)
     signins = get_signins(conn, tenant_id, since=since)
 
     started = time.perf_counter()
-    bundle = train_per_user_bundle(
-        tenant_id,
-        signins,
-        contamination=contamination,
-        random_state=random_state,
-        min_samples=min_samples,
-    )
+    if active_topology == "per_user":
+        bundle = train_per_user_topology(
+            tenant_id,
+            signins,
+            contamination=contamination,
+            random_state=random_state,
+            min_samples=min_samples,
+        )
+    else:
+        bundle = train_pooled_topology(
+            tenant_id,
+            signins,
+            contamination=contamination,
+            random_state=random_state,
+            min_samples=min_samples,
+        )
     duration = time.perf_counter() - started
 
     with mlflow.start_run(
         run_name=f"train-{tenant_id}-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}",
-        tags=standard_tags({"cstack.tenant": tenant_id, "cstack.role": "train"}),
+        tags=standard_tags(
+            {
+                "cstack.tenant": tenant_id,
+                "cstack.role": "train",
+                "topology": active_topology,
+            }
+        ),
     ) as run:
         mlflow.log_params(
             {
@@ -295,7 +414,7 @@ def train_tenant(
                 "lookback_days": lookback_days,
                 "n_estimators": 200,
                 "min_samples": bundle.min_samples_threshold,
-                "architecture": "per_user_with_cold_start_pooled",
+                "topology": active_topology,
             }
         )
         mlflow.log_metrics(
@@ -328,4 +447,5 @@ def train_tenant(
         min_samples_threshold=bundle.min_samples_threshold,
         training_duration_seconds=duration,
         skipped_existing=False,
+        topology=active_topology,
     )

@@ -671,6 +671,15 @@ def anomaly() -> None:
     default=False,
     help="No-op when a @champion already exists for the tenant.",
 )
+@click.option(
+    "--topology",
+    type=click.Choice(["pooled", "per_user"], case_sensitive=False),
+    default=None,
+    help=(
+        "Training topology. Defaults to CSTACK_ML_TRAINING_TOPOLOGY env var, "
+        "then 'pooled'. 'per_user' is the Sprint 3.5 opt-in path."
+    ),
+)
 @click.pass_context
 def anomaly_train_cmd(
     ctx: click.Context,
@@ -679,6 +688,7 @@ def anomaly_train_cmd(
     contamination: float,
     min_samples: int | None,
     skip_if_registered: bool,
+    topology: str | None,
 ) -> None:
     from cstack_ml_anomaly import train_tenant
 
@@ -693,16 +703,24 @@ def anomaly_train_cmd(
             contamination=contamination,
             min_samples=min_samples,
             skip_if_registered=skip_if_registered,
+            topology=topology,
         )
     if result.skipped_existing:
         click.echo(
-            f"{target.display_name}: skipped (champion v{result.model_version} already registered)"
+            f"{target.display_name}: skipped (champion v{result.model_version} "
+            f"already registered, topology={result.topology})"
         )
         return
+    if result.topology == "pooled":
+        topo_summary = f"topology=pooled, {result.n_users} users"
+    else:
+        topo_summary = (
+            f"topology=per_user, {result.n_users_per_user} per-user, "
+            f"{result.n_users_cold_start} cold-start"
+        )
     click.echo(
         f"{target.display_name}: trained {result.model_name} v{result.model_version} "
-        f"on {result.n_signins_used} sign-ins / {result.n_users} users "
-        f"({result.n_users_per_user} per-user, {result.n_users_cold_start} cold-start) "
+        f"on {result.n_signins_used} sign-ins ({topo_summary}) "
         f"in {result.training_duration_seconds:.1f}s; alias=@challenger"
     )
 

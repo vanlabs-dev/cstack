@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from cstack_ml_anomaly import (
     tenant_model_name,
-    train_per_user_bundle,
+    train_per_user_topology,
     train_tenant,
 )
 from cstack_ml_mlops import configure_tracking, set_alias
@@ -78,7 +78,7 @@ def test_per_user_split_routes_high_volume_users_to_dedicated_models() -> None:
     # carol: 35 sign-ins (above) -> dedicated model.
     signins += _signins_for("t", "carol", 35, base)
 
-    bundle = train_per_user_bundle(
+    bundle = train_per_user_topology(
         "t", signins, contamination=0.05, random_state=42, min_samples=30
     )
     assert set(bundle.per_user_models.keys()) == {"alice", "carol"}
@@ -90,7 +90,7 @@ def test_per_user_split_routes_high_volume_users_to_dedicated_models() -> None:
 def test_per_user_with_no_cold_start_users_skips_pooled() -> None:
     base = datetime(2026, 4, 1, 9, tzinfo=UTC)
     signins = _signins_for("t", "alice", 50, base) + _signins_for("t", "bob", 50, base)
-    bundle = train_per_user_bundle(
+    bundle = train_per_user_topology(
         "t", signins, contamination=0.05, random_state=42, min_samples=30
     )
     assert bundle.cold_start_pooled is None
@@ -102,7 +102,7 @@ def test_per_user_with_only_cold_start_users_returns_pooled_only() -> None:
     signins: list[SignIn] = []
     for uid in ("a", "b", "c", "d"):
         signins += _signins_for("t", uid, 25, base)
-    bundle = train_per_user_bundle(
+    bundle = train_per_user_topology(
         "t", signins, contamination=0.05, random_state=42, min_samples=30
     )
     assert bundle.per_user_models == {}
@@ -112,8 +112,8 @@ def test_per_user_with_only_cold_start_users_returns_pooled_only() -> None:
 def test_per_user_training_is_deterministic() -> None:
     base = datetime(2026, 4, 1, 9, tzinfo=UTC)
     signins = _signins_for("t", "alice", 60, base) + _signins_for("t", "bob", 60, base)
-    b1 = train_per_user_bundle("t", signins, contamination=0.05, random_state=42, min_samples=30)
-    b2 = train_per_user_bundle("t", signins, contamination=0.05, random_state=42, min_samples=30)
+    b1 = train_per_user_topology("t", signins, contamination=0.05, random_state=42, min_samples=30)
+    b2 = train_per_user_topology("t", signins, contamination=0.05, random_state=42, min_samples=30)
     assert np.allclose(
         b1.per_user_models["alice"].named_steps["scaler"].mean_,
         b2.per_user_models["alice"].named_steps["scaler"].mean_,
@@ -127,11 +127,11 @@ def test_per_user_training_is_deterministic() -> None:
     assert b1.time_score_p90["alice"] == b2.time_score_p90["alice"]
 
 
-def test_train_per_user_bundle_raises_under_minimum_signins() -> None:
+def test_train_per_user_topology_raises_under_minimum_signins() -> None:
     base = datetime(2026, 4, 1, 9, tzinfo=UTC)
     signins = _signins_for("t", "alice", 50, base)
     with pytest.raises(ValueError, match="at least"):
-        train_per_user_bundle("t", signins, contamination=0.05, random_state=42)
+        train_per_user_topology("t", signins, contamination=0.05, random_state=42)
 
 
 def test_skip_if_registered_short_circuits(tmp_path: Path) -> None:

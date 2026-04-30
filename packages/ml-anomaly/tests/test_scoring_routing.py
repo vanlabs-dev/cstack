@@ -85,6 +85,7 @@ def test_score_batch_emits_per_user_and_cold_start_tiers(tmp_path: Path) -> None
             contamination=0.05,
             min_samples=30,
             tracking_uri=tracking_uri,
+            topology="per_user",
         )
         promote_challenger_to_champion(tenant_id, force=True, tracking_uri=tracking_uri)
         scores = score_batch(signins, tenant_id, conn, tracking_uri=tracking_uri)
@@ -123,6 +124,7 @@ def test_score_batch_falls_to_rule_only_when_no_pooled_for_unknown_user(
             contamination=0.05,
             min_samples=30,
             tracking_uri=tracking_uri,
+            topology="per_user",
         )
         promote_challenger_to_champion(tenant_id, force=True, tracking_uri=tracking_uri)
         unknown = _signins_for("eve", 5, base + timedelta(days=1))
