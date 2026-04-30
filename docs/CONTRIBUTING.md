@@ -27,6 +27,13 @@ pnpm format
 
 CI runs the `--check` variants of both formatters.
 
+The `pre-commit` hook runs `lint-staged` on staged files, applying
+`prettier --write` to `.ts` / `.tsx` / `.js` / `.jsx` / `.json` /
+`.md` / `.yaml` / `.yml` and `ruff check --fix` to `.py`. Most
+formatting drift is therefore caught before push without remembering
+to run the formatters manually. The hook only sees staged files, so
+unstaged work in progress is untouched.
+
 ## Commit messages
 
 Conventional commits, lowercase subject, no trailing period, no em dashes. Allowed types:

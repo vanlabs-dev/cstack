@@ -1,1 +1,1 @@
-# placeholder; lint-staged is added in a later sprint
+pnpm exec lint-staged
