@@ -55,6 +55,16 @@ matching policies and weak-cell findings.
 Timeline list of flagged sign-ins with SHAP top-3 feature chips, filter rail
 on the left, bulk-select with sticky action bar at the bottom.
 
+> **To capture (Sprint 6.7 follow-up):** start the dev stack
+> (`uv run signalguard-api --port 8000` and
+> `pnpm --filter signalguard-web dev` in a second shell), then
+> `uv run cstack signins extract --tenant tenant-a --scenario replay-attacks`
+> followed by `uv run cstack anomaly score --tenant tenant-a` so the feed
+> has flagged rows. Navigate to
+> `http://localhost:3000/dashboard/anomalies?tenant=00000000-aaaa-1111-1111-111111111111`,
+> capture the full viewport at 1920×1200 or larger, save as
+> `docs/images/anomaly-feed.png`.
+
 ## Sign-in anomaly drill-down
 
 <!-- screenshot pending: anomaly-drilldown.png -->
@@ -62,6 +72,11 @@ on the left, bulk-select with sticky action bar at the bottom.
 Sixty-forty split: full sign-in metadata table on the left grouped into
 sections (identity, location, network, client, auth, outcome); location card,
 SHAP waterfall, and per-user sign-in history strip on the right.
+
+> **To capture (Sprint 6.7 follow-up):** from the anomaly feed (see
+> instructions above), click into any flagged row to open the drill-down,
+> capture the full viewport at 1920×1200 or larger, save as
+> `docs/images/anomaly-drilldown.png`.
 
 ## Settings, audit rules tab
 
