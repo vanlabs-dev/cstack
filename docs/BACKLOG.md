@@ -12,17 +12,45 @@ when prioritised.
       LLM narratives against real Graph data. Replace stub ASN lookup with a
       real GeoIP database. Address synthetic-data assumptions baked into
       earlier sprints (CRLF tolerances, break-glass naming, 90-day stale
-      thresholds calibrated to fixture timing). Per-user anomaly tier
-      activation experiment: flip `CSTACK_ML_TRAINING_TOPOLOGY=per_user`
-      against the test tenant, re-measure precision/recall, decide whether
-      to flip the default. Same gate-and-measure pattern for
-      `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`. Sprint 3.5 plumbed both;
-      Sprint 3.5b gated them after synthetic regression; Sprint 7 has the
-      data to evaluate them properly.
-- [ ] **Hard time floor on the off-hours-admin rule** (e.g. UTC hour
-      strictly outside 06:00-22:00 in addition to the per-user p90
-      check). Investigate when activating in Sprint 7 if the rule's
-      false-positive rate on real admin behaviour is high.
+      thresholds calibrated to fixture timing).
+- [ ] **Sprint 7 activation experiments for gated ML paths.** First
+      live-tenant work flips `CSTACK_ML_TRAINING_TOPOLOGY=per_user`
+      against the test tenant, measures precision/recall delta vs the
+      pooled default, decides whether to flip the default. Same
+      gate-and-measure pattern for `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`.
+      Treat this as a controlled A/B-style measurement (one tenant,
+      side-by-side metrics, explicit decision criterion before the
+      sweep), not a default flip. Sprint 3.5 plumbed both; Sprint 3.5b
+      gated them after synthetic regression; Sprint 7 has the data to
+      evaluate them properly.
+- [ ] **CI env hygiene for ML feature flags.** Add a package-level
+      `conftest.py` autouse fixture in `packages/ml-anomaly/tests/` and
+      `packages/ml-features/tests/` that calls `monkeypatch.delenv` on
+      `CSTACK_ML_TRAINING_TOPOLOGY` and `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`
+      so any env-var leaks from CI runners do not silently activate
+      gated paths during tests. ~5 minute fix; do before Sprint 7.
+      Surfaced in Sprint 3.5b final report under "Gate concern".
+- [ ] **Anomaly-bootstrap idempotency in compose.** The
+      `anomaly-bootstrap` service in `infra/docker/compose.yaml`
+      retrains every up because `--skip-if-registered` does not trigger
+      when the named volume already carries an `@champion` alias.
+      Investigate whether the flag's check (does a champion alias
+      already exist for the tenant?) is correctly evaluated before the
+      train call. Sprint 6.6 logged this; it is still open.
+- [ ] **Husky pre-commit lint-staged hook.** The existing
+      `.husky/pre-commit` is a placeholder ("lint-staged is added in a
+      later sprint") and does not actually run prettier on staged files.
+      Format drift recurs whenever docs are hand-edited; Sprint 6.5
+      polish work and recent post-3.5 commits both produced drift CI
+      caught only after push. Add `lint-staged` config to
+      `package.json`, wire `.husky/pre-commit` to run
+      `npx lint-staged`, cover both `.md` and `.ts` / `.tsx` / `.json`
+      patterns. Mid-priority; not blocking Sprint 7 but worth doing
+      before too many more sprints accumulate doc drift.
+- [ ] **Capture remaining UI screenshots.** `docs/images/anomaly-feed.png`
+      and `docs/images/anomaly-drilldown.png` are still placeholders.
+      Replace `<!-- screenshot pending -->` markers in
+      `docs/SCREENSHOTS.md` and root `README.md` once captured.
 - [ ] **Replace pwsh cert-store shell-out** with native cryptography lookup.
       `packages/graph-client/src/cstack_graph_client/credentials.py` currently
       shells to PowerShell to load the cert from the Windows CurrentUser store.
@@ -32,6 +60,24 @@ when prioritised.
 
 ## Mid-term (V1 polish, conditional on demand)
 
+- [ ] **Hard time floor on the off-hours-admin rule.** When activating
+      in Sprint 7 against real data, if the false-positive rate is
+      high, add a hard 06:00-22:00 user-local-time boundary inside
+      `_off_hours_admin` in addition to the per-user time anchor. The
+      rule's design intent assumed real per-user variance; if
+      synthetic-style determinism also appears in real data the hard
+      floor protects against routine admin overnight activity firing
+      the rule.
+- [ ] **Sklearn / numpy version pinning for reproducible calibration.**
+      Sprint 3.5b found that calibration values drift between
+      sklearn / numpy versions: Sprint 3's recorded numbers shifted
+      ~0.02-0.05 on precision and ~0.04-0.11 on recall after a routine
+      library update. Pin specific versions in `pyproject.toml` and
+      decide between (a) hard pinning (`==X.Y.Z`) for ML packages so
+      calibration tables are reproducible, or (b) tolerance-aware
+      tests that do not require exact decimals. Option (a) is
+      friendlier for new contributors; option (b) keeps dep upgrades
+      cheap.
 - [ ] Streaming LLM narrative responses in the dashboard. Today the UI shows a
       skeleton during the ~10-second generation; SSE would close that gap.
 - [ ] Spend dashboard for LLM token usage. Replaces the
@@ -162,6 +208,12 @@ tenants today, scaling) rather than CIPP's broad SaaS audience.
 - [ ] Whether per-prompt customisation (one prompt template per rule_id family)
       lifts narrative quality over the single canonical template. Eval harness
       can answer this when there's tenant variety; punted for now.
+- [ ] **CI runner env-var leak surface.** Confirm whether GitHub Actions
+      or any other CI runner cstack uses sets `CSTACK_*` env vars at the
+      runner level. If yes, the `conftest.py` env-scrubbing fixture
+      (Near-term) is not sufficient and the CI workflow itself needs an
+      explicit env-cleaning step. Lower priority than the conftest
+      fixture but worth checking once.
 
 ## Other future modules
 
@@ -173,3 +225,8 @@ slot ready in the dashboard sidebar.
 - [ ] Driftwatch: tenant configuration drift detection across snapshots.
 - [ ] ChangeRadar: change-management and audit-trail correlator.
 - [ ] CompliancePulse: scheduled compliance attestation reporting.
+
+## Last reviewed
+
+Last reviewed: 2026-04-30 after Sprint 3.5b. Next review: when tenant
+access lands for Sprint 7.
