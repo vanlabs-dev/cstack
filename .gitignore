@@ -98,3 +98,5 @@ desktop.ini
 
 # design working materials
 .design/
+
+infra/docker/.env
