@@ -51,12 +51,6 @@ when prioritised.
       and `docs/images/anomaly-drilldown.png` are still placeholders.
       Replace `<!-- screenshot pending -->` markers in
       `docs/SCREENSHOTS.md` and root `README.md` once captured.
-- [ ] **Replace pwsh cert-store shell-out** with native cryptography lookup.
-      `packages/graph-client/src/cstack_graph_client/credentials.py` currently
-      shells to PowerShell to load the cert from the Windows CurrentUser store.
-- [ ] **Real ASN/GeoIP lookup**, replacing the IP-prefix stub in
-      `packages/ml-features/src/cstack_ml_features/asn_stub.py`. Maxmind or
-      ipinfo. Function signature stays the same.
 
 ## Mid-term (V1 polish, conditional on demand)
 

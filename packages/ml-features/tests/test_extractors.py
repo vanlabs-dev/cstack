@@ -63,11 +63,27 @@ def _signin(
 
 
 def test_lookup_asn_known_prefix() -> None:
-    assert lookup_asn("203.0.113.10") == "AS4648"
+    """Sprint 1's prefix table is the fixture-fallback path; without a
+    real GeoLite2 database the synthesizer's TEST-NET ranges still
+    resolve deterministically."""
+    result = lookup_asn("203.0.113.10")
+    assert result.number == 4648
+    assert result.organization is None  # fallback path doesn't supply org
 
 
 def test_lookup_asn_handles_none() -> None:
-    assert lookup_asn(None) is None
+    result = lookup_asn(None)
+    assert result.number is None
+    assert result.organization is None
+
+
+def test_lookup_asn_returns_int_for_unknown_prefix() -> None:
+    """An IP outside the synthesizer's prefix table falls through to the
+    SHA-256 hash, returning a stable integer."""
+    a = lookup_asn("198.51.100.42")
+    b = lookup_asn("198.51.100.42")
+    assert a.number == b.number
+    assert isinstance(a.number, int)
 
 
 def test_hour_of_day_sin_at_noon() -> None:
@@ -109,7 +125,7 @@ def test_country_entropy_zero_for_uniform_history() -> None:
 def test_asn_entropy_increases_with_diversity() -> None:
     h_uniform = UserHistory(
         countries_30d=(),
-        asns_30d=("AS1", "AS1", "AS1"),
+        asns_30d=(1, 1, 1),
         devices_seen=frozenset(),
         browsers_seen=frozenset(),
         os_seen=frozenset(),
@@ -119,7 +135,7 @@ def test_asn_entropy_increases_with_diversity() -> None:
     )
     h_diverse = UserHistory(
         countries_30d=(),
-        asns_30d=("AS1", "AS2", "AS3"),
+        asns_30d=(1, 2, 3),
         devices_seen=frozenset(),
         browsers_seen=frozenset(),
         os_seen=frozenset(),
@@ -134,7 +150,7 @@ def test_asn_entropy_increases_with_diversity() -> None:
 def test_is_new_country_and_asn_flags() -> None:
     h = UserHistory(
         countries_30d=("NZ",),
-        asns_30d=("AS4648",),
+        asns_30d=(4648,),
         devices_seen=frozenset(),
         browsers_seen=frozenset(),
         os_seen=frozenset(),
@@ -210,7 +226,7 @@ def test_history_rolling_state_and_determinism() -> None:
     h2 = build_history_from_signins(signins, base + td(days=15))
     assert h1 == h2
     assert "NZ" in h1.countries_30d
-    assert "AS4648" in h1.asns_30d
+    assert 4648 in h1.asns_30d
 
 
 def test_extract_features_pipeline_sane() -> None:

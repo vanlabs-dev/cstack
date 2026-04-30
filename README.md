@@ -184,6 +184,14 @@ pnpm --filter signalguard-web dev
 Optional: drop `--no-narratives` and add `ANTHROPIC_API_KEY=sk-ant-...` to `.env`
 to generate LLM narratives during the audit. Default budget is $1 per run.
 
+Optional: ASN feature extraction uses a MaxMind GeoLite2-ASN database
+when `CSTACK_GEOIP_ASN_DB` points at a valid `.mmdb` file. The Docker
+stack handles this automatically via the geoipupdate service; for
+local-from-source dev, either download the database manually (free
+account at <https://www.maxmind.com/>) and point the env var at it,
+or skip it — the ASN lookup falls back to a deterministic prefix table
+that the synthesizer's fixture IPs already use.
+
 To run the anomaly detector end-to-end against fixtures:
 
 ```sh

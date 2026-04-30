@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from cstack_schemas import SignIn
 
-from cstack_ml_features.asn_stub import lookup_asn
+from cstack_ml_features.asn import lookup_asn
 
 
 @dataclass(frozen=True)
@@ -14,10 +14,15 @@ class UserHistory:
 
     All fields are computed from sign-ins strictly before ``as_of`` so the
     feature pipeline never leaks the current event into its own history.
+
+    ``asns_30d`` carries integer AS numbers as of Sprint 6.7; the prior
+    string form ("AS4648") is gone now that the lookup module uses
+    MaxMind GeoLite2 (which yields ints) with a fixture fallback that
+    also yields ints.
     """
 
     countries_30d: tuple[str, ...]
-    asns_30d: tuple[str, ...]
+    asns_30d: tuple[int, ...]
     devices_seen: frozenset[str]
     browsers_seen: frozenset[str]
     os_seen: frozenset[str]
@@ -49,7 +54,7 @@ def build_history_from_signins(
     """Compute the rolling history view from a chronological sign-in list."""
     cutoff = as_of - timedelta(days=window_days)
     countries: list[str] = []
-    asns: list[str] = []
+    asns: list[int] = []
     devices: set[str] = set()
     browsers: set[str] = set()
     os_set: set[str] = set()
@@ -64,8 +69,8 @@ def build_history_from_signins(
             if loc is not None and loc.country_or_region:
                 countries.append(loc.country_or_region)
             asn = lookup_asn(s.ip_address)
-            if asn is not None:
-                asns.append(asn)
+            if asn.number is not None:
+                asns.append(asn.number)
         device = s.device_detail
         if device is not None:
             if device.device_id:

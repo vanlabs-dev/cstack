@@ -12,7 +12,7 @@ from collections import Counter
 
 from cstack_schemas import SignIn
 
-from cstack_ml_features.asn_stub import lookup_asn
+from cstack_ml_features.asn import lookup_asn
 from cstack_ml_features.history import UserHistory
 
 _LEGACY_CLIENT_APPS = frozenset({"Other", "ExchangeActiveSync", "AutoDiscover"})
@@ -90,9 +90,9 @@ def is_new_country_for_user(signin: SignIn, history: UserHistory) -> int:
 
 def is_new_asn_for_user(signin: SignIn, history: UserHistory) -> int:
     asn = lookup_asn(signin.ip_address)
-    if asn is None:
+    if asn.number is None:
         return 0
-    return 0 if asn in history.asns_30d else 1
+    return 0 if asn.number in history.asns_30d else 1
 
 
 def distance_from_last_signin_km(signin: SignIn, history: UserHistory) -> float:

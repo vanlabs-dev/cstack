@@ -24,6 +24,9 @@ x-cli-defaults: &cli-defaults
   # MLFLOW_ARTIFACT_ROOT pins the experiment artifact directory so
   # MLflow does not default to ``./mlruns/<run>/artifacts`` relative to
   # cwd; this is what removed the prior ``working_dir: /data`` hack.
+  #
+  # CSTACK_GEOIP_ASN_DB points at the path the geoipupdate service
+  # writes to. The cstack-geoip volume is mounted read-only here.
   environment:
     CSTACK_DATA_DIR: /data
     CSTACK_DB_PATH: /data/cstack.duckdb
@@ -32,8 +35,10 @@ x-cli-defaults: &cli-defaults
     SIGNALGUARD_API_TENANTS_FILE: /data/tenants.json
     MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
     MLFLOW_ARTIFACT_ROOT: file:///data/mlruns/artifacts
+    CSTACK_GEOIP_ASN_DB: /data/geoip/GeoLite2-ASN.mmdb
   volumes:
     - cstack-data:/data
+    - cstack-geoip:/data/geoip:ro
   restart: 'no'
 
 services:
@@ -105,6 +110,7 @@ services:
       SIGNALGUARD_API_CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
       MLFLOW_TRACKING_URI: sqlite:////data/mlruns/mlflow.sqlite
       MLFLOW_ARTIFACT_ROOT: file:///data/mlruns/artifacts
+      CSTACK_GEOIP_ASN_DB: /data/geoip/GeoLite2-ASN.mmdb
       # LLM provider keys are passthrough. CSTACK_LLM_NARRATIVE_ENABLED
       # defaults off so the stack does not spend money on every audit run.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -112,6 +118,7 @@ services:
       CSTACK_LLM_NARRATIVE_ENABLED: ${CSTACK_LLM_NARRATIVE_ENABLED:-false}
     volumes:
       - cstack-data:/data
+      - cstack-geoip:/data/geoip:ro
     depends_on:
       anomaly-bootstrap:
         condition: service_completed_successfully
@@ -142,6 +149,26 @@ services:
       api:
         condition: service_healthy
 
+  # GeoLite2-ASN database refresher. Free MaxMind account required;
+  # see infra/docker/README.md for the sign-up flow. When the env
+  # vars are unset the service exits and the cstack stack still
+  # works: ASN lookups gracefully fall back to the synthesizer-aware
+  # prefix table, which is what fixture tenants need anyway.
+  geoipupdate:
+    image: ghcr.io/maxmind/geoipupdate:v7
+    container_name: cstack-geoipupdate
+    environment:
+      GEOIPUPDATE_ACCOUNT_ID: ${MAXMIND_ACCOUNT_ID:-}
+      GEOIPUPDATE_LICENSE_KEY: ${MAXMIND_LICENSE_KEY:-}
+      GEOIPUPDATE_EDITION_IDS: GeoLite2-ASN GeoLite2-Country
+      # 168 hours = weekly refresh. Set to 0 to download once and exit.
+      GEOIPUPDATE_FREQUENCY: 168
+    volumes:
+      - cstack-geoip:/usr/share/GeoIP
+    restart: unless-stopped
+
 volumes:
   cstack-data:
     name: cstack-data
+  cstack-geoip:
+    name: cstack-geoip

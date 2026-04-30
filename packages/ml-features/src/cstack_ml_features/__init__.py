@@ -1,4 +1,4 @@
-from cstack_ml_features.asn_stub import lookup_asn
+from cstack_ml_features.asn import AsnLookup, lookup_asn
 from cstack_ml_features.history import UserHistory, build_history_from_signins, empty_history
 from cstack_ml_features.pipeline import (
     FEATURE_COLUMNS,
@@ -9,6 +9,7 @@ from cstack_ml_features.pipeline import (
 
 __all__ = [
     "FEATURE_COLUMNS",
+    "AsnLookup",
     "FeatureSet",
     "UserHistory",
     "build_history_from_signins",

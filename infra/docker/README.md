@@ -8,7 +8,8 @@ fixture tenants.
 
 ## What runs
 
-Five services, three of them one-shot bootstrap.
+Six services, three of them one-shot bootstrap, one long-running
+support container, and the api/web pair.
 
 - `cstack-fixtures` loads tenant-a, tenant-b, tenant-c fixtures into
   `/data/cstack.duckdb`.
@@ -18,6 +19,10 @@ Five services, three of them one-shot bootstrap.
   tenant-a, trains the IF model, promotes it, and scores the corpus.
 - `cstack-api` (FastAPI) on port 8000.
 - `cstack-web` (Next.js standalone) on port 3000.
+- `cstack-geoipupdate` (long-running) refreshes the MaxMind
+  GeoLite2-ASN database weekly. Optional; needs `MAXMIND_ACCOUNT_ID`
+  and `MAXMIND_LICENSE_KEY` set or the container exits early. See
+  the GeoIP database section below.
 
 The bootstrap services run sequentially via `depends_on:
 service_completed_successfully` and the api waits for them via
@@ -70,6 +75,8 @@ edit. The key knobs:
 | `ANTHROPIC_API_KEY`            | (unset)      | LLM provider key for narratives.                |
 | `OPENAI_API_KEY`               | (unset)      | Alternative LLM provider.                       |
 | `CSTACK_LLM_NARRATIVE_ENABLED` | `false`      | Flip true to generate narratives during audits. |
+| `MAXMIND_ACCOUNT_ID`           | (unset)      | GeoLite2 account id; geoipupdate runs when set. |
+| `MAXMIND_LICENSE_KEY`          | (unset)      | GeoLite2 license key (paired with account id).  |
 
 LLM keys are passthrough only; never bake them into the image. Build args
 are reserved for non-sensitive values.
@@ -95,16 +102,39 @@ are reserved for non-sensitive values.
   `docker run --rm --volumes-from cstack-api cstack-api:dev python -m cstack_cli.main ...`
   is the safest pattern; do not run a CLI subcommand while the api is up.
 
+## GeoIP database
+
+ASN feature extraction uses a MaxMind GeoLite2-ASN database when the
+geoipupdate container has populated one. Setup, in three short steps:
+
+1. Sign up free at <https://www.maxmind.com/en/geolite2/signup>. The
+   form asks for name, email, and intended use (state "personal /
+   non-production analytics"). MaxMind issues an Account ID and a
+   License Key.
+2. Set `MAXMIND_ACCOUNT_ID` and `MAXMIND_LICENSE_KEY` in your `.env`
+   file (see `.env.example`). They are read at compose-up time.
+3. `docker compose up`. The geoipupdate container runs once on
+   start, downloads `GeoLite2-ASN.mmdb` to the `cstack-geoip`
+   volume, and refreshes weekly thereafter.
+
+When the env vars are unset the geoipupdate container exits cleanly
+and the rest of the stack still runs. The ASN lookup module
+(`packages/ml-features/src/cstack_ml_features/asn.py`) falls back to
+a deterministic prefix table that resolves the synthesizer's
+TEST-NET addresses, so fixture-only flows keep producing the same
+ASN feature values.
+
+Sprint 7 (live tenant integration) is when real ASN numbers start
+mattering for anomaly detection on real Graph traffic; until then the
+GeoIP setup is optional.
+
 ## Bootstrap idempotency
 
-| service           | re-run behaviour                                                   |
-| ----------------- | ------------------------------------------------------------------ |
-| fixtures          | upsert; safe to re-run, fast                                       |
-| audit             | dedupe by `Finding.compute_id`; rerun produces zero new rows       |
-| anomaly-bootstrap | retrains every up (no skip-if-exists flag yet; tracked in BACKLOG) |
-| api               | start fresh each up                                                |
-| web               | start fresh each up                                                |
-
-The anomaly retrain on every up is documented in BACKLOG; adding a
-"skip if registered champion" guard is a small follow-up that did not
-land in Sprint 6.6.
+| service           | re-run behaviour                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| fixtures          | upsert; safe to re-run, fast                                                                |
+| audit             | dedupe by `Finding.compute_id`; rerun produces zero new rows                                |
+| anomaly-bootstrap | sentinel + `--skip-if-registered`; warm `down && up` exits in <200ms (Sprint 6.7)           |
+| api               | start fresh each up                                                                         |
+| web               | start fresh each up                                                                         |
+| geoipupdate       | runs at start when MaxMind env vars set; refreshes weekly; exits early when env vars absent |

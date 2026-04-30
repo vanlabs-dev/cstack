@@ -127,10 +127,16 @@ extractor needs, populated from sign-ins strictly before the row's
 `createdDateTime`. The strict ordering matters: features must not leak
 information about the row they describe.
 
-ASN lookup is a stub (`ml_features.asn_stub.lookup_asn`) that mirrors the
-synthesizer's IP-prefix layout. Sprint 7 swaps this for a real
-GeoIP/ASN database once we run against a live tenant; the function
-signature stays the same.
+ASN lookup uses a MaxMind GeoLite2-ASN database (`ml_features.asn.
+lookup_asn`) with a deterministic prefix-table fallback. The Docker
+stack ships a `geoipupdate` service that maintains the database on a
+weekly refresh; local-from-source dev points `CSTACK_GEOIP_ASN_DB` at
+a manually downloaded `.mmdb` or skips it (the fallback covers the
+synthesizer's TEST-NET ranges). The function returns an `AsnLookup`
+NamedTuple of `(number: int | None, organization: str | None)` so
+downstream features compare against integer AS numbers; live-tenant
+traffic gets real numbers, fixture traffic gets the synthesizer's
+deterministic ones, and the model sees a unified shape.
 
 ## Training lifecycle
 
@@ -465,8 +471,10 @@ narratives end to end.
   the IF cannot lift precision further when train and test
   distributions overlap by construction (synthetic) or when admins
   signing in overnight is genuinely ambiguous (real).
-- ASN lookup is stubbed via IP prefix matching. Real GeoIP
-  integration is Sprint 7.
+- ASN lookup is real (MaxMind GeoLite2 via the geoipupdate compose
+  service) as of Sprint 6.7, with the synthesizer-aware prefix table
+  retained as a fallback for fixture flows. Sprint 7 will exercise the
+  real path against live-tenant traffic.
 - Scoring is batch only. Real-time scoring is V2.
 - No autoencoder yet. Sprint 3.5 reassessed and decided the IF
   precision ceiling on synthetic data did not justify the autoencoder
