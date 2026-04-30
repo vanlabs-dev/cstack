@@ -625,3 +625,110 @@ recall 0.889+ on attacks, no recall-floor slip). Sprint 3.5
 infrastructure stays in place behind two env flags. Sprint 7 will
 flip `CSTACK_ML_TRAINING_TOPOLOGY=per_user` against the live test
 tenant as the first activation experiment.
+
+## Sprint 6.7 pre-Sprint-7 prep (2026-04-30)
+
+Six BACKLOG items pulled from the parked queue, all clearable without
+live-tenant access. Five closed in code; the sixth (anomaly screenshot
+capture) waits on a manual follow-up commit because Claude Code
+cannot drive a browser to capture PNGs.
+
+### What shipped
+
+- **CI env hygiene fixture.** Autouse `conftest.py` fixture in
+  `packages/ml-anomaly/tests/` and `packages/ml-features/tests/`
+  scrubs `CSTACK_ML_TRAINING_TOPOLOGY` and
+  `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED` from `os.environ` before each
+  test. Closes the Sprint 3.5b gate concern: a CI runner exporting
+  either flag at the runner level can no longer silently activate
+  gated paths in unrelated tests. Verified with a CI-style test that
+  pre-seeds both vars and asserts the fixture cleared them.
+- **Husky pre-commit lint-staged hook.** The Sprint 5/6.5 placeholder
+  `.husky/pre-commit` is now a real hook running `pnpm exec
+lint-staged`. The lint-staged config in `package.json` runs
+  `prettier --write` on staged `.ts/.tsx/.js/.jsx/.json/.md/.yaml/.yml`
+  and `uv run ruff check --fix` on staged `.py`. Verified end-to-end:
+  a markdown file with deliberate trailing-whitespace + double-spacing
+  was auto-formatted by the hook on commit. `docs/CONTRIBUTING.md`
+  documents the new behaviour.
+- **Anomaly-bootstrap idempotency in compose.** Two layers: a
+  sentinel file at `/data/.bootstrap-tenant-a-done` that the
+  bootstrap script touches on first-run completion and short-circuits
+  on subsequent ups, plus `--skip-if-registered` on the `anomaly
+train` invocation as a defensive second layer. Warm `down && up`
+  now completes the anomaly-bootstrap container in 129 ms (was the
+  full ~30 s SHAP scoring run); cold `down -v && up` still does the
+  full work and writes the sentinel.
+- **PFX cert loading replaces pwsh shell-out.** `credentials.py`
+  drops the `Export-PfxCertificate` subprocess hop; live tenants now
+  register with `--cert-pfx-path` and `--cert-pfx-password-env-var`.
+  The PFX is loaded via `cryptography.hazmat.primitives.serialization.
+pkcs12.load_key_and_certificates` and handed to azure-identity's
+  `CertificateCredential`. `TenantConfig` gained two optional fields
+  (`cert_pfx_path`, `cert_pfx_password_env_var`) and `cert_thumbprint`
+  is now optional + derived from the PFX automatically. Tests mint a
+  real self-signed PFX via `cryptography` so the loader is exercised
+  against actual PKCS#12 bytes, not mocks.
+- **Real ASN/GeoIP lookup.** `cstack_ml_features.asn` (renamed from
+  `asn_stub`) tries MaxMind GeoLite2 first, falls back to the
+  synthesizer's TEST-NET prefix table for fixture flows. Returns an
+  `AsnLookup(number: int | None, organization: str | None)`
+  NamedTuple; `UserHistory.asns_30d` is now `tuple[int, ...]`. Compose
+  gains a `geoipupdate` service that downloads the database to a new
+  `cstack-geoip` volume on a weekly refresh; `MAXMIND_ACCOUNT_ID` and
+  `MAXMIND_LICENSE_KEY` env vars are documented in
+  `infra/docker/.env.example`. When the env vars are unset, the
+  geoipupdate service exits early and the rest of the stack falls
+  through to the prefix table — fixture flows still produce
+  deterministic ASNs.
+- **Anomaly screenshot capture instructions.** `docs/SCREENSHOTS.md`
+  gained explicit capture steps (commands to seed the dashboard with
+  flagged rows, exact dashboard URL, target resolution, target file
+  path) for the two anomaly screens. The user captures the PNGs in a
+  separate manual commit.
+
+### Compose timings
+
+| step                                  | timing |
+| ------------------------------------- | ------ |
+| cold `down -v && up` to api healthy   | ~75 s  |
+| warm `down && up` to api healthy      | ~25 s  |
+| warm anomaly-bootstrap container only | 129 ms |
+
+The ~50 s warm-up improvement comes entirely from the anomaly-bootstrap
+short-circuit; fixtures and audit are still per-up and dominated by
+container startup overhead rather than work done.
+
+### Cert-store path choice
+
+Path A (PFX file on disk) over Path B (preserve pwsh as fallback).
+The PowerShell shell-out fought with Execution Policy on multiple dev
+machines and required Windows-only handling; Path A makes credential
+loading cross-platform with one explicit onboarding step ("export the
+cert as PFX, save here") that's clearer than the prior magic.
+
+### MaxMind license setup
+
+Setup is manual and one-time. The user signs up at
+<https://www.maxmind.com/en/geolite2/signup>, gets an Account ID and
+License Key, sets them in `infra/docker/.env`. When unset, the stack
+still works and ASN features fall back to the synthesizer's prefix
+table. Sprint 7 will exercise the real MaxMind path against live
+tenant traffic.
+
+### Concern: CI runner env-var leak surface
+
+The conftest fixture closes the test-time leak. A CI workflow that
+exports `CSTACK_ML_*` at the runner level would still affect the
+`anomaly-bootstrap` step in compose tests (if any) or any
+non-test code path that reads the env. The Sprint 3.5b BACKLOG entry
+"CI runner env-var leak surface" tracks this; it stays open.
+
+### Verdict
+
+Five of six BACKLOG items closed. Sprint 7 inherits a clean substrate:
+no pwsh subprocess in the cert-auth path, real GeoIP available, no
+silent env-var leaks into tests, pre-commit catches doc drift, warm
+compose restarts in seconds. The PFX onboarding step is documented;
+the MaxMind sign-up step is documented. Sprint 7 starts on integration
+logic, not infrastructure plumbing.

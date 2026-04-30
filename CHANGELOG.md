@@ -7,6 +7,40 @@ validation.
 
 ## [Unreleased]
 
+### Sprint 6.7: Pre-Sprint-7 prep
+
+- **PFX cert authentication** replaces the PowerShell shell-out in
+  `graph-client/credentials.py`. Live tenants now register with
+  `--cert-pfx-path` and `--cert-pfx-password-env-var`; the PFX is
+  loaded via `cryptography.hazmat.primitives.serialization.pkcs12`.
+  `TenantConfig` gained `cert_pfx_path` and
+  `cert_pfx_password_env_var` fields; `cert_thumbprint` is now
+  optional and derived from the PFX automatically.
+- **MaxMind GeoLite2 ASN lookup** replaces the IP-prefix stub in
+  `cstack_ml_features.asn`. Real ASN numbers come from the GeoLite2
+  database when the new `geoipupdate` compose service has populated
+  it (free MaxMind account + license required); a synthesizer-aware
+  prefix-table fallback keeps fixture flows producing deterministic
+  ASNs when the database is absent. `UserHistory.asns_30d` is now
+  `tuple[int, ...]`.
+- **Anomaly-bootstrap idempotency** in compose. A sentinel file plus
+  `--skip-if-registered` short-circuits warm restarts: the
+  `anomaly-bootstrap` container exits in 129 ms when the volume has
+  data, vs the prior ~30 s SHAP scoring loop on every up.
+- **Husky pre-commit lint-staged hook** is real. Staged `.md` /
+  `.ts` / `.tsx` / `.js` / `.jsx` / `.json` / `.yaml` / `.yml` files
+  get `prettier --write`; staged `.py` gets `uv run ruff check
+--fix`. Doc drift is now caught at commit time rather than after
+  CI.
+- **CI env-flag isolation** via autouse `conftest.py` fixture in the
+  ml-anomaly and ml-features test suites. Closes the Sprint 3.5b
+  gate concern: a CI runner exporting `CSTACK_ML_TRAINING_TOPOLOGY`
+  or `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED` at the runner level can no
+  longer silently activate gated paths in unrelated tests.
+- **Anomaly screenshot capture instructions** added to
+  `docs/SCREENSHOTS.md`; the actual PNGs are a manual follow-up
+  commit.
+
 ### Sprint 3.5b: Restore Sprint 3 calibration as default; gate per-user behind flags
 
 - **`CSTACK_ML_TRAINING_TOPOLOGY`** (default `pooled`) selects between

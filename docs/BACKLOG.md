@@ -9,10 +9,11 @@ when prioritised.
 
 - [ ] **Sprint 7: Live tenant integration.** Wire signalguard to a real client
       tenant via the existing certificate-auth path. Calibrate audit rules and
-      LLM narratives against real Graph data. Replace stub ASN lookup with a
-      real GeoIP database. Address synthetic-data assumptions baked into
-      earlier sprints (CRLF tolerances, break-glass naming, 90-day stale
-      thresholds calibrated to fixture timing).
+      LLM narratives against real Graph data. Address synthetic-data assumptions
+      baked into earlier sprints (CRLF tolerances, break-glass naming, 90-day
+      stale thresholds calibrated to fixture timing). Sprint 6.7 cleared the
+      infrastructure dependencies (PFX cert auth, MaxMind GeoLite2 ASN, env-flag
+      isolation, lint-staged hook).
 - [ ] **Sprint 7 activation experiments for gated ML paths.** First
       live-tenant work flips `CSTACK_ML_TRAINING_TOPOLOGY=per_user`
       against the test tenant, measures precision/recall delta vs the
@@ -23,34 +24,11 @@ when prioritised.
       sweep), not a default flip. Sprint 3.5 plumbed both; Sprint 3.5b
       gated them after synthetic regression; Sprint 7 has the data to
       evaluate them properly.
-- [ ] **CI env hygiene for ML feature flags.** Add a package-level
-      `conftest.py` autouse fixture in `packages/ml-anomaly/tests/` and
-      `packages/ml-features/tests/` that calls `monkeypatch.delenv` on
-      `CSTACK_ML_TRAINING_TOPOLOGY` and `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`
-      so any env-var leaks from CI runners do not silently activate
-      gated paths during tests. ~5 minute fix; do before Sprint 7.
-      Surfaced in Sprint 3.5b final report under "Gate concern".
-- [ ] **Anomaly-bootstrap idempotency in compose.** The
-      `anomaly-bootstrap` service in `infra/docker/compose.yaml`
-      retrains every up because `--skip-if-registered` does not trigger
-      when the named volume already carries an `@champion` alias.
-      Investigate whether the flag's check (does a champion alias
-      already exist for the tenant?) is correctly evaluated before the
-      train call. Sprint 6.6 logged this; it is still open.
-- [ ] **Husky pre-commit lint-staged hook.** The existing
-      `.husky/pre-commit` is a placeholder ("lint-staged is added in a
-      later sprint") and does not actually run prettier on staged files.
-      Format drift recurs whenever docs are hand-edited; Sprint 6.5
-      polish work and recent post-3.5 commits both produced drift CI
-      caught only after push. Add `lint-staged` config to
-      `package.json`, wire `.husky/pre-commit` to run
-      `npx lint-staged`, cover both `.md` and `.ts` / `.tsx` / `.json`
-      patterns. Mid-priority; not blocking Sprint 7 but worth doing
-      before too many more sprints accumulate doc drift.
 - [ ] **Capture remaining UI screenshots.** `docs/images/anomaly-feed.png`
       and `docs/images/anomaly-drilldown.png` are still placeholders.
-      Replace `<!-- screenshot pending -->` markers in
-      `docs/SCREENSHOTS.md` and root `README.md` once captured.
+      Sprint 6.7 added explicit capture instructions in
+      `docs/SCREENSHOTS.md`; the actual PNG capture is a manual
+      follow-up commit.
 
 ## Mid-term (V1 polish, conditional on demand)
 
@@ -220,7 +198,24 @@ slot ready in the dashboard sidebar.
 - [ ] ChangeRadar: change-management and audit-trail correlator.
 - [ ] CompliancePulse: scheduled compliance attestation reporting.
 
+## Recently closed (Sprint 6.7)
+
+Five items closed; see `docs/SPRINT_NOTES.md` Sprint 6.7 for the full
+breakdown.
+
+- CI env hygiene for ML feature flags (autouse `conftest.py` fixture
+  in both ML test suites)
+- Husky pre-commit lint-staged hook (`.md` / `.ts` / `.py` / etc.
+  formatted on staged files at commit time)
+- Anomaly-bootstrap idempotency in compose (sentinel + `--skip-if-
+registered`; warm restarts complete in <200 ms)
+- Replace pwsh cert-store shell-out with native cryptography
+  (PFX file on disk via `cryptography.hazmat.primitives.serialization.
+pkcs12`; `TenantConfig.cert_pfx_path`)
+- Real ASN/GeoIP lookup (MaxMind GeoLite2 + geoipupdate compose
+  service; synthesizer-aware fallback for fixture flows)
+
 ## Last reviewed
 
-Last reviewed: 2026-04-30 after Sprint 3.5b. Next review: when tenant
+Last reviewed: 2026-04-30 after Sprint 6.7. Next review: when tenant
 access lands for Sprint 7.
