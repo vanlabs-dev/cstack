@@ -29,6 +29,6 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md,yaml,yml}": "prettier --write",
-    "*.py": "ruff check --fix"
+    "*.py": "uv run ruff check --fix"
   }
 }

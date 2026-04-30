@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import cast
 
 import click
@@ -18,7 +20,7 @@ from cstack_fixtures import (
 from cstack_fixtures import (
     load_fixture as fixtures_load_helper,
 )
-from cstack_graph_client import build_client, load_certificate_credential
+from cstack_graph_client import build_client, load_certificate_credential_for_tenant
 from cstack_schemas import TenantApiKey, TenantConfig
 from cstack_storage import (
     connection_scope,
@@ -82,7 +84,21 @@ def tenant() -> None:
 @click.option("--tenant-id", required=True, prompt=True, help="Entra tenant UUID.")
 @click.option("--display-name", required=True, prompt=True)
 @click.option("--client-id", required=True, prompt=True, help="App registration client UUID.")
-@click.option("--cert-thumbprint", required=True, prompt=True, help="SHA-1 hex.")
+@click.option(
+    "--cert-pfx-path",
+    required=True,
+    prompt=True,
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Path to the PKCS#12 PFX bundle (cert + private key) for live auth.",
+)
+@click.option(
+    "--cert-pfx-password-env-var",
+    default=None,
+    help=(
+        "Name of the env var that holds the PFX password. Pass nothing for "
+        "an unencrypted PFX. The password itself is never persisted."
+    ),
+)
 @click.option("--cert-subject", default="CN=cstack-signalguard", show_default=True)
 @click.pass_context
 def tenant_add(
@@ -90,17 +106,40 @@ def tenant_add(
     tenant_id: str,
     display_name: str,
     client_id: str,
-    cert_thumbprint: str,
+    cert_pfx_path: Path,
+    cert_pfx_password_env_var: str | None,
     cert_subject: str,
 ) -> None:
-    """Register a live tenant. Appends to tenants.json and the DB tenants table."""
+    """Register a live tenant. Appends to tenants.json and the DB tenants table.
+
+    Sprint 6.7: live tenants now authenticate via a PFX file on disk
+    instead of the Windows cert store + PowerShell shell-out. The
+    thumbprint is derived from the PFX and recorded for diagnostic
+    cross-reference; the PFX is the source of truth at runtime.
+    """
+    if not cert_pfx_path.exists():
+        raise click.ClickException(f"PFX file not found: {cert_pfx_path}")
+    pfx_password: str | None = None
+    if cert_pfx_password_env_var is not None:
+        pfx_password = os.environ.get(cert_pfx_password_env_var)
+        if pfx_password is None:
+            raise click.ClickException(
+                f"env var {cert_pfx_password_env_var!r} is unset; "
+                "set it to the PFX password before running this command"
+            )
+    from cstack_graph_client import load_pfx_certificate_thumbprint
+
+    derived_thumbprint = load_pfx_certificate_thumbprint(cert_pfx_path, pfx_password)
+
     settings = _settings(ctx)
     new = TenantConfig(
         tenant_id=tenant_id,
         display_name=display_name,
         client_id=client_id,
-        cert_thumbprint=cert_thumbprint,
+        cert_thumbprint=derived_thumbprint,
         cert_subject=cert_subject,
+        cert_pfx_path=cert_pfx_path,
+        cert_pfx_password_env_var=cert_pfx_password_env_var,
         added_at=datetime.now(UTC),
         is_fixture=False,
     )
@@ -113,7 +152,7 @@ def tenant_add(
     with connection_scope(settings.db_path) as conn:
         run_migrations(conn)
         register_tenant(conn, new)
-    click.echo(f"registered tenant {display_name} ({tenant_id})")
+    click.echo(f"registered tenant {display_name} ({tenant_id}); thumbprint {derived_thumbprint}")
 
 
 @tenant.command("list")
@@ -217,9 +256,7 @@ def tenant_verify(ctx: click.Context, identifier: str) -> None:
         return
 
     async def _run() -> None:
-        credential = load_certificate_credential(
-            target.tenant_id, target.client_id, target.cert_thumbprint
-        )
+        credential = load_certificate_credential_for_tenant(target)
         client = build_client(credential)
         org = await client.organization.get()
         if org is None:

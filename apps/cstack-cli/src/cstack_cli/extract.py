@@ -20,7 +20,7 @@ from cstack_graph_client import (
     fetch_all_groups,
     fetch_all_named_locations,
     fetch_all_users,
-    load_certificate_credential,
+    load_certificate_credential_for_tenant,
 )
 from cstack_schemas import (
     ConditionalAccessPolicy,
@@ -149,9 +149,7 @@ def _resolve_payload(
 
 async def _fetch_live(tenant: TenantConfig, resource: str) -> list[dict[str, Any]]:
     """Pull a single resource from Microsoft Graph."""
-    credential = load_certificate_credential(
-        tenant.tenant_id, tenant.client_id, tenant.cert_thumbprint
-    )
+    credential = load_certificate_credential_for_tenant(tenant)
     client = build_client(credential)
     if resource == "ca-policies":
         return await fetch_all_ca_policies(client)

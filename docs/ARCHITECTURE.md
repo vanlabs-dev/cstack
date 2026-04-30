@@ -27,7 +27,10 @@ runs as an independent service or library.
 - `packages/storage/` DuckDB connection management, SQL migrations, raw and normalised
   layer helpers, plus the `findings` table.
 - `packages/graph-client/` Typed wrapper around `msgraph-sdk` with certificate auth and
-  pagination.
+  pagination. Sprint 6.7 dropped the Windows-cert-store + PowerShell shell-out and
+  reads the cert + private key from a PFX file on disk; the PFX path lives in
+  `TenantConfig.cert_pfx_path` and the password is read at runtime from the env var
+  named in `cert_pfx_password_env_var`.
 - `packages/fixtures/` Synthetic Graph corpus (three tenants) plus a loader that
   hydrates DuckDB exactly as the live extractor would. `metadata.json` carries the
   calibrated audit expectations the integration tests assert against.

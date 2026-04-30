@@ -40,7 +40,7 @@ def test_verify_live_tenant_calls_graph(cli_env: dict[str, str]) -> None:
     fake_client.organization.get = AsyncMock(return_value=fake_org)
 
     with (
-        patch("cstack_cli.main.load_certificate_credential"),
+        patch("cstack_cli.main.load_certificate_credential_for_tenant"),
         patch("cstack_cli.main.build_client", return_value=fake_client),
     ):
         runner = CliRunner()

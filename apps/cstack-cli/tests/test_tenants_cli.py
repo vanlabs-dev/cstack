@@ -1,12 +1,13 @@
+from pathlib import Path
+
 from click.testing import CliRunner
 from cstack_cli.main import cli
 
 VALID_TENANT_ID = "11111111-1111-1111-1111-111111111111"
 VALID_CLIENT_ID = "22222222-2222-2222-2222-222222222222"
-VALID_THUMB = "A" * 40
 
 
-def test_tenant_add_then_list(cli_env: dict[str, str]) -> None:
+def test_tenant_add_then_list(cli_env: dict[str, str], test_pfx: Path) -> None:
     runner = CliRunner()
     add = runner.invoke(
         cli,
@@ -19,8 +20,8 @@ def test_tenant_add_then_list(cli_env: dict[str, str]) -> None:
             "alpha",
             "--client-id",
             VALID_CLIENT_ID,
-            "--cert-thumbprint",
-            VALID_THUMB,
+            "--cert-pfx-path",
+            str(test_pfx),
         ],
         env=cli_env,
     )
@@ -32,7 +33,7 @@ def test_tenant_add_then_list(cli_env: dict[str, str]) -> None:
     assert VALID_TENANT_ID in listing.output
 
 
-def test_tenant_remove(cli_env: dict[str, str]) -> None:
+def test_tenant_remove(cli_env: dict[str, str], test_pfx: Path) -> None:
     runner = CliRunner()
     runner.invoke(
         cli,
@@ -45,8 +46,8 @@ def test_tenant_remove(cli_env: dict[str, str]) -> None:
             "alpha",
             "--client-id",
             VALID_CLIENT_ID,
-            "--cert-thumbprint",
-            VALID_THUMB,
+            "--cert-pfx-path",
+            str(test_pfx),
         ],
         env=cli_env,
     )
@@ -58,10 +59,9 @@ def test_tenant_remove(cli_env: dict[str, str]) -> None:
     assert "alpha" not in listing.output
 
 
-def test_tenant_create_api_key_persists_hash_only(cli_env: dict[str, str]) -> None:
+def test_tenant_create_api_key_persists_hash_only(cli_env: dict[str, str], test_pfx: Path) -> None:
     import hashlib
     import json
-    from pathlib import Path
 
     runner = CliRunner()
     runner.invoke(
@@ -75,8 +75,8 @@ def test_tenant_create_api_key_persists_hash_only(cli_env: dict[str, str]) -> No
             "alpha",
             "--client-id",
             VALID_CLIENT_ID,
-            "--cert-thumbprint",
-            VALID_THUMB,
+            "--cert-pfx-path",
+            str(test_pfx),
         ],
         env=cli_env,
     )
