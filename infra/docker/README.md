@@ -64,12 +64,12 @@ reuses the existing data.
 Copy `.env.example` to `.env` (in this directory or the repo root) and
 edit. The key knobs:
 
-| variable                          | default       | purpose                                           |
-| --------------------------------- | ------------- | ------------------------------------------------- |
-| `SIGNALGUARD_API_DEV_API_KEY`     | `dev-secret`  | The dashboard API key gate accepts this value.    |
-| `ANTHROPIC_API_KEY`               | (unset)       | LLM provider key for narratives.                  |
-| `OPENAI_API_KEY`                  | (unset)       | Alternative LLM provider.                         |
-| `CSTACK_LLM_NARRATIVE_ENABLED`    | `false`       | Flip true to generate narratives during audits.   |
+| variable                       | default      | purpose                                         |
+| ------------------------------ | ------------ | ----------------------------------------------- |
+| `SIGNALGUARD_API_DEV_API_KEY`  | `dev-secret` | The dashboard API key gate accepts this value.  |
+| `ANTHROPIC_API_KEY`            | (unset)      | LLM provider key for narratives.                |
+| `OPENAI_API_KEY`               | (unset)      | Alternative LLM provider.                       |
+| `CSTACK_LLM_NARRATIVE_ENABLED` | `false`      | Flip true to generate narratives during audits. |
 
 LLM keys are passthrough only; never bake them into the image. Build args
 are reserved for non-sensitive values.
@@ -97,13 +97,13 @@ are reserved for non-sensitive values.
 
 ## Bootstrap idempotency
 
-| service              | re-run behaviour                                                |
-| -------------------- | --------------------------------------------------------------- |
-| fixtures             | upsert; safe to re-run, fast                                    |
-| audit                | dedupe by `Finding.compute_id`; rerun produces zero new rows    |
-| anomaly-bootstrap    | retrains every up (no skip-if-exists flag yet; tracked in BACKLOG) |
-| api                  | start fresh each up                                             |
-| web                  | start fresh each up                                             |
+| service           | re-run behaviour                                                   |
+| ----------------- | ------------------------------------------------------------------ |
+| fixtures          | upsert; safe to re-run, fast                                       |
+| audit             | dedupe by `Finding.compute_id`; rerun produces zero new rows       |
+| anomaly-bootstrap | retrains every up (no skip-if-exists flag yet; tracked in BACKLOG) |
+| api               | start fresh each up                                                |
+| web               | start fresh each up                                                |
 
 The anomaly retrain on every up is documented in BACKLOG; adding a
 "skip if registered champion" guard is a small follow-up that did not

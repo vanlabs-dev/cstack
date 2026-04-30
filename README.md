@@ -68,7 +68,7 @@ The cstack toolkit currently ships one tool with more planned.
 - **SignalGuard** identity security: CA audit + per-tenant behavioural sign-in
   anomaly detection with explainable ML scoring and LLM-narrated findings.
   Complete (against fixtures).
-- *Future:* LicenseLens, Driftwatch, ChangeRadar, CompliancePulse. Planned for
+- _Future:_ LicenseLens, Driftwatch, ChangeRadar, CompliancePulse. Planned for
   V1.
 
 ## Architecture at a glance

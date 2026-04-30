@@ -45,18 +45,12 @@ export function ExpandedFinding({ finding, isDev }: ExpandedFindingProps) {
         {summary ? (
           <p className="text-13 leading-[1.55] text-fg">{summary}</p>
         ) : (
-          <p className="text-13 italic text-fg-tertiary">
-            (rule-supplied summary unavailable)
-          </p>
+          <p className="text-13 italic text-fg-tertiary">(rule-supplied summary unavailable)</p>
         )}
       </Section>
 
       <Section eyebrow="Narrative">
-        <FindingNarrative
-          tenantId={finding.tenant_id}
-          findingId={finding.id}
-          isDev={isDev}
-        />
+        <FindingNarrative tenantId={finding.tenant_id} findingId={finding.id} isDev={isDev} />
       </Section>
 
       <Section eyebrow="Affected objects">

@@ -209,13 +209,13 @@ makes the system economical at scale.
 `cstack-llm-eval` ships rubric-based LLM-as-judge with explicit bias
 mitigation. Five criteria, weighted:
 
-| criterion          | weight | description                                                             |
-| ------------------ | ------ | ----------------------------------------------------------------------- |
-| accuracy           | 1.5    | Does the narrative reflect evidence and rule? Penalises hallucinations. |
-| actionability      | 1.5    | Can an engineer act on it? Penalises hedging.                           |
-| concision          | 1.0    | Is it under 250 words and on-topic? Penalises padding.                  |
-| format_compliance  | 1.0    | Four sections present, sentence case, no em dashes.                     |
-| tone               | 0.5    | Triage-grade engineer voice; penalises marketing tone, emoji.           |
+| criterion         | weight | description                                                             |
+| ----------------- | ------ | ----------------------------------------------------------------------- |
+| accuracy          | 1.5    | Does the narrative reflect evidence and rule? Penalises hallucinations. |
+| actionability     | 1.5    | Can an engineer act on it? Penalises hedging.                           |
+| concision         | 1.0    | Is it under 250 words and on-topic? Penalises padding.                  |
+| format_compliance | 1.0    | Four sections present, sentence case, no em dashes.                     |
+| tone              | 0.5    | Triage-grade engineer voice; penalises marketing tone, emoji.           |
 
 The aggregate is a weighted mean over the [min, max] window of each
 criterion (default 1-5), normalised to 0-100.
@@ -287,10 +287,10 @@ Full calibration run on 2026-04-29 against the live Anthropic API.
 
 ### Pairwise
 
-| comparison           | a wins | b wins | ties | inconsistent_swaps | winrate(b) |
-| -------------------- | ------ | ------ | ---- | ------------------ | ---------- |
-| reference vs v1      | 0      | 20     | 0    | 0                  | 1.000      |
-| v1 vs v2             | 14     | 0      | 6    | 6                  | 0.150      |
+| comparison      | a wins | b wins | ties | inconsistent_swaps | winrate(b) |
+| --------------- | ------ | ------ | ---- | ------------------ | ---------- |
+| reference vs v1 | 0      | 20     | 0    | 0                  | 1.000      |
+| v1 vs v2        | 14     | 0      | 6    | 6                  | 0.150      |
 
 ### Decision
 
@@ -318,7 +318,7 @@ post-calibration smoke tests, against a $20 hard cap.
 - **No live-tenant calibration.** All eval and smoke tests use synthetic
   fixture data. Sprint 7 lands real-tenant validation.
 - **Token usage logged to file, not a UI.** The `cstack narrative
-  cache-stats` command is the only visible spend tracker. A spend
+cache-stats` command is the only visible spend tracker. A spend
   dashboard is V2.
 - **Custom fine-tuned models are not on the roadmap.** Once enough
   eval-passing narratives accumulate, a fine-tune is plausible, but

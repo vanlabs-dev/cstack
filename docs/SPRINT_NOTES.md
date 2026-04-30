@@ -307,8 +307,8 @@ end against the live Anthropic API.
 
 Five-criterion rubric scoring, weighted aggregate normalised to 0-100.
 
-| prompt | accuracy | actionability | concision | format_compliance | tone | mean |
-| ------ | -------- | ------------- | --------- | ----------------- | ---- | ---- |
+| prompt | accuracy | actionability | concision | format_compliance | tone | mean  |
+| ------ | -------- | ------------- | --------- | ----------------- | ---- | ----- |
 | v1     | 5.00     | 5.00          | 4.00      | 5.00              | 5.00 | 95.45 |
 | v2     | 4.95     | 5.00          | 4.85      | 5.00              | 5.00 | 98.98 |
 
@@ -317,10 +317,10 @@ Pointwise alone, v2 scored higher because the harder concision floor
 
 ### Pairwise comparisons
 
-| comparison           | a wins | b wins | ties | inconsistent_swaps | winrate(b) |
-| -------------------- | ------ | ------ | ---- | ------------------ | ---------- |
-| reference vs v1      | 0      | 20     | 0    | 0                  | 1.000      |
-| v1 vs v2             | 14     | 0      | 6    | 6                  | 0.150      |
+| comparison      | a wins | b wins | ties | inconsistent_swaps | winrate(b) |
+| --------------- | ------ | ------ | ---- | ------------------ | ---------- |
+| reference vs v1 | 0      | 20     | 0    | 0                  | 1.000      |
+| v1 vs v2        | 14     | 0      | 6    | 6                  | 0.150      |
 
 The reference-vs-v1 pairwise is decisive: the LLM-generated v1 narrative
 beats every hand-written reference in the golden set, with no
@@ -398,13 +398,13 @@ final report.
 
 Tested two passes with `down` (data preserved) between them:
 
-| service           | first up | warm up | repeat behaviour                      |
-| ----------------- | -------- | ------- | ------------------------------------- |
-| fixtures          | OK       | OK      | INSERT OR REPLACE; row counts stable  |
-| audit             | OK       | OK      | dedupe via Finding.compute_id; 0 new  |
-| anomaly-bootstrap | OK       | OK      | retrains v3/v4/v5 on each restart     |
-| api               | healthy  | healthy | startup ~5s                           |
-| web               | started  | started | startup ~3s                           |
+| service           | first up | warm up | repeat behaviour                     |
+| ----------------- | -------- | ------- | ------------------------------------ |
+| fixtures          | OK       | OK      | INSERT OR REPLACE; row counts stable |
+| audit             | OK       | OK      | dedupe via Finding.compute_id; 0 new |
+| anomaly-bootstrap | OK       | OK      | retrains v3/v4/v5 on each restart    |
+| api               | healthy  | healthy | startup ~5s                          |
+| web               | started  | started | startup ~3s                          |
 
 Warm-up wall time was 1m 51s, dominated by the anomaly bootstrap
 running the SHAP explainer loop (~29s) and re-registering the model
@@ -418,7 +418,6 @@ Adding a `--skip-if-registered` flag to `cstack anomaly train` would
 let the bootstrap exit fast on warm starts; tracked as a near-term
 BACKLOG item so it can land alongside Sprint 3.5's per-user IF work
 where the same code path gets reorganised.
-
 
 ## Sprint 3.5 per-user anomaly + off-hours admin (2026-04-30)
 
@@ -456,24 +455,24 @@ path.
 
 ### Calibration outcome
 
-| tenant   | scenario       | precision | recall | F1    | FPR   | delta vs Sprint 3 |
-| -------- | -------------- | --------- | ------ | ----- | ----- | ----------------- |
+| tenant   | scenario       | precision | recall | F1    | FPR   | delta vs Sprint 3  |
+| -------- | -------------- | --------- | ------ | ----- | ----- | ------------------ |
 | tenant-a | replay-attacks | 0.209     | 0.852  | 0.336 | 0.025 | -0.089 P, -0.074 R |
 | tenant-a | noisy          | 0.205     | 0.889  | 0.333 | 0.025 | -0.055 P, -0.037 R |
 | tenant-b | replay-attacks | 0.235     | 0.852  | 0.368 | 0.026 | -0.040 P, +0.037 R |
-| tenant-b | noisy          | 0.225     | 0.852  | 0.357 | 0.027 | -0.055 P,  0.000 R |
+| tenant-b | noisy          | 0.225     | 0.852  | 0.357 | 0.027 | -0.055 P, 0.000 R  |
 | tenant-c | replay-attacks | 0.209     | 0.852  | 0.336 | 0.020 | -0.064 P, -0.037 R |
 | tenant-c | noisy          | 0.180     | 0.741  | 0.290 | 0.020 | -0.062 P, -0.111 R |
 
 Layer attribution on tenant-a x replay-attacks (same trained bundle,
 different layer subsets):
 
-| layers                            | precision | recall | F1    |
-| --------------------------------- | --------- | ------ | ----- |
-| per-user IF only                  | 0.057     | 0.074  | 0.065 |
-| per-user + cold-start (no rules)  | 0.057     | 0.074  | 0.065 |
-| per-user + pooled + hybrid rules  | 0.224     | 0.815  | 0.352 |
-| full (+ off-hours-admin)          | 0.209     | 0.852  | 0.336 |
+| layers                           | precision | recall | F1    |
+| -------------------------------- | --------- | ------ | ----- |
+| per-user IF only                 | 0.057     | 0.074  | 0.065 |
+| per-user + cold-start (no rules) | 0.057     | 0.074  | 0.065 |
+| per-user + pooled + hybrid rules | 0.224     | 0.815  | 0.352 |
+| full (+ off-hours-admin)         | 0.209     | 0.852  | 0.336 |
 
 The four hybrid rules drive recall from 0.07 to 0.82. The
 off-hours-admin rule adds the 0.85 plateau by closing the Sprint 3
@@ -571,13 +570,13 @@ default if the lift materialises.
 Restored default config (pooled + 4 hybrid rules + off-hours-admin
 rule off) sweep against all 9 (tenant x scenario) combinations:
 
-| tenant   | scenario       | precision | recall | F1    | FPR   | Sprint 3 P/R/F1 | dP    | dR    | dF1   |
-| -------- | -------------- | --------- | ------ | ----- | ----- | --------------- | ----- | ----- | ----- |
-| tenant-a | replay-attacks | 0.248     | 0.926  | 0.391 | 0.022 | 0.298/0.926/0.450 | -0.050 |  0.000 | -0.059 |
-| tenant-a | noisy          | 0.240     | 0.926  | 0.382 | 0.021 | 0.260/0.926/0.407 | -0.020 |  0.000 | -0.025 |
-| tenant-b | replay-attacks | 0.275     | 0.926  | 0.424 | 0.023 | 0.275/0.815/0.411 |  0.000 | +0.111 | +0.013 |
+| tenant   | scenario       | precision | recall | F1    | FPR   | Sprint 3 P/R/F1   | dP     | dR     | dF1    |
+| -------- | -------------- | --------- | ------ | ----- | ----- | ----------------- | ------ | ------ | ------ |
+| tenant-a | replay-attacks | 0.248     | 0.926  | 0.391 | 0.022 | 0.298/0.926/0.450 | -0.050 | 0.000  | -0.059 |
+| tenant-a | noisy          | 0.240     | 0.926  | 0.382 | 0.021 | 0.260/0.926/0.407 | -0.020 | 0.000  | -0.025 |
+| tenant-b | replay-attacks | 0.275     | 0.926  | 0.424 | 0.023 | 0.275/0.815/0.411 | 0.000  | +0.111 | +0.013 |
 | tenant-b | noisy          | 0.275     | 0.926  | 0.424 | 0.023 | 0.280/0.852/0.422 | -0.005 | +0.074 | +0.002 |
-| tenant-c | replay-attacks | 0.245     | 0.889  | 0.384 | 0.017 | 0.273/0.889/0.417 | -0.028 |  0.000 | -0.033 |
+| tenant-c | replay-attacks | 0.245     | 0.889  | 0.384 | 0.017 | 0.273/0.889/0.417 | -0.028 | 0.000  | -0.033 |
 | tenant-c | noisy          | 0.255     | 0.889  | 0.397 | 0.016 | 0.242/0.852/0.377 | +0.013 | +0.037 | +0.020 |
 
 Strict +/- 0.02 tolerance is exceeded on several scenarios; the deltas

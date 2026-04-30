@@ -74,7 +74,7 @@ V1 trained one pooled Isolation Forest per tenant on the last
 pipeline that handles users below the threshold. The bundle is the
 unit of MLflow registration: one registered model per tenant
 (`signalguard-anomaly-{tenant_id}`), one `model.joblib` artefact per
-version. Per-user pipelines are *not* registered separately; that
+version. Per-user pipelines are _not_ registered separately; that
 would multiply registry entries by N users with no operational
 benefit.
 
@@ -337,20 +337,20 @@ including tenant-c noisy that Sprint 3.5 dropped to 0.741. Precision
 
 ### Sprint 3.5 vs Sprint 3.5b
 
-| scenario              | metric    | 3.5 (per-user, rule on) | 3.5b (pooled, rule off) | delta |
-| --------------------- | --------- | ----------------------- | ----------------------- | ----- |
-| tenant-a/replay       | precision | 0.209                   | 0.248                   | +0.039 |
-| tenant-a/replay       | recall    | 0.852                   | 0.926                   | +0.074 |
-| tenant-a/noisy        | precision | 0.205                   | 0.240                   | +0.035 |
-| tenant-a/noisy        | recall    | 0.889                   | 0.926                   | +0.037 |
-| tenant-b/replay       | precision | 0.235                   | 0.275                   | +0.040 |
-| tenant-b/replay       | recall    | 0.852                   | 0.926                   | +0.074 |
-| tenant-b/noisy        | precision | 0.225                   | 0.275                   | +0.050 |
-| tenant-b/noisy        | recall    | 0.852                   | 0.926                   | +0.074 |
-| tenant-c/replay       | precision | 0.209                   | 0.245                   | +0.036 |
-| tenant-c/replay       | recall    | 0.852                   | 0.889                   | +0.037 |
-| tenant-c/noisy        | precision | 0.180                   | 0.255                   | +0.075 |
-| tenant-c/noisy        | recall    | 0.741                   | 0.889                   | +0.148 |
+| scenario        | metric    | 3.5 (per-user, rule on) | 3.5b (pooled, rule off) | delta  |
+| --------------- | --------- | ----------------------- | ----------------------- | ------ |
+| tenant-a/replay | precision | 0.209                   | 0.248                   | +0.039 |
+| tenant-a/replay | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-a/noisy  | precision | 0.205                   | 0.240                   | +0.035 |
+| tenant-a/noisy  | recall    | 0.889                   | 0.926                   | +0.037 |
+| tenant-b/replay | precision | 0.235                   | 0.275                   | +0.040 |
+| tenant-b/replay | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-b/noisy  | precision | 0.225                   | 0.275                   | +0.050 |
+| tenant-b/noisy  | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-c/replay | precision | 0.209                   | 0.245                   | +0.036 |
+| tenant-c/replay | recall    | 0.852                   | 0.889                   | +0.037 |
+| tenant-c/noisy  | precision | 0.180                   | 0.255                   | +0.075 |
+| tenant-c/noisy  | recall    | 0.741                   | 0.889                   | +0.148 |
 
 Pooled-topology + hybrid-rules-only restores Sprint 3 behaviour and
 fixes the tenant-c noisy slip Sprint 3.5 introduced. The Sprint 3.5
@@ -393,12 +393,12 @@ tenant-a every user is above the 30-signin threshold so the
 cold-start pooled tier is dormant; the table shows the four
 meaningful steps.
 
-| layer combination                 | flagged_high | TP | FP | precision | recall | F1    | FPR   |
-| --------------------------------- | ------------ | -- | -- | --------- | ------ | ----- | ----- |
-| per-user IF only (no rules)       | 35           | 2  | 33 | 0.057     | 0.074  | 0.065 | 0.010 |
-| per-user + cold-start (no rules)  | 35           | 2  | 33 | 0.057     | 0.074  | 0.065 | 0.010 |
-| per-user + pooled + hybrid rules  | 98           | 22 | 76 | 0.224     | 0.815  | 0.352 | 0.022 |
-| full (+ off-hours-admin)          | 110          | 23 | 87 | 0.209     | 0.852  | 0.336 | 0.025 |
+| layer combination                | flagged_high | TP  | FP  | precision | recall | F1    | FPR   |
+| -------------------------------- | ------------ | --- | --- | --------- | ------ | ----- | ----- |
+| per-user IF only (no rules)      | 35           | 2   | 33  | 0.057     | 0.074  | 0.065 | 0.010 |
+| per-user + cold-start (no rules) | 35           | 2   | 33  | 0.057     | 0.074  | 0.065 | 0.010 |
+| per-user + pooled + hybrid rules | 98           | 22  | 76  | 0.224     | 0.815  | 0.352 | 0.022 |
+| full (+ off-hours-admin)         | 110          | 23  | 87  | 0.209     | 0.852  | 0.336 | 0.025 |
 
 The four hybrid rules carry the workload, exactly as in Sprint 3
 (impossible-travel, new country + new ASN, failure + new ASN, MFA

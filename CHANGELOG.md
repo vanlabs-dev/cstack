@@ -56,6 +56,7 @@ fixtures, and the Docker Compose stack brings the whole environment up
 in one command.
 
 ### Sprint 0 to 1: Foundation
+
 - Monorepo with uv + pnpm workspaces.
 - Pydantic v2 schemas for tenants, conditional access policies,
   sign-ins, named locations, directory objects.
@@ -64,6 +65,7 @@ in one command.
 - Three calibrated synthetic fixture tenants (tenant-a/b/c).
 
 ### Sprint 2: CA audit
+
 - 15-rule registry covering MFA, legacy auth, risk-based,
   break-glass, device compliance, guest restrictions, workload
   identity, and policy hygiene categories.
@@ -73,6 +75,7 @@ in one command.
   creep, undocumented).
 
 ### Sprint 3: Anomaly detection
+
 - Per-tenant pooled IsolationForest with rule-based score booster.
 - SHAP top-3 attributions on every flagged sign-in.
 - MLflow model registry with `champion` and `challenger` aliases.
@@ -82,6 +85,7 @@ in one command.
   attacks; precision 0.24 to 0.30.
 
 ### Sprint 4: API
+
 - 19 endpoints across health, whoami, tenants, findings, anomaly,
   coverage, signins, audit, models, narratives.
 - Dual auth model: dev key + per-tenant API keys (SHA-256 hashed in
@@ -91,6 +95,7 @@ in one command.
 - OpenAPI 3.1 with CI-enforced contract drift detection.
 
 ### Sprint 5a to 5b: Frontend
+
 - Next.js 15 + Tailwind 4 dashboard. Server Components first,
   TanStack Query for client interactions.
 - Seven shipped screens: home, signalguard overview, coverage
@@ -101,6 +106,7 @@ in one command.
   detection.
 
 ### Sprint 6: LLM narrative layer
+
 - Provider-agnostic abstraction (Anthropic, OpenAI, Ollama) behind a
   single Protocol. Three adapters; tests register fakes via the same
   factory.
@@ -114,6 +120,7 @@ in one command.
   outcome).
 
 ### Sprint 6.5: Polish
+
 - README rewrite as portfolio-grade entry point.
 - docs/INDEX.md, cross-linking across all major docs.
 - Eight UI screenshots committed (six captured; two pending).
@@ -121,6 +128,7 @@ in one command.
   code removal, SECURITY.md.
 
 ### Sprint 6.6: Containerisation (this release)
+
 - Multi-stage Dockerfiles for `signalguard-api` (uv-based, 2.1 GB)
   and `signalguard-web` (Next.js standalone, 434 MB). Both run as
   non-root cstack:cstack uid 1001.
@@ -137,6 +145,7 @@ in one command.
   in BACKLOG).
 
 ### Known limitations
+
 - No live-tenant validation; everything runs against synthetic
   fixtures. Sprint 7 closes that gap.
 - Anomaly precision 0.24 to 0.30, recall 0.81 to 0.93. Sprint 3.5's

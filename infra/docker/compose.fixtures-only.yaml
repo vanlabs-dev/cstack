@@ -11,4 +11,4 @@ services:
   anomaly-bootstrap:
     # No-op replacement that exits 0 immediately so api's depends_on
     # condition still resolves.
-    command: ["sh", "-c", "echo 'skipping anomaly bootstrap'"]
+    command: ['sh', '-c', "echo 'skipping anomaly bootstrap'"]

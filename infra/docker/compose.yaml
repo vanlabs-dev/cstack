@@ -34,7 +34,7 @@ x-cli-defaults: &cli-defaults
     MLFLOW_ARTIFACT_ROOT: file:///data/mlruns/artifacts
   volumes:
     - cstack-data:/data
-  restart: "no"
+  restart: 'no'
 
 services:
   fixtures:
@@ -84,7 +84,7 @@ services:
     image: cstack-api:dev
     container_name: cstack-api
     ports:
-      - "8000:8000"
+      - '8000:8000'
     environment:
       SIGNALGUARD_API_DB_PATH: /data/cstack.duckdb
       SIGNALGUARD_API_TENANTS_FILE: /data/tenants.json
@@ -119,7 +119,7 @@ services:
     image: cstack-web:dev
     container_name: cstack-web
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       # Browser-side fetches go to the host port mapping, not the docker
       # network DNS name. Server components run inside the container and
