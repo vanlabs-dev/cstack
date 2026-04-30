@@ -68,14 +68,27 @@ services:
     container_name: cstack-anomaly-bootstrap
     # Replay-attacks scenario seeds enough flagged sign-ins for the
     # anomaly feed and drill-down screens to render meaningfully.
+    #
+    # Idempotency: a sentinel file at /data/.bootstrap-tenant-a-done
+    # short-circuits warm restarts (`down && up`); `down -v` wipes the
+    # volume and the sentinel together. ``--skip-if-registered`` on
+    # ``anomaly train`` is a defensive second layer for the case where
+    # the sentinel is missing but a champion already exists in the
+    # registry.
     command:
       - sh
       - -c
       - |
-        python -m cstack_cli.main signins extract --tenant tenant-a --scenario replay-attacks && \
-        python -m cstack_cli.main anomaly train --tenant tenant-a && \
-        python -m cstack_cli.main anomaly promote --tenant tenant-a --force && \
+        set -e
+        if [ -f /data/.bootstrap-tenant-a-done ]; then
+          echo "anomaly-bootstrap: sentinel exists; tenant-a already bootstrapped"
+          exit 0
+        fi
+        python -m cstack_cli.main signins extract --tenant tenant-a --scenario replay-attacks
+        python -m cstack_cli.main anomaly train --tenant tenant-a --skip-if-registered
+        python -m cstack_cli.main anomaly promote --tenant tenant-a --force
         python -m cstack_cli.main anomaly score --tenant tenant-a
+        touch /data/.bootstrap-tenant-a-done
     depends_on:
       audit:
         condition: service_completed_successfully
