@@ -52,46 +52,48 @@
   ],
   "anomaly_calibration": {
     "model_version": "signalguard-anomaly-00000000-aaaa-1111-1111-111111111111:v1",
-    "pipeline": "per-user IsolationForest(n=200, random_state=42) + cold-start pooled IF + 4 hybrid rules + off-hours-admin rule",
+    "pipeline": "pooled IsolationForest(n=200, random_state=42) + 4 hybrid rules",
+    "topology": "pooled",
+    "off_hours_admin_enabled": false,
     "contamination": 0.05,
     "min_samples_per_user": 30,
     "feature_count": 20,
     "scenarios": {
       "baseline": {
         "rows": 3321,
-        "flagged": 191,
-        "flagged_high": 71,
+        "flagged": 173,
+        "flagged_high": 61,
         "gt": 0,
         "tp": 0,
         "precision": null,
         "recall": null,
         "f1": null,
-        "false_positive_rate": 0.021
+        "false_positive_rate": 0.018
       },
       "replay-attacks": {
         "rows": 3489,
-        "flagged": 227,
-        "flagged_high": 110,
+        "flagged": 191,
+        "flagged_high": 101,
         "gt": 27,
-        "tp": 23,
-        "precision": 0.209,
-        "recall": 0.852,
-        "f1": 0.336,
-        "false_positive_rate": 0.025
+        "tp": 25,
+        "precision": 0.248,
+        "recall": 0.926,
+        "f1": 0.391,
+        "false_positive_rate": 0.022
       },
       "noisy": {
         "rows": 3718,
-        "flagged": 231,
-        "flagged_high": 117,
+        "flagged": 195,
+        "flagged_high": 104,
         "gt": 27,
-        "tp": 24,
-        "precision": 0.205,
-        "recall": 0.889,
-        "f1": 0.333,
-        "false_positive_rate": 0.025
+        "tp": 25,
+        "precision": 0.240,
+        "recall": 0.926,
+        "f1": 0.382,
+        "false_positive_rate": 0.021
       }
     },
     "calibrated_at": "2026-04-30",
-    "notes": "Sprint 3.5 architecture: per-user IF lifts coverage of user-specific patterns (e.g. off-hours admin signin caught via per-user time anchor) but tenant-a has zero cold-start users so the pooled fallback is dormant on this fixture. Layer attribution: per-user IF alone catches 2/27 attacks; the four hybrid rules drive recall to 22/27; the off-hours-admin rule adds the 23rd. Precision sits below the Sprint 3.5 0.40 target because the hybrid rules trigger on legitimate-but-rare events (mobile-carrier ASN swaps, traveler sign-ins). Sprint 7 calibration against real tenant data is expected to yield more discriminating per-user models."
+    "notes": "Sprint 3.5b restore. Sprint 3.5's per-user topology and off-hours-admin rule infrastructure stays in place but is feature-flagged; defaults match Sprint 3 pooled behaviour. Activate via CSTACK_ML_TRAINING_TOPOLOGY=per_user and CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true; expect Sprint 3.5 calibration in that mode (see SPRINT_NOTES.md). Numbers above are within ~0.05 of Sprint 3's calibration; small deltas reflect sklearn/numpy version drift since 2026-04-28 rather than algorithmic change."
   }
 }

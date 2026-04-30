@@ -59,46 +59,48 @@
   ],
   "anomaly_calibration": {
     "model_version": "signalguard-anomaly-00000000-cccc-3333-3333-333333333333:v1",
-    "pipeline": "per-user IsolationForest(n=200, random_state=42) + cold-start pooled IF + 4 hybrid rules + off-hours-admin rule",
+    "pipeline": "pooled IsolationForest(n=200, random_state=42) + 4 hybrid rules",
+    "topology": "pooled",
+    "off_hours_admin_enabled": false,
     "contamination": 0.05,
     "min_samples_per_user": 30,
     "feature_count": 20,
     "scenarios": {
       "baseline": {
         "rows": 4459,
-        "flagged": 261,
-        "flagged_high": 89,
+        "flagged": 231,
+        "flagged_high": 65,
         "gt": 0,
         "tp": 0,
         "precision": null,
         "recall": null,
         "f1": null,
-        "false_positive_rate": 0.020
+        "false_positive_rate": 0.015
       },
       "replay-attacks": {
         "rows": 4461,
-        "flagged": 273,
-        "flagged_high": 110,
+        "flagged": 238,
+        "flagged_high": 98,
         "gt": 27,
-        "tp": 23,
-        "precision": 0.209,
-        "recall": 0.852,
-        "f1": 0.336,
-        "false_positive_rate": 0.020
+        "tp": 24,
+        "precision": 0.245,
+        "recall": 0.889,
+        "f1": 0.384,
+        "false_positive_rate": 0.017
       },
       "noisy": {
         "rows": 4522,
-        "flagged": 273,
-        "flagged_high": 111,
+        "flagged": 246,
+        "flagged_high": 94,
         "gt": 27,
-        "tp": 20,
-        "precision": 0.180,
-        "recall": 0.741,
-        "f1": 0.290,
-        "false_positive_rate": 0.020
+        "tp": 24,
+        "precision": 0.255,
+        "recall": 0.889,
+        "f1": 0.397,
+        "false_positive_rate": 0.016
       }
     },
     "calibrated_at": "2026-04-30",
-    "notes": "Sprint 3.5 per-user architecture. Recall on replay-attacks meets the 0.80 floor (0.852); the noisy scenario slips to 0.741 because the noise injection broadens user time-distributions, which makes the off-hours-admin rule's per-user p90 anchor less discriminating. Precision below the 0.40 target across the board (rules drive recall but trip on rare-but-legitimate events). Sprint 7 with real tenant baselines will recalibrate this scenario."
+    "notes": "Sprint 3.5b restore. Pooled topology is the default; per-user topology and off-hours-admin rule are gated. The Sprint 3.5 noisy-recall slip (0.741) is gone (now 0.889) because the pooled IF generalises better against the noise injection than per-user models trained on each user's smaller distribution. Numbers track Sprint 3 metadata; small deltas reflect library-version drift."
   }
 }

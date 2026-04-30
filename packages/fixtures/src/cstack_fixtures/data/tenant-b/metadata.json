@@ -71,46 +71,48 @@
   ],
   "anomaly_calibration": {
     "model_version": "signalguard-anomaly-00000000-bbbb-2222-2222-222222222222:v1",
-    "pipeline": "per-user IsolationForest(n=200, random_state=42) + cold-start pooled IF + 4 hybrid rules + off-hours-admin rule",
+    "pipeline": "pooled IsolationForest(n=200, random_state=42) + 4 hybrid rules",
+    "topology": "pooled",
+    "off_hours_admin_enabled": false,
     "contamination": 0.05,
     "min_samples_per_user": 30,
     "feature_count": 20,
     "scenarios": {
       "baseline": {
         "rows": 2909,
-        "flagged": 168,
-        "flagged_high": 64,
+        "flagged": 149,
+        "flagged_high": 53,
         "gt": 0,
         "tp": 0,
         "precision": null,
         "recall": null,
         "f1": null,
-        "false_positive_rate": 0.022
+        "false_positive_rate": 0.018
       },
       "replay-attacks": {
         "rows": 2876,
-        "flagged": 191,
-        "flagged_high": 98,
+        "flagged": 155,
+        "flagged_high": 91,
         "gt": 27,
-        "tp": 23,
-        "precision": 0.235,
-        "recall": 0.852,
-        "f1": 0.368,
-        "false_positive_rate": 0.026
+        "tp": 25,
+        "precision": 0.275,
+        "recall": 0.926,
+        "f1": 0.424,
+        "false_positive_rate": 0.023
       },
       "noisy": {
         "rows": 2958,
-        "flagged": 201,
-        "flagged_high": 102,
+        "flagged": 162,
+        "flagged_high": 91,
         "gt": 27,
-        "tp": 23,
-        "precision": 0.225,
-        "recall": 0.852,
-        "f1": 0.357,
-        "false_positive_rate": 0.027
+        "tp": 25,
+        "precision": 0.275,
+        "recall": 0.926,
+        "f1": 0.424,
+        "false_positive_rate": 0.023
       }
     },
     "calibrated_at": "2026-04-30",
-    "notes": "Sprint 3.5 per-user architecture; tenant-b has 30 users all above the 30-signin threshold, so cold-start pooled is dormant. Recall meets the 0.80 floor on attacks; precision sits below the 0.40 target for the same reason as tenant-a (rules drive recall but trip on rare-but-legitimate events). The off-hours-admin rule fires on the injected scenario via the per-user time model anchor."
+    "notes": "Sprint 3.5b restore. Sprint 3.5's per-user topology and off-hours-admin rule are now feature-flagged; defaults match Sprint 3 pooled behaviour. Recall on attacks (0.926) is slightly above Sprint 3's 0.815-0.852 envelope, reflecting sklearn/numpy version drift since the original calibration. See SPRINT_NOTES.md Sprint 3.5b for the regression analysis that motivated gating per-user training behind a flag."
   }
 }
