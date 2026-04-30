@@ -20,14 +20,22 @@ an exclusion-hygiene analyser that catches stale, orphaned, or undocumented CA
 policy exclusions. Every finding is deduplicated by content hash and persisted
 to DuckDB.
 
-The anomaly half watches Entra sign-in events. A per-user Isolation
-Forest with a cold-start pooled fallback flags rows that look unlike
-the user's own normal pattern, layered with four hybrid attack-pattern
-rules and a per-user-anchored off-hours-admin rule. SHAP attributions
-explain the top three contributing features on every flagged row.
-MLflow tracks every training run; a champion/challenger alias system
-gates promotion. The detector targets SMB-tier tenants without Entra
-ID P2 licensing, where Microsoft's Identity Protection is unavailable.
+The anomaly half watches Entra sign-in events. A pooled Isolation
+Forest per tenant flags rows that look unlike the tenant's normal
+pattern, layered with four hybrid attack-pattern rules. SHAP
+attributions explain the top three contributing features on every
+flagged row. MLflow tracks every training run; a champion/challenger
+alias system gates promotion. Calibrated against synthetic fixtures
+at precision 0.245-0.275, recall 0.889-0.926 on injected attack
+scenarios. The detector targets SMB-tier tenants without Entra ID P2
+licensing, where Microsoft's Identity Protection is unavailable.
+
+A per-user IF topology and a per-user-anchored off-hours-admin rule
+ship as feature-flagged opt-ins (`CSTACK_ML_TRAINING_TOPOLOGY=per_user`,
+`CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`). Sprint 3.5 added the
+infrastructure; Sprint 3.5b gated the activation pending real-tenant
+calibration in Sprint 7 because synthetic data could not demonstrate
+their precision lift.
 
 Every finding (audit or anomaly) gets a four-section LLM narrative explaining
 why it fired, what it means, how to remediate, and when it might be a false

@@ -237,28 +237,54 @@ Direction labels (`pushes_anomalous` vs `pushes_normal`) on each
 contribution mean consumers do not need to interpret SHAP signs against
 the IF score-direction convention.
 
-## Per-user modelling tier
+## Two-topology training
 
-The bundle routes each row through one of three tiers at score time:
+Sprint 3 trained one pooled model per tenant. Sprint 3.5 added a
+per-user topology with a cold-start pooled fallback. Sprint 3.5b
+gated the per-user topology behind a feature flag because synthetic
+calibration showed it regressed precision uniformly (the synthesizer's
+deterministic profiles lack real per-user behavioural variance).
+
+`CSTACK_ML_TRAINING_TOPOLOGY` selects the active path:
+
+- **`pooled`** (default): one IsolationForest fitted on all tenant
+  signins. Sprint 3 behaviour. Calibration metrics in
+  `metadata.json` reflect this default.
+- **`per_user`** (opt-in): per-user IF for users with at least
+  `min_samples` sign-ins, plus a cold-start pooled fallback for the
+  long tail. Sprint 3.5 behaviour.
+
+Both topologies emit a `PerUserBundle` artefact with the same shape
+so scoring code is topology-agnostic. In `pooled` mode
+`per_user_models` is empty and the single fit is assigned to
+`cold_start_pooled`; every signin routes through cold-start at score
+time.
+
+`--topology` on `cstack anomaly train` overrides the env var per
+invocation. The MLflow run carries a `topology` tag so eval history
+records which topology produced each version.
+
+### Per-user modelling tier
+
+When the active topology is `per_user`, the bundle routes each row
+through one of three tiers at score time:
 
 - **`per_user`** when the row's `user_id` has a dedicated pipeline.
-  This is the default path on tenants where every user has enough
-  sign-ins to train against. It catches user-individual patterns the
-  pooled model could not isolate (a user who never roams looks
-  anomalous when they suddenly travel, even when some other user in
-  the tenant travels frequently).
+  Catches user-individual patterns the pooled model could not isolate
+  (a user who never roams looks anomalous when they suddenly travel,
+  even when some other user in the tenant travels frequently).
 - **`cold_start_pooled`** when the user is below the `min_samples`
   threshold. The shared pooled pipeline is fitted on the union of
-  all cold-start users' sign-ins; new users default to this rather
-  than dropping straight to a rule-only path.
+  all cold-start users' sign-ins.
 - **`rule_only`** when the user has neither a per-user model nor a
   cold-start pooled fallback (rare; happens when training found no
   cold-start users at all and a never-seen user shows up at score
   time). Rule booster floors still apply.
 
-The `model_tier` field is persisted on every `AnomalyScore` row and
-visible in the alerts CLI, the API responses, and the dashboard's
-SHAP detail card.
+In `pooled` mode every signin reports tier `cold_start_pooled` because
+all users route to the single pooled fit. The `model_tier` field is
+persisted on every `AnomalyScore` row and visible in the alerts CLI,
+the API responses, and the dashboard's SHAP detail card.
 
 ### Off-hours-admin rule (gated)
 
@@ -287,10 +313,66 @@ distributions.
 
 ## Calibration results
 
-Full pipeline ran from a clean DuckDB and `mlruns/` against all three
-fixture tenants and all three scenarios on 2026-04-30 with the
-Sprint 3.5 architecture (per-user IF + cold-start pooled + 4 hybrid
-rules + off-hours-admin rule).
+Sprint 3.5b restored the Sprint 3 pooled-topology defaults after
+Sprint 3.5's per-user calibration showed a uniform precision
+regression. The HEAD calibration metrics (default config: pooled
+topology, off-hours-admin rule gated off) sweep across all three
+fixture tenants and all three scenarios on 2026-04-30:
+
+| tenant   | scenario       | rows | flagged | ge 0.7 | GT  | TP  | precision | recall | F1    | FPR   |
+| -------- | -------------- | ---- | ------- | ------ | --- | --- | --------- | ------ | ----- | ----- |
+| tenant-a | baseline       | 3321 | 173     | 61     | 0   | 0   | n/a       | n/a    | n/a   | 0.018 |
+| tenant-a | replay-attacks | 3489 | 191     | 101    | 27  | 25  | 0.248     | 0.926  | 0.391 | 0.022 |
+| tenant-a | noisy          | 3718 | 195     | 104    | 27  | 25  | 0.240     | 0.926  | 0.382 | 0.021 |
+| tenant-b | baseline       | 2909 | 149     | 53     | 0   | 0   | n/a       | n/a    | n/a   | 0.018 |
+| tenant-b | replay-attacks | 2876 | 155     | 91     | 27  | 25  | 0.275     | 0.926  | 0.424 | 0.023 |
+| tenant-b | noisy          | 2958 | 162     | 91     | 27  | 25  | 0.275     | 0.926  | 0.424 | 0.023 |
+| tenant-c | baseline       | 4459 | 231     | 65     | 0   | 0   | n/a       | n/a    | n/a   | 0.015 |
+| tenant-c | replay-attacks | 4461 | 238     | 98     | 27  | 24  | 0.245     | 0.889  | 0.384 | 0.017 |
+| tenant-c | noisy          | 4522 | 246     | 94     | 27  | 24  | 0.255     | 0.889  | 0.397 | 0.016 |
+
+Recall meets the 0.80 floor on every attack scenario (0.889-0.926),
+including tenant-c noisy that Sprint 3.5 dropped to 0.741. Precision
+0.245-0.275, F1 0.382-0.424.
+
+### Sprint 3.5 vs Sprint 3.5b
+
+| scenario              | metric    | 3.5 (per-user, rule on) | 3.5b (pooled, rule off) | delta |
+| --------------------- | --------- | ----------------------- | ----------------------- | ----- |
+| tenant-a/replay       | precision | 0.209                   | 0.248                   | +0.039 |
+| tenant-a/replay       | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-a/noisy        | precision | 0.205                   | 0.240                   | +0.035 |
+| tenant-a/noisy        | recall    | 0.889                   | 0.926                   | +0.037 |
+| tenant-b/replay       | precision | 0.235                   | 0.275                   | +0.040 |
+| tenant-b/replay       | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-b/noisy        | precision | 0.225                   | 0.275                   | +0.050 |
+| tenant-b/noisy        | recall    | 0.852                   | 0.926                   | +0.074 |
+| tenant-c/replay       | precision | 0.209                   | 0.245                   | +0.036 |
+| tenant-c/replay       | recall    | 0.852                   | 0.889                   | +0.037 |
+| tenant-c/noisy        | precision | 0.180                   | 0.255                   | +0.075 |
+| tenant-c/noisy        | recall    | 0.741                   | 0.889                   | +0.148 |
+
+Pooled-topology + hybrid-rules-only restores Sprint 3 behaviour and
+fixes the tenant-c noisy slip Sprint 3.5 introduced. The Sprint 3.5
+infrastructure (PerUserBundle, cold-start fallback, off-hours-admin
+rule, per-user time anchor, MLflow `artifact_location` plumbing,
+`--skip-if-registered`) remains in place; the topology and the rule
+are simply gated off until Sprint 7 has real-tenant data to
+calibrate against.
+
+### Gate verification
+
+A second sweep on tenant-a/replay-attacks with both flags activated
+(`CSTACK_ML_TRAINING_TOPOLOGY=per_user`,
+`CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`) reproduces Sprint 3.5
+metrics exactly: precision 0.209, recall 0.852, F1 0.336, FPR 0.025.
+The gate works.
+
+### Sprint 3.5 archived calibration table
+
+For reference, the per-user-topology calibration that Sprint 3.5
+ran (and that Sprint 3.5b gated off because of the precision
+regression):
 
 | tenant   | scenario       | rows | flagged | ge 0.7 | GT  | TP  | precision | recall | F1    | FPR   |
 | -------- | -------------- | ---- | ------- | ------ | --- | --- | --------- | ------ | ----- | ----- |
@@ -374,19 +456,15 @@ narratives end to end.
 
 - Synthetic per-user behaviours fit the synthesizer's patterns rather
   than discovering user-individual patterns the model would catch on
-  live data. The per-user IF tier is plumbed end to end but its
-  precision/recall lift is bound by the fixture's noise model;
-  Sprint 7 real-tenant calibration is where the per-user model
-  gets to prove itself.
-- Precision sits below the Sprint 3.5 0.40 target on synthetic data
-  (range 0.18-0.24 across the three tenants on attacks). The hybrid
-  rules drive recall above the 0.80 floor; the IF (pooled or
-  per-user) cannot lift precision further when train and test
-  distributions overlap by construction.
-- `tenant-c noisy` recall (0.741) slips below the 0.80 floor that
-  the strict replay-attacks scenarios meet. Noise injection broadens
-  user time distributions which dilutes the off-hours-admin per-user
-  anchor; replay-attacks (the strict criterion) still passes.
+  live data. The per-user IF topology and the off-hours-admin rule
+  are plumbed end to end but feature-flagged (Sprint 3.5b) because
+  synthetic-data calibration regressed; Sprint 7 real-tenant data is
+  where they get to prove themselves.
+- Precision on the default pooled topology sits at 0.245-0.275 across
+  attack scenarios. The hybrid rules drive recall above the 0.80 floor;
+  the IF cannot lift precision further when train and test
+  distributions overlap by construction (synthetic) or when admins
+  signing in overnight is genuinely ambiguous (real).
 - ASN lookup is stubbed via IP prefix matching. Real GeoIP
   integration is Sprint 7.
 - Scoring is batch only. Real-time scoring is V2.
@@ -405,10 +483,13 @@ narratives end to end.
   with weekly retrain cron.
 - **Sprint 6**: LLM narrator consumes the SHAP top-3 plus rule
   references and generates investigator-ready summaries.
-- **Sprint 7**: live tenant validation, real ASN lookup, real per-user
-  baselines (the per-user IF tier is plumbed but expected to need
-  recalibration once live data shows up), SHAP runtime budget tuning
-  against tenant-scale traffic.
+- **Sprint 7**: live tenant validation, real ASN lookup, real
+  per-user baselines. The first activation experiment will flip
+  `CSTACK_ML_TRAINING_TOPOLOGY=per_user` against the test tenant and
+  re-measure precision/recall. If the per-user lift materialises on
+  real data, the default flips. Same gate-and-measure pattern for
+  `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`. SHAP runtime budget
+  tuning against tenant-scale traffic.
 - **Future**: per-role pooled tier (a third tier between per-user
   and tenant-pooled, useful when many users hold the same role and
   the pooled model would be too generic but per-user is too sparse).

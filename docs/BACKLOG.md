@@ -12,9 +12,17 @@ when prioritised.
       LLM narratives against real Graph data. Replace stub ASN lookup with a
       real GeoIP database. Address synthetic-data assumptions baked into
       earlier sprints (CRLF tolerances, break-glass naming, 90-day stale
-      thresholds calibrated to fixture timing). Recalibrate the per-user
-      anomaly tier; Sprint 3.5 plumbed it but synthetic data did not exercise
-      its precision lift, so live data is the next step.
+      thresholds calibrated to fixture timing). Per-user anomaly tier
+      activation experiment: flip `CSTACK_ML_TRAINING_TOPOLOGY=per_user`
+      against the test tenant, re-measure precision/recall, decide whether
+      to flip the default. Same gate-and-measure pattern for
+      `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`. Sprint 3.5 plumbed both;
+      Sprint 3.5b gated them after synthetic regression; Sprint 7 has the
+      data to evaluate them properly.
+- [ ] **Hard time floor on the off-hours-admin rule** (e.g. UTC hour
+      strictly outside 06:00-22:00 in addition to the per-user p90
+      check). Investigate when activating in Sprint 7 if the rule's
+      false-positive rate on real admin behaviour is high.
 - [ ] **Replace pwsh cert-store shell-out** with native cryptography lookup.
       `packages/graph-client/src/cstack_graph_client/credentials.py` currently
       shells to PowerShell to load the cert from the Windows CurrentUser store.

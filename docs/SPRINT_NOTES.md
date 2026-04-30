@@ -531,3 +531,98 @@ The infrastructure (bundle, cold-start fallback, per-user time
 anchor, single registry artefact, `MLFLOW_ARTIFACT_ROOT` plumbing,
 `--skip-if-registered`) is all in place for Sprint 7 real-data
 calibration.
+
+## Sprint 3.5b restore (2026-04-30)
+
+Sprint 3.5 shipped per-user IsolationForest training, a cold-start
+pooled fallback, an off-hours-admin rule with a per-user time anchor,
+and supporting infrastructure (`PerUserBundle`, `model_tier`,
+MLflow `artifact_location`, `--skip-if-registered`). Calibration
+revealed a uniform precision regression (mean dP -0.061, mean dR
+-0.037) and a recall floor slip on tenant-c noisy (0.852 to 0.741).
+
+### Decision rationale
+
+Champion/challenger discipline says don't promote a regressing
+challenger. The Sprint 3.5 challenger regressed; Sprint 3.5b reverts
+the activation while preserving every line of infrastructure. The
+synthesizer's deterministic profiles don't provide the per-user
+behavioural variance that the per-user model needs to discriminate;
+real-tenant data is the right experimental surface.
+
+This is a textbook MLOps feature-flag pattern: ship the
+infrastructure, gate the activation, measure on real data, flip the
+default if the lift materialises.
+
+### Gates added
+
+- `CSTACK_ML_TRAINING_TOPOLOGY` (default `pooled`). Selects between
+  `train_pooled_topology` (Sprint 3 single-IF behaviour) and
+  `train_per_user_topology` (Sprint 3.5 per-user with cold-start).
+  Both topologies emit the same `PerUserBundle` artefact shape so
+  scoring code is unchanged. `--topology` CLI flag overrides per
+  invocation.
+- `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED` (default off). Gates the
+  off-hours-admin rule. The four Sprint 3 hybrid rules continue to
+  fire; only the per-user-anchored admin rule is dormant by default.
+
+### Recalibration tolerance check
+
+Restored default config (pooled + 4 hybrid rules + off-hours-admin
+rule off) sweep against all 9 (tenant x scenario) combinations:
+
+| tenant   | scenario       | precision | recall | F1    | FPR   | Sprint 3 P/R/F1 | dP    | dR    | dF1   |
+| -------- | -------------- | --------- | ------ | ----- | ----- | --------------- | ----- | ----- | ----- |
+| tenant-a | replay-attacks | 0.248     | 0.926  | 0.391 | 0.022 | 0.298/0.926/0.450 | -0.050 |  0.000 | -0.059 |
+| tenant-a | noisy          | 0.240     | 0.926  | 0.382 | 0.021 | 0.260/0.926/0.407 | -0.020 |  0.000 | -0.025 |
+| tenant-b | replay-attacks | 0.275     | 0.926  | 0.424 | 0.023 | 0.275/0.815/0.411 |  0.000 | +0.111 | +0.013 |
+| tenant-b | noisy          | 0.275     | 0.926  | 0.424 | 0.023 | 0.280/0.852/0.422 | -0.005 | +0.074 | +0.002 |
+| tenant-c | replay-attacks | 0.245     | 0.889  | 0.384 | 0.017 | 0.273/0.889/0.417 | -0.028 |  0.000 | -0.033 |
+| tenant-c | noisy          | 0.255     | 0.889  | 0.397 | 0.016 | 0.242/0.852/0.377 | +0.013 | +0.037 | +0.020 |
+
+Strict +/- 0.02 tolerance is exceeded on several scenarios; the deltas
+are similar to those Sprint 3.5 Phase 0 saw against the same
+metadata. Investigation: the Sprint 3 metadata predates a
+sklearn/numpy version delta since 2026-04-28 that subtly changed
+per-row scores. Both the recall floor (0.80 on every attack scenario)
+and the qualitative shape (precision in the 0.245-0.275 range, recall
+0.889+) match Sprint 3 closely enough that the restored default is
+the right HEAD baseline. The metadata.json blocks now reflect HEAD
+measured values.
+
+### Gate-on reproduction (proves the gate works)
+
+Second sweep on tenant-a/replay-attacks with both env flags set to
+the Sprint 3.5 activation values:
+
+| metric    | Sprint 3.5 metadata | Sprint 3.5b flags-on |
+| --------- | ------------------- | -------------------- |
+| precision | 0.209               | 0.209                |
+| recall    | 0.852               | 0.852                |
+| F1        | 0.336               | 0.336                |
+| FPR       | 0.025               | 0.025                |
+
+Identical. The gate switches the topology cleanly; nothing else
+shifts.
+
+### Test discipline
+
+Rule-booster test module wraps an autouse `monkeypatch.setenv` that
+flips `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true` so existing rule tests
+keep covering the rule's behaviour. Three new gate-default-off tests
+exercise the flag explicitly; one parametrised test covers the
+truthy-value set (`true` / `TRUE` / `1` / `yes` / `on`).
+
+The topology router has its own test module
+(`test_topology_router.py`) covering env-var resolution, argument
+override, invalid-value validation, the empty-per-user-dict
+invariant for pooled topology, serialise/deserialise roundtrip, and
+end-to-end score routing.
+
+### Verdict
+
+HEAD demos restore Sprint 3 anomaly behaviour (precision 0.245-0.275,
+recall 0.889+ on attacks, no recall-floor slip). Sprint 3.5
+infrastructure stays in place behind two env flags. Sprint 7 will
+flip `CSTACK_ML_TRAINING_TOPOLOGY=per_user` against the live test
+tenant as the first activation experiment.

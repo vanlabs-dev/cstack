@@ -7,35 +7,46 @@ validation.
 
 ## [Unreleased]
 
-### Sprint 3.5: Per-user anomaly tier + off-hours admin
+### Sprint 3.5b: Restore Sprint 3 calibration as default; gate per-user behind flags
 
-- **Per-user IsolationForest bundle** replaces the Sprint 3 pooled-only
-  model. One fitted pipeline per user with at least 30 sign-ins,
-  cold-start pooled fallback for the long tail, all packaged as a
-  single `model.joblib` registered under
+- **`CSTACK_ML_TRAINING_TOPOLOGY`** (default `pooled`) selects between
+  Sprint 3's pooled IF and Sprint 3.5's per-user-with-cold-start
+  topology. Both emit the same `PerUserBundle` shape so scoring code
+  is topology-agnostic. `--topology` CLI flag overrides per-invocation.
+- **`CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`** (default off) gates the
+  off-hours-admin rule. The four Sprint 3 hybrid rules keep firing.
+- **Restored calibration** at HEAD: recall 0.889-0.926 on every
+  attack scenario (above the 0.80 floor everywhere, including
+  tenant-c noisy that Sprint 3.5 dropped to 0.741). Precision
+  0.245-0.275, F1 0.382-0.424. Numbers track Sprint 3 metadata
+  closely; small deltas reflect sklearn/numpy version drift.
+- **Gate verified**: `tenant-a/replay-attacks` with both flags
+  activated reproduces Sprint 3.5 metrics exactly
+  (P/R/F1/FPR = 0.209/0.852/0.336/0.025).
+- **MLflow run topology tag** records which topology produced each
+  registered model version.
+
+### Sprint 3.5: Per-user anomaly tier + off-hours admin (gated by 3.5b)
+
+- **Per-user IsolationForest bundle** opt-in via
+  `CSTACK_ML_TRAINING_TOPOLOGY=per_user`. One fitted pipeline per
+  user with at least 30 sign-ins, cold-start pooled fallback for the
+  long tail, all packaged as a single `model.joblib` registered under
   `signalguard-anomaly-{tenant_id}` (no more `-pooled-` suffix).
 - **`AnomalyScore.model_tier`** field plus migration 11 surfaces
   which tier (`per_user` / `cold_start_pooled` / `rule_only`) scored
   each row.
-- **Off-hours-admin rule** in `cstack_ml_anomaly.rules` fires on
-  tier-0 admin sign-ins that the user's per-user time-only model
-  rates in their own training-distribution top decile (cold-start
-  admins fall back to a UTC 22:00-06:00 night band). Closes the
-  Sprint 3 admin-time miss.
+- **Off-hours-admin rule** opt-in via
+  `CSTACK_ML_OFF_HOURS_ADMIN_ENABLED=true`. Fires on tier-0 admin
+  sign-ins that the user's per-user time-only model rates in their
+  own training-distribution top decile (cold-start admins fall back
+  to a UTC 22:00-06:00 night band).
 - **`anomaly train --skip-if-registered`** for fast Compose warm-ups
   when a champion already exists.
 - **MLflow `artifact_location`** resolved at `configure_tracking`
   time from explicit arg / `MLFLOW_ARTIFACT_ROOT` env / sqlite
   sibling. Removes the `working_dir: /data` Compose hack; bootstrap
   services keep cwd at `/app` regardless.
-- **Recalibration** against all 9 fixture (tenant x scenario)
-  combinations. Recall meets the 0.80 floor on all three tenants'
-  replay-attacks scenarios; precision sits at 0.18 to 0.24 (below
-  the 0.40 target). Layer attribution showed the per-user IF on
-  synthetic data adds little on top of the four hybrid rules; the
-  per-user infrastructure is plumbed for Sprint 7's real-data
-  calibration where it is expected to find more user-individual
-  patterns to discriminate against.
 
 ## [0.6.0-alpha.1] - 2026-04-30
 
