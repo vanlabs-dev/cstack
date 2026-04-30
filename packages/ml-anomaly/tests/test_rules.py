@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 from cstack_ml_anomaly.per_user import PerUserBundle
 from cstack_ml_anomaly.rules import (
     NIGHT_HOURS_UTC,
@@ -18,6 +19,16 @@ from cstack_ml_features import FEATURE_COLUMNS
 from sklearn.ensemble import IsolationForest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+
+
+@pytest.fixture(autouse=True)
+def _enable_off_hours_admin(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Sprint 3.5b gated the off-hours-admin rule behind a flag with
+    default off. Existing tests assume the rule is active; flip the
+    flag on for this test module so they keep covering the rule's
+    behaviour. The default-off behaviour is exercised separately in
+    the dedicated gate tests below."""
+    monkeypatch.setenv("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", "true")
 
 
 def _row(hour: int, **overrides: float) -> dict[str, float]:
@@ -217,3 +228,80 @@ def test_user_ids_required_when_privileged_set_supplied() -> None:
         privileged_user_ids=frozenset({"admin-1"}),
     )
     assert boosts == [0.0]
+
+
+# Off-hours-admin gate (Sprint 3.5b). The autouse fixture above flips
+# the flag on for the bulk of the file; these tests override the flag
+# explicitly to verify the default-off behaviour.
+
+
+def test_off_hours_admin_gate_default_off(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With CSTACK_ML_OFF_HOURS_ADMIN_ENABLED unset, the rule never fires
+    even on the per-user-anchored path that would otherwise match."""
+    monkeypatch.delenv("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", raising=False)
+    bundle = _bundle_with_admin_time_model("admin-1")
+    df = _df(_row(hour=3))
+    boosts = rule_score_boosts(
+        df,
+        user_ids=["admin-1"],
+        bundle=bundle,
+        privileged_user_ids=frozenset({"admin-1"}),
+    )
+    assert boosts == [0.0]
+
+
+def test_off_hours_admin_gate_explicit_false(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``false`` is a no-op as well; only truthy values activate."""
+    monkeypatch.setenv("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", "false")
+    bundle = _bundle_with_admin_time_model("admin-1")
+    df = _df(_row(hour=3))
+    boosts = rule_score_boosts(
+        df,
+        user_ids=["admin-1"],
+        bundle=bundle,
+        privileged_user_ids=frozenset({"admin-1"}),
+    )
+    assert boosts == [0.0]
+
+
+def test_off_hours_admin_gate_cold_start_also_dormant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Cold-start admin path (no per-user time model) is also gated."""
+    monkeypatch.delenv("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", raising=False)
+    bundle = PerUserBundle(
+        tenant_id="t",
+        per_user_models={},
+        cold_start_pooled=None,
+        feature_columns=tuple(FEATURE_COLUMNS),
+        trained_at=datetime.now(UTC),
+        n_users_per_user=0,
+        n_users_cold_start=1,
+        total_signins_used=0,
+        min_samples_threshold=30,
+    )
+    df = _df(_row(hour=3))
+    boosts = rule_score_boosts(
+        df,
+        user_ids=["admin-cold"],
+        bundle=bundle,
+        privileged_user_ids=frozenset({"admin-cold"}),
+    )
+    assert boosts == [0.0]
+
+
+@pytest.mark.parametrize("flag_value", ["true", "TRUE", "1", "yes", "on"])
+def test_off_hours_admin_gate_truthy_values(
+    monkeypatch: pytest.MonkeyPatch, flag_value: str
+) -> None:
+    """All documented truthy values activate the rule."""
+    monkeypatch.setenv("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", flag_value)
+    bundle = _bundle_with_admin_time_model("admin-1")
+    df = _df(_row(hour=3))
+    boosts = rule_score_boosts(
+        df,
+        user_ids=["admin-1"],
+        bundle=bundle,
+        privileged_user_ids=frozenset({"admin-1"}),
+    )
+    assert boosts == [RULE_OFF_HOURS_ADMIN_FLOOR]

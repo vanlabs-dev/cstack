@@ -18,6 +18,7 @@ admin's late-night activity.
 from __future__ import annotations
 
 import math
+import os
 from typing import Any
 
 import pandas as pd
@@ -47,6 +48,20 @@ TIME_FEATURE_COLUMNS: tuple[str, ...] = (
     "hour_of_day_sin",
     "is_business_hours_local",
 )
+
+# Truthy values for the off-hours-admin gate flag. Anything else (or
+# unset) keeps the rule dormant. Default-off because Sprint 3.5
+# calibration showed it fires on legitimate-but-rare admin overnight
+# activity in the synthetic fixtures (no real off-hours signal in the
+# generator's deterministic profiles); Sprint 7 with real admin
+# behaviour data will exercise the per-user time anchor properly.
+_OFF_HOURS_ADMIN_TRUTHY = frozenset({"true", "1", "yes", "on"})
+
+
+def _off_hours_admin_enabled() -> bool:
+    """Honour ``CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`` (default off)."""
+    raw = os.environ.get("CSTACK_ML_OFF_HOURS_ADMIN_ENABLED", "")
+    return raw.strip().lower() in _OFF_HOURS_ADMIN_TRUTHY
 
 
 def _hybrid_rule_boost(row: Any) -> float:
@@ -92,12 +107,20 @@ def _off_hours_admin_boost(
 ) -> float:
     """Off-hours-admin rule. Returns 0.0 if the rule does not fire.
 
-    Fires when the user is in ``privileged_user_ids`` AND either:
+    Gated by ``CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`` (default off). Sprint
+    3.5b parked the rule behind a flag because it produced uniform
+    false positives on synthetic baseline traffic; the rule's per-user
+    time anchor needs real admin behaviour data to be discriminating.
+
+    When the flag is on, fires when the user is in
+    ``privileged_user_ids`` AND either:
     - The user has a per-user time model and the row's negated time-only
       score is at or above the user's training-distribution p90, or
     - The user has no per-user model (cold-start) and the UTC hour falls
       in the 22:00-06:00 night band.
     """
+    if not _off_hours_admin_enabled():
+        return 0.0
     if user_id not in privileged_user_ids:
         return 0.0
     if bundle is not None and user_id in bundle.time_pipelines:

@@ -260,23 +260,30 @@ The `model_tier` field is persisted on every `AnomalyScore` row and
 visible in the alerts CLI, the API responses, and the dashboard's
 SHAP detail card.
 
-### Off-hours-admin rule (Sprint 3.5)
+### Off-hours-admin rule (gated)
 
 The Sprint 3 calibration documented an off-hours admin sign-in as the
-single attack pattern the booster missed. The Sprint 3.5 rule fires
-when (a) the user holds one of the four tier-0 admin role template
-ids (Global Admin, Privileged Role Admin, Privileged Authentication
-Admin, Security Admin), AND (b) either the user has a per-user
-time-only model and the row's negated time-only score is at or above
-the user's training-distribution p90, OR the user is on the
+single attack pattern the booster missed. Sprint 3.5 added a rule
+that fires when (a) the user holds one of the four tier-0 admin role
+template ids (Global Admin, Privileged Role Admin, Privileged
+Authentication Admin, Security Admin), AND (b) either the user has a
+per-user time-only model and the row's negated time-only score is at
+or above the user's training-distribution p90, OR the user is on the
 cold-start path and the UTC hour falls in the 22:00-06:00 night band.
 
-The rule's score floor is 0.85 and it combines via `max` with the
-four hybrid rules and the IF score so a stronger signal is never
-downgraded. Decile 9 (p90) was chosen empirically: tighter thresholds
-miss the injected attack on tenants whose admin user has variable
-hours; looser thresholds inflate false positives on routine off-hours
-admin work.
+The rule's score floor is 0.85 and combines via `max` with the four
+hybrid rules and the IF score so a stronger signal is never
+downgraded. Decile 9 (p90) was chosen empirically.
+
+**Gate (Sprint 3.5b):** the rule is feature-flagged behind
+`CSTACK_ML_OFF_HOURS_ADMIN_ENABLED`, default off. Sprint 3.5
+calibration showed the rule's per-user time anchor inflates false
+positives on the synthetic fixtures because the synthesizer's admins
+have a deterministic work-hours profile and any rare-but-legitimate
+overnight sign-in trips the p90 threshold. Set the env var to `true`
+(or `1` / `yes` / `on`) to activate; Sprint 7 with real admin
+behaviour data will recalibrate against genuine per-user
+distributions.
 
 ## Calibration results
 
